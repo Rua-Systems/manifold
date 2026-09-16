@@ -1,0 +1,10 @@
+<header class="header">
+	<a class="brand" routerLink="/">{{ 'app.name' | translate }}</a>
+	<div class="actions">
+		<app-language-switcher />
+		<app-theme-toggle />
+	</div>
+</header>
+<main class="main">
+	<router-outlet />
+</main>

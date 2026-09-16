@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Manifold"
+  },
+  "header": {
+    "language": "Dil",
+    "theme": "Temayı değiştir"
+  },
+  "language": {
+    "en": "English",
+    "tr": "Türkçe"
+  },
+  "theme": {
+    "light": "Açık",
+    "dark": "Koyu"
+  },
+  "home": {
+    "title": "Manifold'a hoş geldiniz",
+    "description": "Uygulama iskeleti hazır. Yönlendirilen sayfaları pages klasörüne ekleyin."
+  }
+}

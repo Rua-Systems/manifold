@@ -1,0 +1,32 @@
+@use './styles/theme';
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	font-family: var(--font-family-base);
+	font-size: 16px;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+	background: var(--bg-page);
+	color: var(--text-primary);
+	font-size: var(--font-size-md);
+	line-height: 1.5;
+	transition: background var(--transition-base), color var(--transition-base);
+}
+
+a {
+	color: var(--primary-color);
+}
+
+button {
+	font: inherit;
+}

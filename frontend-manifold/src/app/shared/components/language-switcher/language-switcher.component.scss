@@ -1,0 +1,29 @@
+:host {
+	display: inline-flex;
+}
+
+:host>.switcher {
+	display: inline-flex;
+	overflow: hidden;
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius-pill);
+
+	>.option {
+		padding: var(--space-1) var(--space-3);
+		border: 0;
+		background: var(--bg-surface);
+		color: var(--text-secondary);
+		font-size: var(--font-size-sm);
+		cursor: pointer;
+		transition: background var(--transition-base), color var(--transition-base);
+
+		&:hover {
+			color: var(--text-primary);
+		}
+
+		&.active {
+			background: var(--primary-color);
+			color: var(--on-primary);
+		}
+	}
+}

@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "Manifold"
+  },
+  "header": {
+    "language": "Language",
+    "theme": "Toggle theme"
+  },
+  "language": {
+    "en": "English",
+    "tr": "Türkçe"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "home": {
+    "title": "Welcome to Manifold",
+    "description": "The application scaffold is ready. Add routed pages under the pages folder."
+  }
+}
