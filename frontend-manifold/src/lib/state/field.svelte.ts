@@ -29,8 +29,19 @@ export class Field {
 		return this.touched && this.error !== null;
 	}
 
+	get message(): string {
+		if (!this.showError) {
+			return '';
+		}
+		return this.error ?? '';
+	}
+
 	markTouched(): void {
 		this.touched = true;
+	}
+
+	clearError(): void {
+		this.touched = false;
 	}
 
 	reset(): void {

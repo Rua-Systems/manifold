@@ -113,9 +113,7 @@
 					bind:value={emailField.value}
 					onblur={() => emailField.markTouched()}
 				/>
-				{#if emailField.showError}
-					<p class="error" id="recoveryEmailError">{emailField.error}</p>
-				{/if}
+				<p class="error" id="recoveryEmailError">{emailField.message}</p>
 			</div>
 			<div class="actions">
 				<button type="submit">Send Code</button>
@@ -140,19 +138,25 @@
 					bind:value={codeField.value}
 					onblur={() => codeField.markTouched()}
 				/>
-				{#if codeField.showError}
-					<p class="error" id="recoveryCodeError">{codeField.error}</p>
-				{/if}
+				<p class="error" id="recoveryCodeError">{codeField.message}</p>
 			</div>
-			<div class="actions">
-				<button type="submit">Verify</button>
-				<button type="button" class="quiet" onclick={resendCode} disabled={cooldown > 0}>
-					{#if cooldown > 0}
-						Resend in {cooldown}s
-					{:else}
-						Resend code
-					{/if}
-				</button>
+			<div class="submit">
+				<p class="notice" role="status">{notice}</p>
+				<div class="actions">
+					<button type="submit">Verify</button>
+					<button
+						type="button"
+						class="quiet"
+						onclick={resendCode}
+						disabled={cooldown > 0}
+					>
+						{#if cooldown > 0}
+							Resend in {cooldown}s
+						{:else}
+							Resend code
+						{/if}
+					</button>
+				</div>
 			</div>
 			<div class="foot-row">
 				<button type="button" class="quiet" onclick={changeEmail}>
@@ -160,9 +164,6 @@
 				</button>
 				<a href="/login">Back to login</a>
 			</div>
-			{#if notice}
-				<p class="notice" role="status">{notice}</p>
-			{/if}
 		</form>
 	{/if}
 </AuthShell>
@@ -260,10 +261,12 @@
 		}
 	}
 
+	.submit {
+		@include forms.submitGroup;
+	}
+
 	.notice {
-		font-size: 0.7rem;
-		letter-spacing: 0.1em;
-		color: clr.$errorColor;
+		@include forms.formNotice;
 	}
 
 	@media (max-width: 420px) {

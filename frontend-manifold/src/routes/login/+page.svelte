@@ -1,19 +1,78 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import AuthShell from '$lib/components/AuthShell/AuthShell.svelte';
 	import { pageTitle } from '$lib/constants';
 	import { Field, validateAll } from '$lib/state/field.svelte';
-	import { email, required } from '$lib/utils/validation';
+	import { getNotifications } from '$lib/state/notifications.svelte';
+	import { digits, email as emailRule, required } from '$lib/utils/validation';
+	import type { PageProps } from './$types';
 
-	const emailField = new Field([required(), email()]);
+	type Method = 'password' | 'code';
+
+	const CODE_LENGTH = 6;
+
+	let { form }: PageProps = $props();
+
+	const notifications = getNotifications();
+	const emailField = new Field([required(), emailRule()]);
 	const passwordField = new Field([required()]);
+	const codeField = new Field([required(), digits(CODE_LENGTH)]);
 
-	let remember = $state(false);
+	function initialMethod(): Method {
+		if (form !== null && form !== undefined && form.sent) {
+			return 'code';
+		}
+		return 'password';
+	}
 
-	function submit(event: SubmitEvent): void {
-		event.preventDefault();
-		if (!validateAll([emailField, passwordField])) {
+	let method = $state<Method>(initialMethod());
+	let hideServerMessage = $state(false);
+
+	const redirectTo = $derived(page.url.searchParams.get('redirectTo') ?? '');
+	const codeSent = $derived(form !== null && form !== undefined && form.sent);
+
+	const serverMessage = $derived.by(() => {
+		if (hideServerMessage) {
+			return '';
+		}
+		return form?.message ?? '';
+	});
+
+	function selectMethod(next: Method): void {
+		if (next === method) {
 			return;
 		}
+
+		method = next;
+		hideServerMessage = true;
+		emailField.clearError();
+		passwordField.clearError();
+		codeField.clearError();
+	}
+
+	function guardPassword(event: SubmitEvent): void {
+		if (!validateAll([emailField, passwordField])) {
+			event.preventDefault();
+			return;
+		}
+		hideServerMessage = false;
+	}
+
+	function guardEmail(event: SubmitEvent): void {
+		if (!validateAll([emailField])) {
+			event.preventDefault();
+			return;
+		}
+		hideServerMessage = false;
+	}
+
+	function guardCode(event: SubmitEvent): void {
+		if (!validateAll([codeField])) {
+			event.preventDefault();
+			return;
+		}
+		hideServerMessage = false;
 	}
 </script>
 
@@ -27,55 +86,136 @@
 		<h1>Login</h1>
 		<p class="lead">Authorization required to proceed.</p>
 	</div>
-	<form class="step" onsubmit={submit} novalidate>
-		<div class="field">
-			<label for="loginEmail">Email</label>
-			<input
-				id="loginEmail"
-				type="email"
-				autocomplete="email"
-				placeholder="Enter Email"
-				aria-invalid={emailField.showError}
-				aria-describedby="loginEmailError"
-				bind:value={emailField.value}
-				onblur={() => emailField.markTouched()}
-			/>
-			{#if emailField.showError}
-				<p class="error" id="loginEmailError">{emailField.error}</p>
-			{/if}
-		</div>
-		<div class="field">
-			<label for="loginPassword">Password</label>
-			<input
-				id="loginPassword"
-				type="password"
-				autocomplete="current-password"
-				placeholder="Enter Password"
-				aria-invalid={passwordField.showError}
-				aria-describedby="loginPasswordError"
-				bind:value={passwordField.value}
-				onblur={() => passwordField.markTouched()}
-			/>
-			{#if passwordField.showError}
-				<p class="error" id="loginPasswordError">{passwordField.error}</p>
-			{/if}
-		</div>
-		<div class="field inline">
-			<label>
-				<input type="checkbox" bind:checked={remember} />
-				<span>Remember Me</span>
-			</label>
-		</div>
-		<div class="actions">
-			<button type="submit">Authenticate</button>
-			<a href="/forgot-password">Forgot Password</a>
-		</div>
-	</form>
+	<div class="methods" role="group" aria-label="Login method">
+		<button
+			type="button"
+			class:active={method === 'password'}
+			onclick={() => selectMethod('password')}
+		>
+			Password
+		</button>
+		<button type="button" class:active={method === 'code'} onclick={() => selectMethod('code')}>
+			Email Code
+		</button>
+	</div>
+	{#if method === 'password'}
+		<form method="POST" action="?/password" use:enhance onsubmit={guardPassword} novalidate>
+			<input type="hidden" name="redirectTo" value={redirectTo} />
+			<div class="field">
+				<label for="loginEmail">Email</label>
+				<input
+					id="loginEmail"
+					name="email"
+					type="email"
+					autocomplete="email"
+					placeholder="Enter Email"
+					aria-invalid={emailField.showError}
+					aria-describedby="loginEmailError"
+					bind:value={emailField.value}
+					onblur={() => emailField.markTouched()}
+				/>
+				<p class="error" id="loginEmailError">{emailField.message}</p>
+			</div>
+			<div class="field">
+				<label for="loginPassword">Password</label>
+				<input
+					id="loginPassword"
+					name="password"
+					type="password"
+					autocomplete="current-password"
+					placeholder="Enter Password"
+					aria-invalid={passwordField.showError}
+					aria-describedby="loginPasswordError"
+					bind:value={passwordField.value}
+					onblur={() => passwordField.markTouched()}
+				/>
+				<p class="error" id="loginPasswordError">{passwordField.message}</p>
+			</div>
+			<div class="submit">
+				<p class="notice" role="alert">{serverMessage}</p>
+				<div class="actions">
+					<button type="submit">Authenticate</button>
+					<a href="/forgot-password">Forgot Password</a>
+				</div>
+			</div>
+		</form>
+	{:else if !codeSent}
+		<form
+			method="POST"
+			action="?/requestCode"
+			onsubmit={guardEmail}
+			novalidate
+			use:enhance={() => {
+				return async ({ result, update }) => {
+					if (result.type === 'success') {
+						notifications.confirm('A sign in code has been sent.');
+					}
+					await update({ reset: false });
+				};
+			}}
+		>
+			<input type="hidden" name="redirectTo" value={redirectTo} />
+			<div class="field">
+				<label for="codeEmail">Email</label>
+				<input
+					id="codeEmail"
+					name="email"
+					type="email"
+					autocomplete="email"
+					placeholder="Enter Email"
+					aria-invalid={emailField.showError}
+					aria-describedby="codeEmailError"
+					bind:value={emailField.value}
+					onblur={() => emailField.markTouched()}
+				/>
+				<p class="error" id="codeEmailError">{emailField.message}</p>
+			</div>
+			<div class="submit">
+				<p class="notice" role="alert">{serverMessage}</p>
+				<div class="actions">
+					<button type="submit">Send Code</button>
+					<a href="/forgot-password">Forgot Password</a>
+				</div>
+			</div>
+		</form>
+	{:else}
+		<form method="POST" action="?/verifyCode" use:enhance onsubmit={guardCode} novalidate>
+			<input type="hidden" name="redirectTo" value={redirectTo} />
+			<input type="hidden" name="email" value={form?.email ?? emailField.value} />
+			<p class="sent">Code sent to <strong>{form?.email}</strong></p>
+			<div class="field">
+				<label for="loginCode">Verification Code</label>
+				<input
+					id="loginCode"
+					name="code"
+					class="code"
+					type="text"
+					inputmode="numeric"
+					autocomplete="one-time-code"
+					maxlength={CODE_LENGTH}
+					placeholder="000000"
+					aria-invalid={codeField.showError}
+					aria-describedby="loginCodeError"
+					bind:value={codeField.value}
+					onblur={() => codeField.markTouched()}
+				/>
+				<p class="error" id="loginCodeError">{codeField.message}</p>
+			</div>
+			<div class="submit">
+				<p class="notice" role="alert">{serverMessage}</p>
+				<div class="actions">
+					<button type="submit">Verify</button>
+					<a href="/login">Start over</a>
+				</div>
+			</div>
+		</form>
+	{/if}
 </AuthShell>
 
 <style lang="scss">
 	@use '../../styles/colors' as clr;
 	@use '../../styles/forms' as forms;
+	@use '../../styles/variables' as vars;
 
 	.intro {
 		margin-bottom: 0.4rem;
@@ -95,10 +235,53 @@
 		}
 	}
 
-	.step {
+	.methods {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 2px;
+		padding: 2px;
+		border: 1px solid clr.$borderSubtleColor;
+		border-radius: vars.$radius;
+
+		> button {
+			padding: 0.6rem 0.5rem;
+			font-size: 0.66rem;
+			letter-spacing: 0.16em;
+			text-transform: uppercase;
+			color: clr.$textMutedColor;
+			background-color: transparent;
+			border: 0;
+			border-radius: 2px;
+			cursor: pointer;
+			transition:
+				color 160ms ease,
+				background-color 160ms ease;
+
+			&:hover {
+				color: clr.$textPrimaryColor;
+			}
+
+			&.active {
+				color: clr.$accentColor;
+				background-color: clr.$accentWashColor;
+			}
+		}
+	}
+
+	form {
 		display: flex;
 		flex-direction: column;
 		gap: 1.15rem;
+	}
+
+	.sent {
+		font-size: 0.78rem;
+		color: clr.$textSecondaryColor;
+
+		> strong {
+			font-weight: 400;
+			color: clr.$textPrimaryColor;
+		}
 	}
 
 	.field {
@@ -110,31 +293,25 @@
 			@include forms.textInput;
 		}
 
+		> .code {
+			padding-block: 0.9rem;
+			font-size: 1.3rem;
+			letter-spacing: 0.7em;
+			text-indent: 0.7em;
+			text-align: center;
+		}
+
 		> .error {
 			@include forms.fieldError;
 		}
+	}
 
-		&.inline > label {
-			display: flex;
-			align-items: center;
-			gap: 0.6rem;
-			margin-bottom: 0;
-			cursor: pointer;
+	.submit {
+		@include forms.submitGroup;
+	}
 
-			> span {
-				font-size: 0.68rem;
-				letter-spacing: 0.14em;
-				text-transform: uppercase;
-				color: clr.$textMutedColor;
-			}
-
-			> input {
-				width: auto;
-				padding: 0;
-				accent-color: clr.$accentColor;
-				cursor: pointer;
-			}
-		}
+	.notice {
+		@include forms.formNotice;
 	}
 
 	.actions {
@@ -143,7 +320,6 @@
 		justify-content: space-between;
 		gap: 1rem;
 		flex-wrap: wrap;
-		margin-top: 0.4rem;
 
 		> button {
 			@include forms.primaryButton;

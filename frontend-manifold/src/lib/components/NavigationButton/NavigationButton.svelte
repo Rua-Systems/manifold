@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
 	import HamburgerIcon from '$lib/components/icons/HamburgerIcon.svelte';
-	import { NAVIGATION_LINKS } from '$lib/config/navigation';
+	import { ACCOUNT_LINKS, GUEST_LINKS, PUBLIC_LINKS } from '$lib/config/navigation';
 	import type { NavigationLink } from '$lib/types/navigation';
 	import type { Action } from 'svelte/action';
 	import { cubicOut } from 'svelte/easing';
@@ -16,14 +16,30 @@
 	let isOpen = $state(false);
 	let triggerElement: HTMLButtonElement | undefined = $state();
 
-	const items: NavigationItem[] = $derived(
-		NAVIGATION_LINKS.map((link) => {
+	const user = $derived(page.data.user);
+
+	function decorate(links: NavigationLink[]): NavigationItem[] {
+		return links.map((link) => {
 			if (page.url.pathname === link.href) {
 				return { ...link, current: 'page' as const };
 			}
 			return { ...link, current: undefined };
-		})
-	);
+		});
+	}
+
+	const primaryItems: NavigationItem[] = $derived.by(() => {
+		if (user === null) {
+			return decorate([...PUBLIC_LINKS, ...GUEST_LINKS]);
+		}
+		return decorate(PUBLIC_LINKS);
+	});
+
+	const accountItems: NavigationItem[] = $derived.by(() => {
+		if (user === null) {
+			return [];
+		}
+		return decorate(ACCOUNT_LINKS);
+	});
 
 	afterNavigate(() => {
 		isOpen = false;
@@ -58,7 +74,15 @@
 	};
 
 	function toggle(): void {
-		isOpen = !isOpen;
+		if (isOpen) {
+			close();
+			return;
+		}
+		open();
+	}
+
+	function open(): void {
+		isOpen = true;
 	}
 
 	function close(): void {
@@ -108,7 +132,7 @@
 			</button>
 		</div>
 		<ul>
-			{#each items as item, index (item.href)}
+			{#each primaryItems as item, index (item.href)}
 				<li style="--delay: {120 + index * 60}ms">
 					<a href={item.href} class:active={item.current} aria-current={item.current}>
 						{item.label}
@@ -116,6 +140,21 @@
 				</li>
 			{/each}
 		</ul>
+		{#if user !== null}
+			<div class="divider" role="presentation"></div>
+			<ul>
+				{#each accountItems as item, index (item.href)}
+					<li style="--delay: {300 + index * 60}ms">
+						<a href={item.href} class:active={item.current} aria-current={item.current}>
+							{item.label}
+						</a>
+					</li>
+				{/each}
+			</ul>
+			<form method="POST" action="/logout">
+				<button type="submit" class="logout">Logout</button>
+			</form>
+		{/if}
 	</nav>
 {/if}
 
@@ -188,7 +227,7 @@
 		z-index: 110;
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: 1rem;
 		width: min(20rem, 82vw);
 		padding: clamp(0.9rem, 2.5vw, 1.5rem);
 		overflow-y: auto;
@@ -200,6 +239,18 @@
 			display: flex;
 			flex: none;
 			justify-content: flex-end;
+		}
+
+		> .divider {
+			height: 1px;
+			margin-inline: 0.85rem;
+			background-color: clr.$borderSubtleColor;
+		}
+
+		> form {
+			margin-top: auto;
+			padding-top: 1rem;
+			border-top: 1px solid clr.$borderMutedColor;
 		}
 
 		> ul {
@@ -264,6 +315,28 @@
 			color: clr.$textPrimaryColor;
 			border-color: clr.$accentColor;
 			background-color: clr.$accentWashColor;
+		}
+	}
+
+	.logout {
+		width: 100%;
+		padding: 0.75rem 0.85rem;
+		font-size: 0.7rem;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		text-align: left;
+		color: clr.$textMutedColor;
+		background-color: transparent;
+		border: 0;
+		border-radius: vars.$radius;
+		cursor: pointer;
+		transition:
+			color 160ms ease,
+			background-color 160ms ease;
+
+		&:hover {
+			color: clr.$errorColor;
+			background-color: clr.$surfaceHoverColor;
 		}
 	}
 </style>

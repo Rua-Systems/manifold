@@ -3,12 +3,14 @@
 	import NavigationButton from '$lib/components/NavigationButton/NavigationButton.svelte';
 	import Notifications from '$lib/components/Notifications/Notifications.svelte';
 	import { setNotifications } from '$lib/state/notifications.svelte';
+	import { setSidebarState } from '$lib/state/sidebar.svelte';
 	import '../styles/styles.scss';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
 
 	setNotifications();
+	setSidebarState();
 </script>
 
 <svelte:head>
