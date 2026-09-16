@@ -1,0 +1,14 @@
+services:
+  frontend:
+    build:
+      context: ./frontend-manifold
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      ORIGIN: ${ORIGIN}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+    ports:
+      - '3000:3000'
+    restart: unless-stopped

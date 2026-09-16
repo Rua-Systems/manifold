@@ -1,5 +1,9 @@
-.angular/
-dist/
-node_modules/
+# Package Managers
 package-lock.json
-*.scss
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Miscellaneous
+/static/
