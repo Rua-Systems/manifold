@@ -1,5 +1,4 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.png';
 	import NavigationButton from '$lib/components/NavigationButton/NavigationButton.svelte';
 	import Notifications from '$lib/components/Notifications/Notifications.svelte';
 	import { setNotifications } from '$lib/state/notifications.svelte';
@@ -12,10 +11,6 @@
 	setNotifications();
 	setSidebarState();
 </script>
-
-<svelte:head>
-	<link rel="icon" type="image/png" href={favicon} />
-</svelte:head>
 
 <NavigationButton />
 <div class="shell">

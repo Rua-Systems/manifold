@@ -1,5 +1,5 @@
 <script lang="ts">
-	import logo from '$lib/assets/favicon.png';
+	import logo from '$lib/assets/manifold-logo.svg';
 	import { DEFAULT_TITLE } from '$lib/constants';
 </script>
 
@@ -95,9 +95,8 @@
 			}
 
 			> .logo {
-				width: var(--wordmark-size);
+				width: auto;
 				height: var(--wordmark-size);
-				object-fit: contain;
 				animation: logoIn 1250ms cubic-bezier(0.18, 0.85, 0.3, 1) both;
 				animation-delay: 700ms;
 			}
