@@ -5,3 +5,8 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Local SSH tunnel scripts for the Manifold DB (they hold the SSH password)
+db-tunnel.bat
+db-tunnel.sh
+db-tunnel.command
