@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
 	import Dialog from '$lib/components/Dialog/Dialog.svelte';
 	import ArrowDownIcon from '$lib/components/icons/ArrowDownIcon.svelte';
@@ -12,7 +13,7 @@
 	import { getNotifications } from '$lib/state/notifications.svelte';
 	import type { FieldErrors } from '$lib/types/validation';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { sortable } from '../sortable';
 	import type { ServicesAction, ServicesFormState, ServiceView } from '../types';
 	import ServiceForm from './ServiceForm.svelte';
@@ -35,6 +36,13 @@
 	let deleting = $state<ServiceView | null>(null);
 	let dragOrder = $state<string[] | null>(null);
 	let reorderForm: HTMLFormElement | undefined = $state();
+
+	// `/services?new`, as the command palette's "New service" opens it, starts with the form open.
+	$effect(() => {
+		if (page.url.searchParams.has('new')) {
+			untrack(() => (createOpen = true));
+		}
+	});
 
 	const ordered: ServiceView[] = $derived.by(() => {
 		if (dragOrder === null) {

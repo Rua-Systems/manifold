@@ -21,6 +21,7 @@ import {
 import { emptyNoteContent, fileIdsInContent, type NoteContent } from './content';
 import { contentToText, validateNoteContent } from './content.server';
 import { note, noteFile, noteRevision } from './schema.server';
+import { containsPattern, prefixQuery } from '$lib/server/search-query';
 import { noteTitleSchema } from './schemas';
 import type { NoteDetail, NoteRevisionSummary, NoteSummary } from './types';
 
@@ -94,14 +95,66 @@ function toSummary(row: {
 	};
 }
 
-/** Title or text contains the query, case insensitively, with `%` and `_` taken literally. */
+/**
+ * The search's rule for a note: a word of the text or title starts with each query word, or the
+ * title contains the query or looks like it (trigram similarity).
+ */
 function textMatch(query: string | undefined): SQL | undefined {
 	const trimmed = query?.trim() ?? '';
 	if (trimmed.length === 0) {
 		return undefined;
 	}
-	const pattern = `%${trimmed.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
-	return or(ilike(note.title, pattern), ilike(note.contentText, pattern));
+	const words = prefixQuery(trimmed);
+	const fullText =
+		words === null ? sql`false` : sql`${note.searchVector} @@ to_tsquery('simple', ${words})`;
+	return or(
+		fullText,
+		ilike(note.title, containsPattern(trimmed)),
+		sql`${note.title} % ${trimmed}`
+	);
+}
+
+export interface NoteSearchHit {
+	id: string;
+	title: string;
+	snippet: string;
+	updatedAt: Date;
+	/** From 0 to 1. */
+	score: number;
+}
+
+/** Notes outside the trash that match the search rule, best first, each with a snippet. */
+export async function searchNotes(query: string, limit: number): Promise<NoteSearchHit[]> {
+	const trimmed = query.trim();
+	const match = textMatch(trimmed);
+	if (match === undefined) {
+		return [];
+	}
+	const words = prefixQuery(trimmed);
+	const tsquery = words === null ? sql`''::tsquery` : sql`to_tsquery('simple', ${words})`;
+	// ts_rank_cd with normalization 32 stays below 1; a title containing the query ranks first.
+	const score = sql<number>`greatest(
+		ts_rank_cd(${note.searchVector}, ${tsquery}, 32),
+		similarity(${note.title}, ${trimmed}),
+		case when ${note.title} ilike ${containsPattern(trimmed)} then 0.9 else 0 end
+	)::float8`;
+	const rows = await getDb()
+		.select({
+			id: note.id,
+			title: note.title,
+			snippet: sql<string>`ts_headline('simple', left(${note.contentText}, 20000), ${tsquery}, 'StartSel="", StopSel="", MaxWords=24, MinWords=8, MaxFragments=1, FragmentDelimiter=" "')`,
+			updatedAt: note.updatedAt,
+			score
+		})
+		.from(note)
+		.where(and(isNull(note.deletedAt), match))
+		.orderBy(desc(score), desc(note.updatedAt))
+		.limit(limit);
+	return rows.map((row) => ({
+		...row,
+		snippet: excerptOf(row.snippet),
+		score: Number(row.score)
+	}));
 }
 
 export async function listNotes(options: ListNotesOptions = {}): Promise<NoteSummary[]> {

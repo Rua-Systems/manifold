@@ -1,6 +1,7 @@
 import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
+import type { SearchProvider } from '$lib/server/search';
 import type { SidebarGroup } from './types';
 
 export interface ServerModuleManifest {
@@ -12,4 +13,6 @@ export interface ServerModuleManifest {
 	housekeeping?: HousekeepingTask[];
 	/** REST routes under /api/v1. */
 	api?: ApiRoute[];
+	/** Answers the search and the command palette. */
+	search?: SearchProvider;
 }

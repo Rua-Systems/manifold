@@ -5,7 +5,8 @@ import { fileRejectionMessage } from '$lib/server/files/messages';
 import { isUuid } from '$lib/utils/uuid';
 import { fieldErrors } from '$lib/utils/validation';
 import { m } from '$lib/paraglide/messages.js';
-import { asc, eq, sql } from 'drizzle-orm';
+import { containsPattern } from '$lib/server/search-query';
+import { asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { service } from './schema.server';
 import { serviceSchema, type ServiceInput } from './schemas';
 import type { MoveDirection, Service } from './types';
@@ -169,4 +170,31 @@ export async function moveService(id: string, direction: MoveDirection): Promise
 	[ids[index], ids[target]] = [ids[target], ids[index]];
 	await writeOrder(ids);
 	return listServices();
+}
+
+/** Services whose alias or address contains the query or looks like it, best first. */
+export async function searchServices(
+	query: string,
+	limit: number
+): Promise<(Service & { score: number })[]> {
+	const pattern = containsPattern(query);
+	const score = sql<number>`greatest(
+		similarity(${service.alias}, ${query}),
+		similarity(${service.url}, ${query}) * 0.8,
+		case when ${service.alias} ilike ${pattern} then 0.9 else 0 end
+	)::float8`;
+	const rows = await getDb()
+		.select({ ...columns, score })
+		.from(service)
+		.where(
+			or(
+				ilike(service.alias, pattern),
+				ilike(service.url, pattern),
+				sql`${service.alias} % ${query}`,
+				sql`${service.url} % ${query}`
+			)
+		)
+		.orderBy(desc(score), asc(service.position))
+		.limit(limit);
+	return rows.map((row) => ({ ...row, score: Number(row.score) }));
 }

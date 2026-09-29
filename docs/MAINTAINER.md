@@ -135,3 +135,16 @@ Choices the Batch 01 specification left open, with the reason for each.
 - **Values are limited to 10,000 characters,** names to 100 and notes to 500.
 - **The vault is a sidebar link, not a group,** after Notes.
 - **The API has two routes, both reads, both metadata only.** A test checks that no vault route writes and that responses carry no value or ciphertext.
+
+### Phase 9: Search and command palette
+
+- **A note matches when a word of its title or text starts with each query word, or its title contains the query or looks like it.** The first uses the generated `search_vector` with prefix terms (`trip:*`), so results come while typing; the others use `pg_trgm` (`ILIKE` and `%`). Query words are reduced to letters and digits, so input can never carry tsquery operators.
+- **The indexed text is capped at 200,000 characters** of `content_text`, because a tsvector has a size limit and a 2 MB note would exceed it.
+- **Scores run from 0 to 1 in every provider,** so hits of all modules sort together: `ts_rank_cd` with normalization 32, trigram similarity, and 0.9 for a title or alias that contains the query outright.
+- **Snippets come from `ts_headline`** over the first 20,000 characters, without markup, because the page renders them as text.
+- **The vault's provider searches names and addresses only;** a hit leads to `/vault`, where values still need a step-up.
+- **The search is reached through a form action** (`/search?/search`) by the palette and the sidebar filter, like the map's reads, and `/search?q=` is a page of its own for browsers without JavaScript. `GET /api/v1/search` needs a valid key and quietly leaves out the modules the key has no read scope for.
+- **Sidebar groups can hand their filter to the search** (`filterSearch`). The notes filter then finds notes beyond the hundred listed; while the search answers, the listed items are narrowed at once.
+- **Modules offer palette entries in their client manifest** (`commands`), next to "Go to" entries made from every module page. Core entries cover the settings pages, the theme, the other locales and signing out. Services come from the sidebar data the layout already has, and open in a new tab.
+- **"New service" opens `/services?new`,** which starts the Services page with its form open.
+- **The palette follows the ARIA combobox pattern:** focus stays in the input, `aria-activedescendant` names the highlighted option, and options are not in the tab order. On desktop it also opens from a "Search" entry at the top of the sidebar, since there is no top bar there; on phones from the top bar.

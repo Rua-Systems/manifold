@@ -1,4 +1,4 @@
-import type { Pathname } from '$app/types';
+import type { Pathname, PathnameWithSearchOrHash } from '$app/types';
 import type { Component } from 'svelte';
 
 // Client safe half of a module manifest. The server half (sidebar data, API handlers, MCP tools,
@@ -12,6 +12,13 @@ export interface ApiScope {
 	label: () => string;
 }
 
+/** A place or action of a module that the command palette offers, besides the module page. */
+export interface ModuleCommand {
+	id: string;
+	label: () => string;
+	href: PathnameWithSearchOrHash;
+}
+
 export interface ModuleManifest {
 	id: string;
 	label: () => string;
@@ -22,6 +29,7 @@ export interface ModuleManifest {
 	position: number;
 	sidebar: 'link' | 'group';
 	scopes: ApiScope[];
+	commands?: ModuleCommand[];
 }
 
 export type SidebarLink = { kind: 'internal'; path: Pathname } | { kind: 'external'; url: string };
@@ -41,6 +49,11 @@ export interface SidebarGroup {
 	items: SidebarItem[];
 	/** Shows a filter field above the first filterable item, with this accessible label. */
 	filterLabel?: string;
+	/**
+	 * A search type, such as `note`: the filter then asks the search, so it finds items beyond the
+	 * ones listed, instead of only narrowing the list.
+	 */
+	filterSearch?: string;
 }
 
 /** Sidebar group contents by module id, loaded on the server for every protected page. */

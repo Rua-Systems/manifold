@@ -9,6 +9,7 @@ export const servicesManifest: ModuleManifest = {
 	href: '/services',
 	position: 10,
 	sidebar: 'group',
+	commands: [{ id: 'services.new', label: m.services_new, href: '/services?new' }],
 	scopes: [
 		{ id: 'services:read', access: 'read', label: m.scope_services_read },
 		{ id: 'services:write', access: 'write', label: m.scope_services_write }

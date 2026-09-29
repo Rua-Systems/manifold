@@ -7,10 +7,15 @@
 	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
 	import { CORE_SIDEBAR_LINKS } from '$lib/config/navigation';
 	import { MODULES } from '$lib/modules/registry';
+	import type { Pathname } from '$app/types';
 	import type { ModuleManifest, SidebarData, SidebarItem } from '$lib/modules/types';
 	import { m } from '$lib/paraglide/messages.js';
 	import { deLocalizeHref } from '$lib/paraglide/runtime.js';
+	import { getPalette } from '$lib/state/palette.svelte';
 	import { getSidebarState } from '$lib/state/sidebar.svelte';
+	import Search from '@lucide/svelte/icons/search';
+	import type { SearchHit } from '$lib/types/search';
+	import { postAction } from '$lib/utils/actions';
 	import { currentMarker, localizedHref } from '$lib/utils/navigation';
 	import { fade } from 'svelte/transition';
 
@@ -23,6 +28,7 @@
 	const MOBILE_QUERY = '(max-width: 767.98px)';
 
 	const sidebar = getSidebarState();
+	const palette = getPalette();
 
 	const organizationName = $derived(page.data.organizationName);
 	const currentPath = $derived(deLocalizeHref(page.url.pathname));
@@ -42,29 +48,81 @@
 		return !sidebar.expanded && !window.matchMedia(MOBILE_QUERY).matches;
 	}
 
+	/** Waits this long after the last key before asking the search. */
+	const SEARCH_DELAY = 200;
+
 	let filters = $state<Record<string, string>>({});
+	/** Search hits for groups whose filter asks the search, by module id. */
+	let searched = $state<Record<string, SidebarItem[]>>({});
+	// Not state: pending searches only.
+	const searchTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 
-	function groupItems(module: ModuleManifest): SidebarItem[] {
-		return data[module.id]?.items ?? [];
+	interface GroupLayout {
+		/** Items before the filterable ones, such as "New note". */
+		before: SidebarItem[];
+		/** The filterable items, narrowed by the filter or replaced by search hits. */
+		middle: SidebarItem[];
+		after: SidebarItem[];
+		filterLabel: string | undefined;
 	}
 
-	function isVisible(module: ModuleManifest, item: SidebarItem): boolean {
-		const filter = (filters[module.id] ?? '').trim().toLocaleLowerCase();
-		return (
-			filter.length === 0 ||
-			item.filterable !== true ||
-			item.label.toLocaleLowerCase().includes(filter)
-		);
+	function layoutOf(module: ModuleManifest): GroupLayout {
+		const group = data[module.id];
+		const items = group?.items ?? [];
+		const first = items.findIndex((item) => item.filterable === true);
+		if (first === -1) {
+			return { before: items, middle: [], after: [], filterLabel: undefined };
+		}
+		const last = items.findLastIndex((item) => item.filterable === true);
+		const query = (filters[module.id] ?? '').trim().toLocaleLowerCase();
+		let middle = items.slice(first, last + 1);
+		if (query.length > 0) {
+			// Until the search answers, the listed items are narrowed right away.
+			middle =
+				searched[module.id] ??
+				middle.filter((item) => item.label.toLocaleLowerCase().includes(query));
+		}
+		return {
+			before: items.slice(0, first),
+			middle,
+			after: items.slice(last + 1),
+			filterLabel: group?.filterLabel
+		};
 	}
 
-	function filterLabel(module: ModuleManifest): string | undefined {
-		return data[module.id]?.filterLabel;
-	}
-
-	/** The filter field sits right before the first filterable item of the group. */
-	function isFirstFilterable(module: ModuleManifest, item: SidebarItem): boolean {
-		const first = (data[module.id]?.items ?? []).find((entry) => entry.filterable === true);
-		return first?.id === item.id;
+	function onFilterInput(module: ModuleManifest): void {
+		const type = data[module.id]?.filterSearch;
+		if (type === undefined) {
+			return;
+		}
+		clearTimeout(searchTimers[module.id]);
+		searched = Object.fromEntries(Object.entries(searched).filter(([id]) => id !== module.id));
+		const query = (filters[module.id] ?? '').trim();
+		if (query.length === 0) {
+			return;
+		}
+		searchTimers[module.id] = setTimeout(async () => {
+			const result = await postAction(`${localizedHref('/search')}?/search`, {
+				q: query,
+				types: type
+			});
+			// A newer query may have been typed meanwhile.
+			if ((filters[module.id] ?? '').trim() !== query || result.type !== 'success') {
+				return;
+			}
+			const hits = (result.data?.hits ?? []) as SearchHit[];
+			searched = {
+				...searched,
+				[module.id]: hits.map((hit) => ({
+					id: hit.id,
+					label: hit.title,
+					link: hit.external
+						? { kind: 'external', url: hit.href }
+						: { kind: 'internal', path: hit.href as Pathname },
+					filterable: true
+				}))
+			};
+		}, SEARCH_DELAY);
 	}
 
 	function isInModule(module: ModuleManifest): boolean {
@@ -99,6 +157,32 @@
 </script>
 
 <svelte:window onkeydown={onWindowKeydown} />
+
+{#snippet childItem(item: SidebarItem)}
+	<li>
+		{#if item.link.kind === 'external'}
+			<a
+				class="child"
+				href={item.link.url}
+				target="_blank"
+				rel="external noopener noreferrer"
+			>
+				{@render itemIcon(item)}
+				<span class="child-label">{item.label}</span>
+			</a>
+		{:else}
+			<a
+				class="child"
+				class:active={currentPath === item.link.path}
+				href={localizedHref(item.link.path)}
+				aria-current={currentMarker(page.url, item.link.path)}
+			>
+				{@render itemIcon(item)}
+				<span class="child-label">{item.label}</span>
+			</a>
+		{/if}
+	</li>
+{/snippet}
 
 {#snippet itemIcon(item: SidebarItem)}
 	{#if item.icon?.kind === 'image'}
@@ -150,6 +234,26 @@
 	</div>
 	<nav id="appSidebarNav" class="body" aria-label={m.sidebar_label()}>
 		<ul class="entries">
+			<li class="entry">
+				<div class="entry-row">
+					<button
+						type="button"
+						class="entry-link palette-button"
+						title={m.palette_open()}
+						aria-label={m.palette_open()}
+						aria-haspopup="dialog"
+						onclick={() => palette.show()}
+					>
+						<span class="icon">
+							<Search size="1.2rem" />
+						</span>
+						<span class="label">
+							{m.palette_search()}
+							<kbd>Ctrl K</kbd>
+						</span>
+					</button>
+				</div>
+			</li>
 			{#each MODULES as module (module.id)}
 				{@const Icon = module.icon}
 				{@const open = sidebar.isGroupOpen(module.id)}
@@ -183,46 +287,27 @@
 						{/if}
 					</div>
 					{#if module.sidebar === 'group' && open}
+						{@const layout = layoutOf(module)}
 						<ul class="children" id="sidebarGroup-{module.id}">
-							{#each groupItems(module) as item (item.id)}
-								{#if filterLabel(module) !== undefined && isFirstFilterable(module, item)}
-									<li class="filter">
-										<input
-											type="search"
-											aria-label={filterLabel(module)}
-											placeholder={filterLabel(module)}
-											bind:value={filters[module.id]}
-										/>
-									</li>
-								{/if}
-								{#if isVisible(module, item)}
-									<li>
-										{#if item.link.kind === 'external'}
-											<a
-												class="child"
-												href={item.link.url}
-												target="_blank"
-												rel="external noopener noreferrer"
-											>
-												{@render itemIcon(item)}
-												<span class="child-label">{item.label}</span>
-											</a>
-										{:else}
-											<a
-												class="child"
-												class:active={currentPath === item.link.path}
-												href={localizedHref(item.link.path)}
-												aria-current={currentMarker(
-													page.url,
-													item.link.path
-												)}
-											>
-												{@render itemIcon(item)}
-												<span class="child-label">{item.label}</span>
-											</a>
-										{/if}
-									</li>
-								{/if}
+							{#each layout.before as item (item.id)}
+								{@render childItem(item)}
+							{/each}
+							{#if layout.filterLabel !== undefined}
+								<li class="filter">
+									<input
+										type="search"
+										aria-label={layout.filterLabel}
+										placeholder={layout.filterLabel}
+										bind:value={filters[module.id]}
+										oninput={() => onFilterInput(module)}
+									/>
+								</li>
+							{/if}
+							{#each layout.middle as item (item.id)}
+								{@render childItem(item)}
+							{/each}
+							{#each layout.after as item (item.id)}
+								{@render childItem(item)}
 							{/each}
 						</ul>
 					{/if}
@@ -375,6 +460,27 @@
 		display: flex;
 		align-items: center;
 		gap: 0.2rem;
+	}
+
+	.palette-button {
+		width: 100%;
+		font: inherit;
+		text-align: left;
+		background-color: transparent;
+		border-top: 0;
+		border-right: 0;
+		border-bottom: 0;
+		cursor: pointer;
+
+		> .label > kbd {
+			margin-left: 0.6rem;
+			padding: 0.05rem 0.35rem;
+			font: inherit;
+			font-size: 0.6rem;
+			color: clr.$textMutedColor;
+			border: 1px solid clr.$borderSubtleColor;
+			border-radius: vars.$radius;
+		}
 	}
 
 	.entry-link {

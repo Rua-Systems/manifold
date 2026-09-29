@@ -3,7 +3,8 @@ import { getEnv } from '$lib/server/env';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
 import { isUuid } from '$lib/utils/uuid';
 import { fieldErrors } from '$lib/utils/validation';
-import { asc, eq, sql } from 'drizzle-orm';
+import { containsPattern } from '$lib/server/search-query';
+import { asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { z } from 'zod';
 import { parseVaultKey, seal, unseal } from './crypto.server';
@@ -129,4 +130,29 @@ export async function revealSecret(id: string, now = new Date()): Promise<string
 		.set({ lastRevealedAt: now })
 		.where(eq(vaultSecret.id, row.id));
 	return value;
+}
+
+/** Secrets whose name or address matches the query: metadata only, never values. */
+export async function searchSecrets(
+	query: string,
+	limit: number
+): Promise<(VaultSecretView & { score: number })[]> {
+	const pattern = containsPattern(query);
+	const score = sql<number>`greatest(
+		similarity(${vaultSecret.name}, ${query}),
+		case when ${vaultSecret.name} ilike ${pattern} then 0.9 else 0 end
+	)::float8`;
+	const rows = await getDb()
+		.select({ ...viewColumns, score })
+		.from(vaultSecret)
+		.where(
+			or(
+				ilike(vaultSecret.name, pattern),
+				ilike(vaultSecret.serviceUrl, pattern),
+				sql`${vaultSecret.name} % ${query}`
+			)
+		)
+		.orderBy(desc(score), asc(vaultSecret.name))
+		.limit(limit);
+	return rows.map((row) => ({ ...row, score: Number(row.score) }));
 }

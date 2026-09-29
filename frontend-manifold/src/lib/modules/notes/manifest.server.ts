@@ -4,7 +4,7 @@ import type { SidebarItem } from '../types';
 import type { ServerModuleManifest } from '../types.server';
 import { notesApiRoutes } from './api.server';
 import { mapApiRoutes } from './map/api.server';
-import { listNotes, NOTES_MODULE, purgeTrashedNotes } from './notes.server';
+import { listNotes, NOTES_MODULE, purgeTrashedNotes, searchNotes } from './notes.server';
 
 const SIDEBAR_NOTE_LIMIT = 100;
 
@@ -21,6 +21,7 @@ export const notesServerManifest: ServerModuleManifest = {
 
 		return {
 			filterLabel: m.notes_filter(),
+			filterSearch: 'note',
 			items: [
 				{ id: 'map', label: m.map_title(), link: { kind: 'internal', path: '/notes/map' } },
 				{ id: 'new', label: m.notes_new(), link: { kind: 'internal', path: '/notes/new' } },
@@ -31,6 +32,20 @@ export const notesServerManifest: ServerModuleManifest = {
 	},
 	fileReferences: [{ table: 'note_file', column: 'file_id' }],
 	api: [...notesApiRoutes, ...mapApiRoutes],
+	search: {
+		type: 'note',
+		scope: 'notes:read',
+		search: async (query, limit) =>
+			(await searchNotes(query, limit)).map((hit) => ({
+				type: 'note',
+				id: hit.id,
+				title: hit.title || m.notes_untitled(),
+				snippet: hit.snippet,
+				href: `/notes/${hit.id}`,
+				external: false,
+				score: hit.score
+			}))
+	},
 	housekeeping: [
 		{
 			name: 'notes.purge-trash',

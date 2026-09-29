@@ -18,13 +18,17 @@ import {
 	NOTES_MODULE,
 	restoreNote,
 	restoreRevision,
+	searchNotes,
 	trashNote,
 	updateNote
 } from './notes.server';
 import { listNoteFeatures, mapConfig } from './map/features.server';
 import { NEW_NOTE_ID } from './paths';
 import { noteVersionSchema } from './schemas';
-import type { NotePreview } from './types';
+import type { NotePreview, NoteSummary } from './types';
+
+/** The notes page shows at most this many search hits. */
+const SEARCH_PAGE_LIMIT = 100;
 
 // Loads and form actions behind /notes. The route files only re-export these.
 
@@ -59,9 +63,21 @@ function notFoundAsPage(cause: unknown): never {
 	throw cause;
 }
 
+/** Newest first; with `?q=` the search's hits instead, best first. */
 export async function loadNotesList(url: URL) {
-	const query = url.searchParams.get('q') ?? '';
-	return { notes: await listNotes({ query }), query };
+	const query = (url.searchParams.get('q') ?? '').trim().slice(0, 200);
+	if (query.length === 0) {
+		return { notes: await listNotes(), query };
+	}
+	const hits = await searchNotes(query, SEARCH_PAGE_LIMIT);
+	const notes: NoteSummary[] = hits.map((hit) => ({
+		id: hit.id,
+		title: hit.title,
+		excerpt: hit.snippet,
+		updatedAt: hit.updatedAt,
+		deletedAt: null
+	}));
+	return { notes, query };
 }
 
 export async function loadTrash() {

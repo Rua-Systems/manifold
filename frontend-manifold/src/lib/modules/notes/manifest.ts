@@ -9,6 +9,10 @@ export const notesManifest: ModuleManifest = {
 	href: '/notes',
 	position: 20,
 	sidebar: 'group',
+	commands: [
+		{ id: 'notes.map', label: m.map_title, href: '/notes/map' },
+		{ id: 'notes.new', label: m.notes_new, href: '/notes/new' }
+	],
 	scopes: [
 		{ id: 'notes:read', access: 'read', label: m.scope_notes_read },
 		{ id: 'notes:write', access: 'write', label: m.scope_notes_write },

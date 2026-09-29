@@ -2,7 +2,7 @@ import { m } from '$lib/paraglide/messages.js';
 import type { SidebarItem } from '../types';
 import type { ServerModuleManifest } from '../types.server';
 import { servicesApiRoutes } from './api.server';
-import { listServices, SERVICES_MODULE } from './services.server';
+import { listServices, searchServices, SERVICES_MODULE } from './services.server';
 import type { Service } from './types';
 
 export function serviceIconSource(item: Service): string | null {
@@ -41,5 +41,19 @@ export const servicesServerManifest: ServerModuleManifest = {
 		};
 	},
 	fileReferences: [{ table: 'service', column: 'icon_file_id' }],
-	api: servicesApiRoutes
+	api: servicesApiRoutes,
+	search: {
+		type: 'service',
+		scope: 'services:read',
+		search: async (query, limit) =>
+			(await searchServices(query, limit)).map((item) => ({
+				type: 'service',
+				id: item.id,
+				title: item.alias,
+				snippet: item.url,
+				href: item.url,
+				external: true,
+				score: item.score
+			}))
+	}
 };
