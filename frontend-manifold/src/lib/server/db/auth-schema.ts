@@ -1,8 +1,8 @@
 import { relations } from 'drizzle-orm';
-import { boolean, index, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
-// Mirror of the Better Auth tables in migrations/0001_core_init.sql. The SQL files are the source of
-// truth; keep this file in step with them by hand.
+// Mirror of the Better Auth tables in migrations/0001_core_init.sql and 0007_core_security.sql. The
+// SQL files are the source of truth; keep this file in step with them by hand.
 
 function timestamptz(name: string) {
 	return timestamp(name, { withTimezone: true });
@@ -16,6 +16,7 @@ export const user = pgTable('user', {
 	image: text('image'),
 	username: text('username').unique(),
 	displayUsername: text('display_username'),
+	twoFactorEnabled: boolean('two_factor_enabled').default(false),
 	createdAt: timestamptz('created_at').defaultNow().notNull(),
 	updatedAt: timestamptz('updated_at')
 		.defaultNow()
@@ -84,9 +85,34 @@ export const verification = pgTable(
 	(table) => [index('verification_identifier_idx').on(table.identifier)]
 );
 
+/** Better Auth's twoFactor plugin looks the table up by this export name. */
+export const twoFactor = pgTable(
+	'two_factor',
+	{
+		id: text('id').primaryKey(),
+		secret: text('secret').notNull(),
+		backupCodes: text('backup_codes').notNull(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		verified: boolean('verified').default(true),
+		failedVerificationCount: integer('failed_verification_count').default(0),
+		lockedUntil: timestamptz('locked_until')
+	},
+	(table) => [
+		index('two_factor_secret_idx').on(table.secret),
+		index('two_factor_user_id_idx').on(table.userId)
+	]
+);
+
 export const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),
-	accounts: many(account)
+	accounts: many(account),
+	twoFactors: many(twoFactor)
+}));
+
+export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
+	user: one(user, { fields: [twoFactor.userId], references: [user.id] })
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

@@ -1,6 +1,9 @@
 import { m } from '$lib/paraglide/messages.js';
 import { localizeHref } from '$lib/paraglide/runtime.js';
 import { codeRequestSchema, passwordResetSchema } from '$lib/schemas/auth';
+import { findUserIdByEmail } from '$lib/server/account';
+import { ownerActor, SYSTEM_ACTOR } from '$lib/server/actor';
+import { originOf, recordAudit } from '$lib/server/audit';
 import { getAuth } from '$lib/server/auth';
 import { emailEnabled } from '$lib/server/features';
 import { notePasswordChanged } from '$lib/server/notices';
@@ -101,6 +104,12 @@ export const actions: Actions = {
 			}
 			throw cause;
 		}
+		const userId = await findUserIdByEmail(parsed.data.email);
+		await recordAudit({
+			actor: userId === null ? SYSTEM_ACTOR : ownerActor(userId),
+			action: 'auth.password_reset',
+			origin: originOf(event)
+		});
 		notePasswordChanged(event, parsed.data.email);
 		redirect(303, localizeHref('/login'));
 	}

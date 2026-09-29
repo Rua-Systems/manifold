@@ -4,6 +4,15 @@ import { user } from './db/schema';
 
 export type EmailChangeResult = 'changed' | 'taken';
 
+export async function findUserIdByEmail(email: string): Promise<string | null> {
+	const [found] = await getDb()
+		.select({ id: user.id })
+		.from(user)
+		.where(eq(user.email, email.trim().toLowerCase()))
+		.limit(1);
+	return found?.id ?? null;
+}
+
 /**
  * Changes the owner's email directly. There is no confirmation mail: this is a single owner app and
  * the change must work without SMTP. The address stays marked verified, because the email code

@@ -1,7 +1,13 @@
 import { connect, type Connection } from '$lib/server/db';
 import { defaultMigrationsDirectory, MigrationError, runMigrations } from '$lib/server/db/migrate';
 import { EnvError, parseEnv } from '$lib/server/env';
-import { findOwner, OwnerError, resetOwnerPassword } from '$lib/server/owner';
+import { recordAudit } from '$lib/server/audit';
+import {
+	disableOwnerTwoFactor,
+	findOwner,
+	OwnerError,
+	resetOwnerPassword
+} from '$lib/server/owner';
 import { createInterface } from 'node:readline';
 
 // Bundled into build-cli/cli.js and shipped as /app/cli.js. It must only import plain modules that
@@ -12,9 +18,13 @@ const USAGE = `Usage: node cli.js <command>
 Commands:
   migrate                 Apply pending database migrations.
   owner:show              Print the owner's username and email.
-  owner:reset-password    Set a new owner password and sign out every session.`;
+  owner:reset-password    Set a new owner password and sign out every session.
+  owner:disable-2fa       Turn two factor authentication off and sign out every session.`;
 
 class CancelledError extends Error {}
+
+/** CLI commands act as themselves in the audit log. */
+const CLI_ACTOR = { type: 'cli', id: null } as const;
 
 /** Reads a line without echoing it when attached to a terminal; piped input is read as is. */
 function promptHidden(question: string): Promise<string> {
@@ -88,6 +98,10 @@ async function migrate(connection: Connection): Promise<void> {
 	for (const fileName of applied) {
 		console.log(`Applied ${fileName}`);
 	}
+	await recordAudit(
+		{ actor: CLI_ACTOR, action: 'database.migrate', metadata: { applied } },
+		connection.db
+	);
 }
 
 async function showOwner(connection: Connection): Promise<void> {
@@ -107,7 +121,40 @@ async function resetPassword(connection: Connection): Promise<void> {
 	}
 
 	const owner = await resetOwnerPassword(connection.db, password);
+	await recordAudit(
+		{ actor: CLI_ACTOR, action: 'auth.password_reset', target: { type: 'user', id: owner.id } },
+		connection.db
+	);
 	console.log(`The password of "${owner.username ?? owner.email}" was changed.`);
+	console.log('Every session was signed out.');
+}
+
+async function disableTwoFactor(connection: Connection): Promise<void> {
+	const owner = await findOwner(connection.db);
+	if (owner === null) {
+		throw new OwnerError('No owner account exists yet. Start the app once to create it.');
+	}
+	const answer = await promptLine(
+		`Turn two factor authentication off for "${owner.username ?? owner.email}" and sign out every session? Type "yes" to continue: `
+	);
+	if (answer.trim().toLowerCase() !== 'yes') {
+		throw new CancelledError('Nothing was changed.');
+	}
+
+	const { wasEnabled } = await disableOwnerTwoFactor(connection.db);
+	await recordAudit(
+		{
+			actor: CLI_ACTOR,
+			action: 'auth.two_factor_disable',
+			target: { type: 'user', id: owner.id }
+		},
+		connection.db
+	);
+	console.log(
+		wasEnabled
+			? 'Two factor authentication is off. Sign in with the password and turn it on again in Settings.'
+			: 'Two factor authentication was already off.'
+	);
 	console.log('Every session was signed out.');
 }
 
@@ -126,13 +173,16 @@ async function run(command: string): Promise<void> {
 			case 'owner:reset-password':
 				await resetPassword(connection);
 				break;
+			case 'owner:disable-2fa':
+				await disableTwoFactor(connection);
+				break;
 		}
 	} finally {
 		await connection.sql.end();
 	}
 }
 
-const COMMANDS = new Set(['migrate', 'owner:show', 'owner:reset-password']);
+const COMMANDS = new Set(['migrate', 'owner:show', 'owner:reset-password', 'owner:disable-2fa']);
 
 async function main(): Promise<number> {
 	const [command] = process.argv.slice(2);

@@ -70,6 +70,13 @@ export const codeSchema = z
 	.min(1, required())
 	.regex(CODE_PATTERN, { error: () => m.validation_code({ length: CODE_LENGTH }) });
 
+/** Backup codes are ten letters and digits with a dash in the middle; the length is left loose. */
+export const backupCodeSchema = z
+	.string()
+	.trim()
+	.min(1, required())
+	.max(32, { error: () => m.validation_max_length({ max: 32 }) });
+
 export const passwordLoginSchema = z.object({
 	identifier: identifierSchema,
 	password: passwordSchema

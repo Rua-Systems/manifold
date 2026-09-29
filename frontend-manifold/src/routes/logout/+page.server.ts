@@ -1,4 +1,6 @@
 import { localizeHref } from '$lib/paraglide/runtime.js';
+import { ownerActor } from '$lib/server/actor';
+import { originOf, recordAudit } from '$lib/server/audit';
 import { getAuth } from '$lib/server/auth';
 import { redirect } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
@@ -10,7 +12,15 @@ export const load: PageServerLoad = () => {
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async (event) => {
+		const { request, locals } = event;
+		if (locals.user !== null) {
+			await recordAudit({
+				actor: ownerActor(locals.user.id),
+				action: 'auth.sign_out',
+				origin: originOf(event)
+			});
+		}
 		try {
 			await getAuth().api.signOut({ headers: request.headers });
 		} catch (error) {

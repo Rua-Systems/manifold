@@ -12,6 +12,7 @@ describe('toSessionUser', () => {
 			name: 'Owner',
 			email: 'owner@example.com',
 			username: 'owner',
+			twoFactorEnabled: true,
 			emailVerified: true,
 			image: null,
 			createdAt: new Date(0),
@@ -21,7 +22,8 @@ describe('toSessionUser', () => {
 		expect(toSessionUser(user)).toEqual({
 			name: 'Owner',
 			email: 'owner@example.com',
-			username: 'owner'
+			username: 'owner',
+			twoFactorEnabled: true
 		});
 	});
 

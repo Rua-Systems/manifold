@@ -16,7 +16,8 @@ const PRUNE_THRESHOLD = 1000;
 
 export const RATE_LIMITS = {
 	signIn: { max: 5, windowMs: MINUTE },
-	sendCode: { max: 3, windowMs: MINUTE }
+	sendCode: { max: 3, windowMs: MINUTE },
+	stepUp: { max: 5, windowMs: MINUTE }
 } satisfies Record<string, RateLimit>;
 
 export type RateLimitBucket = keyof typeof RATE_LIMITS;

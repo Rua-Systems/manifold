@@ -11,11 +11,12 @@ import {
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { betterAuth } from 'better-auth/minimal';
-import { emailOTP, username } from 'better-auth/plugins';
+import { emailOTP, twoFactor, username } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { count } from 'drizzle-orm';
 import { getDb } from './db';
 import { user } from './db/schema';
+import { emailCodeTwoFactor } from './email-code-two-factor';
 import { getEnv } from './env';
 import { sendMailInBackground, type MailContent, type MailContext } from './services/mail';
 import { passwordResetCodeMail, signInCodeMail } from './services/mail/templates';
@@ -79,6 +80,12 @@ function createAuth() {
 					sendMailInBackground(email, getLocale(), otpMail(otp, type));
 				}
 			}),
+			twoFactor({
+				// Shown by authenticator apps next to the account.
+				issuer: env.ORGANIZATION_NAME
+			}),
+			// After twoFactor, whose challenge it reuses for sign ins with an emailed code.
+			emailCodeTwoFactor,
 			// Must stay last: it copies the cookies of every auth.api call onto the SvelteKit
 			// response.
 			sveltekitCookies(getRequestEvent)

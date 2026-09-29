@@ -1,5 +1,14 @@
+import type { Page } from '@playwright/test';
 import { TEST_OWNER } from '../support/owner.ts';
 import { expect, signIn, test } from './fixtures';
+
+/** Password changes need a recent step-up; the step-up page gives one and returns to Settings. */
+async function stepUp(page: Page, password: string): Promise<void> {
+	await page.goto('/step-up?redirectTo=/settings', { waitUntil: 'networkidle' });
+	await page.getByLabel('Password', { exact: true }).fill(password);
+	await page.getByRole('button', { name: 'Confirm' }).click();
+	await page.waitForURL(/\/settings$/);
+}
 
 test('the display name can be changed', async ({ page }) => {
 	await signIn(page);
@@ -26,7 +35,7 @@ test('the username follows the username rules', async ({ page }) => {
 
 test('a password change needs the current password', async ({ page }) => {
 	await signIn(page);
-	await page.goto('/settings', { waitUntil: 'networkidle' });
+	await stepUp(page, TEST_OWNER.password);
 
 	await page.getByLabel('Current Password').fill('not the password');
 	await page.getByLabel('New Password').fill('another password');
@@ -40,9 +49,10 @@ test('a password change needs the current password', async ({ page }) => {
 
 test('the password can be changed and changed back', async ({ page }) => {
 	await signIn(page);
-	await page.goto('/settings', { waitUntil: 'networkidle' });
 
+	// Each change starts a new session, so each needs its own step-up.
 	async function changePassword(from: string, to: string): Promise<void> {
+		await stepUp(page, from);
 		await page.getByLabel('Current Password').fill(from);
 		await page.getByLabel('New Password').fill(to);
 		await page.getByLabel('Confirm Password').fill(to);

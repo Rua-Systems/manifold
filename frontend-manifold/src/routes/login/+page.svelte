@@ -12,7 +12,7 @@
 	} from '$lib/schemas/auth';
 	import { Field, validateAll } from '$lib/state/field.svelte';
 	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { LoginMethod } from '$lib/types/auth';
+	import type { LoginMethod, SecondFactor } from '$lib/types/auth';
 	import type { FieldErrors } from '$lib/types/validation';
 	import { localizedHref } from '$lib/utils/navigation';
 	import { pageTitle } from '$lib/utils/title';
@@ -27,6 +27,8 @@
 	const passwordField = new Field([fromSchema(passwordSchema)]);
 	const codeField = new Field([fromSchema(codeSchema)]);
 
+	let secondFactor = $state<SecondFactor>('totp');
+
 	function initialMethod(): LoginMethod {
 		return form?.method ?? 'password';
 	}
@@ -38,6 +40,7 @@
 
 	const redirectTo = $derived(page.url.searchParams.get('redirectTo') ?? '');
 	const codeSent = $derived(form?.sent === true);
+	const twoFactorDue = $derived(form?.twoFactor === true);
 
 	const serverMessage = $derived.by(() => {
 		if (hideServerMessage) {
@@ -109,132 +112,42 @@
 		<h1>{m.login_title()}</h1>
 		<p class="lead">{m.login_lead()}</p>
 	</div>
-	{#if emailEnabled}
-		<div class="methods" role="group" aria-label={m.login_method_label()}>
-			<button
-				type="button"
-				aria-pressed={method === 'password'}
-				onclick={() => selectMethod('password')}
-			>
-				{m.login_method_password()}
-			</button>
-			<button
-				type="button"
-				aria-pressed={method === 'code'}
-				onclick={() => selectMethod('code')}
-			>
-				{m.login_method_code()}
-			</button>
-		</div>
-	{/if}
-	{#if method === 'password' || !emailEnabled}
-		<form method="POST" action="?/password" use:enhance onsubmit={guardPassword} novalidate>
+	{#if twoFactorDue}
+		<form method="POST" action="?/secondFactor" use:enhance novalidate>
 			<input type="hidden" name="redirectTo" value={redirectTo} />
+			<input type="hidden" name="method" value={form?.method ?? 'password'} />
+			<p class="sent">{m.login_two_factor_lead()}</p>
+			<fieldset class="methods">
+				<legend class="visually-hidden">{m.login_two_factor_kind()}</legend>
+				<label class:active={secondFactor === 'totp'}>
+					<input type="radio" name="kind" value="totp" bind:group={secondFactor} />
+					{m.login_two_factor_totp()}
+				</label>
+				<label class:active={secondFactor === 'backup'}>
+					<input type="radio" name="kind" value="backup" bind:group={secondFactor} />
+					{m.login_two_factor_backup()}
+				</label>
+			</fieldset>
 			<div class="field">
-				<label for="loginIdentifier">{m.field_identifier()}</label>
-				<input
-					id="loginIdentifier"
-					name="identifier"
-					type="text"
-					autocomplete="username"
-					autocapitalize="none"
-					spellcheck="false"
-					placeholder={m.field_identifier_placeholder()}
-					aria-invalid={errorFor(identifierField, 'identifier').length > 0}
-					aria-describedby="loginIdentifierError"
-					bind:value={identifierField.value}
-					onblur={() => identifierField.markTouched()}
-				/>
-				<p class="error" id="loginIdentifierError">
-					{errorFor(identifierField, 'identifier')}
-				</p>
-			</div>
-			<div class="field">
-				<label for="loginPassword">{m.field_password()}</label>
-				<input
-					id="loginPassword"
-					name="password"
-					type="password"
-					autocomplete="current-password"
-					placeholder={m.field_password_placeholder()}
-					aria-invalid={errorFor(passwordField, 'password').length > 0}
-					aria-describedby="loginPasswordError"
-					bind:value={passwordField.value}
-					onblur={() => passwordField.markTouched()}
-				/>
-				<p class="error" id="loginPasswordError">{errorFor(passwordField, 'password')}</p>
-			</div>
-			<div class="submit">
-				<p class="notice" role="alert">{serverMessage}</p>
-				<div class="actions">
-					<button type="submit">{m.login_submit()}</button>
-					{#if emailEnabled}
-						<a href={localizedHref('/forgot-password')}>{m.login_forgot_password()}</a>
-					{/if}
-				</div>
-			</div>
-		</form>
-	{:else if !codeSent}
-		<form
-			method="POST"
-			action="?/requestCode"
-			onsubmit={guardEmail}
-			novalidate
-			use:enhance={() => {
-				return async ({ result, update }) => {
-					if (result.type === 'success') {
-						notifications.confirm(m.login_code_sent_notice());
-					}
-					await update({ reset: false });
-				};
-			}}
-		>
-			<input type="hidden" name="redirectTo" value={redirectTo} />
-			<div class="field">
-				<label for="codeEmail">{m.field_email()}</label>
-				<input
-					id="codeEmail"
-					name="email"
-					type="email"
-					autocomplete="email"
-					placeholder={m.field_email_placeholder()}
-					aria-invalid={errorFor(emailField, 'email').length > 0}
-					aria-describedby="codeEmailError"
-					bind:value={emailField.value}
-					onblur={() => emailField.markTouched()}
-				/>
-				<p class="error" id="codeEmailError">{errorFor(emailField, 'email')}</p>
-			</div>
-			<div class="submit">
-				<p class="notice" role="alert">{serverMessage}</p>
-				<div class="actions">
-					<button type="submit">{m.common_send_code()}</button>
-					<a href={localizedHref('/forgot-password')}>{m.login_forgot_password()}</a>
-				</div>
-			</div>
-		</form>
-	{:else}
-		<form method="POST" action="?/verifyCode" use:enhance onsubmit={guardCode} novalidate>
-			<input type="hidden" name="redirectTo" value={redirectTo} />
-			<input type="hidden" name="email" value={form?.identifier ?? emailField.value} />
-			<p class="sent">{m.login_code_sent_to()} <strong>{form?.identifier}</strong></p>
-			<div class="field">
-				<label for="loginCode">{m.field_code()}</label>
-				<input
-					id="loginCode"
-					name="code"
-					class="code"
-					type="text"
-					inputmode="numeric"
-					autocomplete="one-time-code"
-					maxlength={CODE_LENGTH}
-					placeholder={'0'.repeat(CODE_LENGTH)}
-					aria-invalid={errorFor(codeField, 'code').length > 0}
-					aria-describedby="loginCodeError"
-					bind:value={codeField.value}
-					onblur={() => codeField.markTouched()}
-				/>
-				<p class="error" id="loginCodeError">{errorFor(codeField, 'code')}</p>
+				<label for="loginSecondFactor">
+					{secondFactor === 'totp' ? m.field_totp_code() : m.field_backup_code()}
+				</label>
+				{#key secondFactor}
+					<input
+						id="loginSecondFactor"
+						name="code"
+						class:code={secondFactor === 'totp'}
+						type="text"
+						inputmode={secondFactor === 'totp' ? 'numeric' : 'text'}
+						autocomplete="one-time-code"
+						autocapitalize="none"
+						spellcheck="false"
+						maxlength={secondFactor === 'totp' ? CODE_LENGTH : 32}
+						aria-invalid={(serverErrors.code ?? '').length > 0}
+						aria-describedby="loginSecondFactorError"
+					/>
+				{/key}
+				<p class="error" id="loginSecondFactorError">{serverErrors.code ?? ''}</p>
 			</div>
 			<div class="submit">
 				<p class="notice" role="alert">{serverMessage}</p>
@@ -244,6 +157,147 @@
 				</div>
 			</div>
 		</form>
+	{:else}
+		{#if emailEnabled}
+			<div class="methods" role="group" aria-label={m.login_method_label()}>
+				<button
+					type="button"
+					aria-pressed={method === 'password'}
+					onclick={() => selectMethod('password')}
+				>
+					{m.login_method_password()}
+				</button>
+				<button
+					type="button"
+					aria-pressed={method === 'code'}
+					onclick={() => selectMethod('code')}
+				>
+					{m.login_method_code()}
+				</button>
+			</div>
+		{/if}
+		{#if method === 'password' || !emailEnabled}
+			<form method="POST" action="?/password" use:enhance onsubmit={guardPassword} novalidate>
+				<input type="hidden" name="redirectTo" value={redirectTo} />
+				<div class="field">
+					<label for="loginIdentifier">{m.field_identifier()}</label>
+					<input
+						id="loginIdentifier"
+						name="identifier"
+						type="text"
+						autocomplete="username"
+						autocapitalize="none"
+						spellcheck="false"
+						placeholder={m.field_identifier_placeholder()}
+						aria-invalid={errorFor(identifierField, 'identifier').length > 0}
+						aria-describedby="loginIdentifierError"
+						bind:value={identifierField.value}
+						onblur={() => identifierField.markTouched()}
+					/>
+					<p class="error" id="loginIdentifierError">
+						{errorFor(identifierField, 'identifier')}
+					</p>
+				</div>
+				<div class="field">
+					<label for="loginPassword">{m.field_password()}</label>
+					<input
+						id="loginPassword"
+						name="password"
+						type="password"
+						autocomplete="current-password"
+						placeholder={m.field_password_placeholder()}
+						aria-invalid={errorFor(passwordField, 'password').length > 0}
+						aria-describedby="loginPasswordError"
+						bind:value={passwordField.value}
+						onblur={() => passwordField.markTouched()}
+					/>
+					<p class="error" id="loginPasswordError">
+						{errorFor(passwordField, 'password')}
+					</p>
+				</div>
+				<div class="submit">
+					<p class="notice" role="alert">{serverMessage}</p>
+					<div class="actions">
+						<button type="submit">{m.login_submit()}</button>
+						{#if emailEnabled}
+							<a href={localizedHref('/forgot-password')}
+								>{m.login_forgot_password()}</a
+							>
+						{/if}
+					</div>
+				</div>
+			</form>
+		{:else if !codeSent}
+			<form
+				method="POST"
+				action="?/requestCode"
+				onsubmit={guardEmail}
+				novalidate
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						if (result.type === 'success') {
+							notifications.confirm(m.login_code_sent_notice());
+						}
+						await update({ reset: false });
+					};
+				}}
+			>
+				<input type="hidden" name="redirectTo" value={redirectTo} />
+				<div class="field">
+					<label for="codeEmail">{m.field_email()}</label>
+					<input
+						id="codeEmail"
+						name="email"
+						type="email"
+						autocomplete="email"
+						placeholder={m.field_email_placeholder()}
+						aria-invalid={errorFor(emailField, 'email').length > 0}
+						aria-describedby="codeEmailError"
+						bind:value={emailField.value}
+						onblur={() => emailField.markTouched()}
+					/>
+					<p class="error" id="codeEmailError">{errorFor(emailField, 'email')}</p>
+				</div>
+				<div class="submit">
+					<p class="notice" role="alert">{serverMessage}</p>
+					<div class="actions">
+						<button type="submit">{m.common_send_code()}</button>
+						<a href={localizedHref('/forgot-password')}>{m.login_forgot_password()}</a>
+					</div>
+				</div>
+			</form>
+		{:else}
+			<form method="POST" action="?/verifyCode" use:enhance onsubmit={guardCode} novalidate>
+				<input type="hidden" name="redirectTo" value={redirectTo} />
+				<input type="hidden" name="email" value={form?.identifier ?? emailField.value} />
+				<p class="sent">{m.login_code_sent_to()} <strong>{form?.identifier}</strong></p>
+				<div class="field">
+					<label for="loginCode">{m.field_code()}</label>
+					<input
+						id="loginCode"
+						name="code"
+						class="code"
+						type="text"
+						inputmode="numeric"
+						autocomplete="one-time-code"
+						maxlength={CODE_LENGTH}
+						placeholder={'0'.repeat(CODE_LENGTH)}
+						aria-invalid={errorFor(codeField, 'code').length > 0}
+						aria-describedby="loginCodeError"
+						bind:value={codeField.value}
+						onblur={() => codeField.markTouched()}
+					/>
+					<p class="error" id="loginCodeError">{errorFor(codeField, 'code')}</p>
+				</div>
+				<div class="submit">
+					<p class="notice" role="alert">{serverMessage}</p>
+					<div class="actions">
+						<button type="submit">{m.common_verify()}</button>
+						<a href={localizedHref('/login')}>{m.login_start_over()}</a>
+					</div>
+				</div>
+			</form>
+		{/if}
 	{/if}
 </AuthShell>
 
@@ -271,6 +325,7 @@
 
 	.methods {
 		@include forms.segmentedControl;
+		margin: 0;
 
 		> button {
 			@include forms.segmentedOption;
@@ -278,6 +333,27 @@
 			&[aria-pressed='true'] {
 				@include forms.segmentedOptionActive;
 			}
+		}
+
+		> label {
+			@include forms.segmentedOption;
+			position: relative;
+
+			&.active {
+				@include forms.segmentedOptionActive;
+			}
+
+			// The radio stays reachable by keyboard; the label is what shows.
+			> input {
+				position: absolute;
+				opacity: 0;
+				pointer-events: none;
+			}
+		}
+
+		> label:focus-within {
+			outline: 2px solid clr.$focusRingColor;
+			outline-offset: 2px;
 		}
 	}
 

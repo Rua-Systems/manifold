@@ -1,4 +1,6 @@
 import { fileReferences, moduleHousekeeping } from '$lib/modules/registry.server';
+import { purgeAuditEvents } from './audit';
+import { getEnv } from './env';
 import { purgeUnreferencedFiles } from './files/files';
 import type { HousekeepingTask } from './housekeeping';
 
@@ -13,6 +15,12 @@ export function housekeepingTasks(): HousekeepingTask[] {
 			name: 'files.purge-unreferenced',
 			run: async (now) => {
 				await purgeUnreferencedFiles(fileReferences(), now);
+			}
+		},
+		{
+			name: 'audit.purge',
+			run: async (now) => {
+				await purgeAuditEvents(now, getEnv().AUDIT_RETENTION_DAYS);
 			}
 		}
 	];

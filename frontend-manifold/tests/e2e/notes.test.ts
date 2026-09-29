@@ -1,7 +1,6 @@
 import type { Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
-import postgres from 'postgres';
-import { testDatabaseUrl } from '../support/test-database.ts';
+import { withDatabase } from './database';
 import { expect, signIn, test } from './fixtures';
 
 const PNG = Buffer.from(
@@ -46,16 +45,13 @@ async function appendText(page: Page, text: string): Promise<void> {
 
 /** Moves every revision of a note back in time, so the next edit starts a new revision. */
 async function ageRevisions(noteId: string, minutes: number): Promise<void> {
-	const sql = postgres(testDatabaseUrl(), { max: 1, onnotice: () => {} });
-	try {
-		await sql`
+	await withDatabase(
+		(sql) => sql`
 			update note_revision
 			set created_at = created_at - make_interval(mins => ${minutes})
 			where note_id = ${noteId}
-		`;
-	} finally {
-		await sql.end();
-	}
+		`
+	);
 }
 
 test.beforeEach(async ({ page }) => {

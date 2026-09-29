@@ -11,6 +11,7 @@ import { guardRequest } from '$lib/server/guard';
 import { startHousekeeping } from '$lib/server/housekeeping';
 import { bootstrapOwner } from '$lib/server/owner';
 import { housekeepingTasks } from '$lib/server/tasks';
+import { getUserSettings } from '$lib/server/user-settings';
 import { parseTheme, THEME_COOKIE } from '$lib/utils/theme';
 import type { Handle, ServerInit } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -74,8 +75,15 @@ const handleSecurityHeaders: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-const handleTheme: Handle = ({ event, resolve }) => {
-	const theme = parseTheme(event.cookies.get(THEME_COOKIE));
+/**
+ * The browser's own choice wins; a browser that has none starts with the owner's default theme.
+ * Runs after the session is known.
+ */
+const handleTheme: Handle = async ({ event, resolve }) => {
+	let theme = parseTheme(event.cookies.get(THEME_COOKIE));
+	if (theme === null && event.locals.user !== null) {
+		theme = (await getUserSettings(event.locals.user.id)).theme;
+	}
 	event.locals.theme = theme;
 
 	return resolve(event, {
@@ -101,6 +109,6 @@ export const handle: Handle = sequence(
 	handleLocale,
 	handleSecurityHeaders,
 	handleBodySize,
-	handleTheme,
-	handleSession
+	handleSession,
+	handleTheme
 );

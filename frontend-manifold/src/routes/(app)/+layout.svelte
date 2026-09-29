@@ -2,14 +2,17 @@
 	import { page } from '$app/state';
 	import HamburgerIcon from '$lib/components/icons/HamburgerIcon.svelte';
 	import Sidebar from '$lib/components/Sidebar/Sidebar.svelte';
+	import StepUpDialog from '$lib/components/StepUp/StepUpDialog.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { setSidebarState } from '$lib/state/sidebar.svelte';
+	import { setStepUp } from '$lib/state/step-up.svelte';
 	import { untrack } from 'svelte';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
 
 	const sidebar = setSidebarState(untrack(() => data.sidebarPreferences));
+	setStepUp();
 </script>
 
 <div class="app">
@@ -33,6 +36,7 @@
 		</div>
 	</div>
 </div>
+<StepUpDialog />
 
 <style lang="scss">
 	@use '../../styles/colors' as clr;

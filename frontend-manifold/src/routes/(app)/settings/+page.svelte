@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import Credit from '$lib/components/Credit/Credit.svelte';
 	import PageShell from '$lib/components/PageShell/PageShell.svelte';
+	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import {
 		displayNameSchema,
@@ -14,15 +15,18 @@
 	} from '$lib/schemas/auth';
 	import { Field, validateAll } from '$lib/state/field.svelte';
 	import { getNotifications } from '$lib/state/notifications.svelte';
+	import { getStepUp, needsStepUp } from '$lib/state/step-up.svelte';
 	import type { SettingsForm } from '$lib/types/settings';
+	import { localizedHref } from '$lib/utils/navigation';
 	import { fromSchema, matches } from '$lib/utils/validation';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
-	let { form }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 
 	const notifications = getNotifications();
+	const stepUp = getStepUp();
 	const initial = untrack(() => page.data.user);
 
 	const nameField = new Field([fromSchema(displayNameSchema)], initial?.name ?? '');
@@ -64,8 +68,14 @@
 		};
 	}
 
-	const confirmOnSuccess: SubmitFunction = () => {
+	const confirmOnSuccess: SubmitFunction = ({ formElement, submitter }) => {
 		return async ({ result, update }) => {
+			if (needsStepUp(result)) {
+				if (await stepUp.request()) {
+					formElement.requestSubmit(submitter);
+				}
+				return;
+			}
 			if (result.type === 'success' && typeof result.data?.message === 'string') {
 				notifications.confirm(result.data.message);
 			}
@@ -73,8 +83,14 @@
 		};
 	};
 
-	const confirmPasswordChange: SubmitFunction = () => {
+	const confirmPasswordChange: SubmitFunction = ({ formElement, submitter }) => {
 		return async ({ result, update }) => {
+			if (needsStepUp(result)) {
+				if (await stepUp.request()) {
+					formElement.requestSubmit(submitter);
+				}
+				return;
+			}
 			if (result.type === 'success' && typeof result.data?.message === 'string') {
 				notifications.confirm(result.data.message);
 				currentPasswordField.reset();
@@ -91,10 +107,7 @@
 	sigil={m.account_sigil()}
 	metaDescription={m.settings_meta_description()}
 >
-	<nav class="sections" aria-label={m.settings_sections_label()}>
-		<a href="#profile">{m.settings_section_profile()}</a>
-		<a href="#about">{m.settings_section_about()}</a>
-	</nav>
+	<SettingsNav />
 	<section id="profile" class="section" aria-labelledby="profileHeading">
 		<h2 id="profileHeading">{m.settings_section_profile()}</h2>
 		<form
@@ -141,6 +154,30 @@
 				<button type="submit">{m.settings_save()}</button>
 			</div>
 		</form>
+		<form method="POST" action="?/preferences" use:enhance={confirmOnSuccess} novalidate>
+			<div class="field">
+				<label for="settingsLocale">{m.settings_locale()}</label>
+				<select id="settingsLocale" name="locale" value={data.preferences.locale ?? ''}>
+					<option value="">{m.settings_locale_address()}</option>
+					<option value="en">English</option>
+					<option value="tr">Türkçe</option>
+				</select>
+				<p class="hint">{m.settings_locale_hint()}</p>
+			</div>
+			<div class="field">
+				<label for="settingsTheme">{m.settings_theme()}</label>
+				<select id="settingsTheme" name="theme" value={data.preferences.theme ?? ''}>
+					<option value="">{m.settings_theme_browser()}</option>
+					<option value="light">{m.theme_light()}</option>
+					<option value="dark">{m.theme_dark()}</option>
+				</select>
+				<p class="hint">{m.settings_theme_hint()}</p>
+			</div>
+			<div class="submit">
+				<p class="notice" role="alert">{noticeFor('preferences')}</p>
+				<button type="submit">{m.settings_save()}</button>
+			</div>
+		</form>
 		<form
 			method="POST"
 			action="?/email"
@@ -165,7 +202,18 @@
 				</p>
 			</div>
 			<div class="submit">
-				<p class="notice" role="alert">{noticeFor('email')}</p>
+				<p class="notice" role="alert">
+					{noticeFor('email')}
+					{#if form?.form === 'email' && form.stepUp}
+						<a
+							href="{localizedHref('/step-up')}?redirectTo={encodeURIComponent(
+								'/settings'
+							)}"
+						>
+							{m.step_up_link()}
+						</a>
+					{/if}
+				</p>
 				<button type="submit">{m.settings_change_email()}</button>
 			</div>
 		</form>
@@ -226,7 +274,18 @@
 				</p>
 			</div>
 			<div class="submit">
-				<p class="notice" role="alert">{noticeFor('password')}</p>
+				<p class="notice" role="alert">
+					{noticeFor('password')}
+					{#if form?.form === 'password' && form.stepUp}
+						<a
+							href="{localizedHref('/step-up')}?redirectTo={encodeURIComponent(
+								'/settings'
+							)}"
+						>
+							{m.step_up_link()}
+						</a>
+					{/if}
+				</p>
 				<button type="submit">{m.settings_change_password()}</button>
 			</div>
 		</form>
@@ -247,17 +306,6 @@
 	@use '../../../styles/colors' as clr;
 	@use '../../../styles/forms' as forms;
 	@use '../../../styles/variables' as vars;
-
-	.sections {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.3rem 1.2rem;
-		margin-bottom: 1.5rem;
-
-		> a {
-			@include forms.mutedLink;
-		}
-	}
 
 	.section {
 		display: flex;
@@ -302,6 +350,16 @@
 			@include forms.textInput;
 		}
 
+		> select {
+			@include forms.inputSurface;
+		}
+
+		> .hint {
+			margin-top: 0.35rem;
+			font-size: 0.7rem;
+			color: clr.$textMutedColor;
+		}
+
 		> .error {
 			@include forms.fieldError;
 		}
@@ -318,6 +376,10 @@
 
 	.notice {
 		@include forms.formNotice;
+
+		> a {
+			color: clr.$accentColor;
+		}
 	}
 
 	.record {

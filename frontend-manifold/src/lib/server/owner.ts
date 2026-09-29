@@ -10,7 +10,7 @@ import { and, count, eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { Database } from './db';
-import { account, session, user } from './db/schema';
+import { account, session, twoFactor, user } from './db/schema';
 
 // Plain module: the startup hook and the CLI both use it.
 
@@ -181,4 +181,32 @@ export async function resetOwnerPassword(db: Database, password: string): Promis
 		await tx.delete(session).where(eq(session.userId, owner.id));
 	});
 	return owner;
+}
+
+/**
+ * Turns two factor authentication off for an owner locked out of it, and signs out every session.
+ * Reports whether it was on.
+ */
+export async function disableOwnerTwoFactor(
+	db: Database
+): Promise<{ owner: Owner; wasEnabled: boolean }> {
+	const owner = await findOwner(db);
+	if (owner === null) {
+		throw new OwnerError('No owner account exists yet. Start the app once to create it.');
+	}
+
+	const wasEnabled = await db.transaction(async (tx) => {
+		const [current] = await tx
+			.select({ enabled: user.twoFactorEnabled })
+			.from(user)
+			.where(eq(user.id, owner.id));
+		await tx
+			.update(user)
+			.set({ twoFactorEnabled: false, updatedAt: new Date() })
+			.where(eq(user.id, owner.id));
+		await tx.delete(twoFactor).where(eq(twoFactor.userId, owner.id));
+		await tx.delete(session).where(eq(session.userId, owner.id));
+		return current?.enabled === true;
+	});
+	return { owner, wasEnabled };
 }

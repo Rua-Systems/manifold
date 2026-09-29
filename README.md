@@ -50,8 +50,9 @@ The production image ships a CLI:
 docker compose exec app node cli.js migrate
 docker compose exec app node cli.js owner:show
 docker compose exec app node cli.js owner:reset-password
+docker compose exec app node cli.js owner:disable-2fa
 ```
 
-In Coolify, run the same `node cli.js <command>` in the app container's terminal. `owner:reset-password` asks for the new password twice and signs every session out.
+In Coolify, run the same `node cli.js <command>` in the app container's terminal. `owner:reset-password` asks for the new password twice and signs every session out. `owner:disable-2fa` is for an owner who lost their authenticator and backup codes: it asks for confirmation, turns two factor authentication off and signs every session out. Commands that change data are recorded in the audit log.
 
 In development, `npm run build` first, then `npm run cli -- <command>`.

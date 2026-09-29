@@ -90,3 +90,19 @@ Choices the Batch 01 specification left open, with the reason for each.
 - **The note page's location map is still,** without panning or zooming, so it never captures page scrolling; "Show on map" is where geometries are explored.
 - **The note picker lists at most 50 matches** and reloads the titles when it opens.
 - **End to end tests draw with synthetic pointer events** on the map's viewport, of type `mouse` on desktop and `touch` on phones, over a random spot per test so that other tests' geometries never interfere. Map tiles are answered with a one pixel image, so tests never reach the tile host.
+
+### Phase 6: Security features and settings
+
+- **Two factor sign in with an emailed code reuses Better Auth's challenge.** Better Auth asks for the second factor only after password sign ins. A small plugin (`email-code-two-factor.ts`) does the same after `/sign-in/email-otp`: it deletes the new session and sets the twoFactor plugin's own challenge cookie and records, so `verifyTOTP` and `verifyBackupCode` finish both kinds of sign in.
+- **The TOTP setup hands its `otpauth://` address back through a hidden field** between "Set up" and "Turn on", so a wrong code can show the same QR code again. The server only rebuilds the image from it; Better Auth checks the code against the secret it stored.
+- **QR codes are rendered on the server as SVG and shown as a `data:` image,** which needs no client library, no inline SVG and no change to the CSP.
+- **Backup codes are shown once, right after they are made, with a download button** that saves them as a text file from the browser. They are read back through Better Auth's server-only `viewBackupCodes` after the first valid code.
+- **Turning two factor off and making new backup codes ask for the password and a code in their own form.** Better Auth needs the password for both anyway, and entering both on the spot is the step-up these actions require, so the dialog would only ask twice.
+- **Step-ups live in `session_step_up`,** one row per session that goes with it. The dialog is part of the signed in layout; a form whose action answers `stepUp: true` opens it and submits again once confirmed. Without JavaScript the same form links to `/step-up`, which returns to the page afterwards. Email and password changes use it in this phase.
+- **Step-up checks the password with Better Auth's `verifyPassword` and the code with `verifyTOTP`,** which only checks the code when the session already has two factor turned on. Step-up attempts are rate limited like sign ins and recorded in the audit log.
+- **Sessions are listed and revoked straight from the `session` table,** by id. Better Auth's `listSessions` endpoint answers tokens and needs a fresh session; tokens never leave the server here. The current session is signed out with the normal sign out.
+- **Audit events carry no identifiers from failed sign ins.** A mistyped password can end up in the username field, so a failed attempt records only the method, the address and the device.
+- **Audit times are shown in UTC,** like mail times, because the server does not know the owner's time zone; the date filters are UTC days too.
+- **User settings are columns on `user_setting`:** `locale` and `theme`, where null means "not chosen". The locale is for mails sent outside a request (`preferredLocale()`); mails sent while handling a request keep using the request's locale. The theme is what a browser without its own theme cookie starts with. Both are cached in memory and replaced on save.
+- **Settings has two pages:** Profile (profile, preferences, email, password, about) and Security (two factor, sessions, audit log), with links between them.
+- **The CLI records the commands that change data** (`migrate` when it applied something, `owner:reset-password`, `owner:disable-2fa`) with the actor type `cli`.
