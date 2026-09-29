@@ -1,10 +1,177 @@
 # Manifold maintainer guide
 
-This guide is completed at the end of Batch 01. Until then it holds the decisions made while building the batch.
+For the person who installs, runs and changes Manifold. The README is the short version; this guide has the details, and ends with the decisions taken while building it.
+
+## 1. Overview
+
+Manifold is a private, single user workspace: services, notes on a map, a vault, search, a REST API and an MCP server, behind one owner account.
+
+- **One SvelteKit application** (`frontend-manifold/`) serves pages and the backend: Svelte 5, SvelteKit 2 with adapter-node, TypeScript, SCSS. Pages talk to the server through `load` functions and form actions; `+server.ts` endpoints exist only for outside callers (`/api/v1`, `/mcp`, `/healthz`, `/files/<id>`, the export download).
+- **PostgreSQL 17 with PostGIS** stores everything but uploaded files, through Drizzle ORM on postgres.js. Hand written SQL migrations run on start.
+- **Uploaded files** live in `UPLOAD_DIR`, named by random ids; the `file` table describes them.
+- **Better Auth** handles the owner's credentials, sessions and two factor authentication, called only from the server (`auth.api.*`).
+- **Housekeeping** runs inside the app once on start and then daily: the trash, the audit log and unreferenced files.
+- **A CLI** (`cli.js` in the image) migrates, recovers the owner account, rotates the vault key, and backs up and restores.
+
+## 2. Modules and features
+
+Features are modules under `src/lib/modules/<id>/`; the core lives in `src/lib/server/`, `src/lib/components/` and `src/routes/`.
+
+| Module     | Holds                                                                                       | Routes                                                | Configuration                   |
+| ---------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------- |
+| `services` | Links with icons, ordered. Sidebar group, API, MCP, search.                                 | `/services`                                           | `UPLOAD_MAX_BYTES` for icons    |
+| `notes`    | Notes (TipTap JSON with Markdown conversion), revisions, trash, images, Map Notes (`map/`). | `/notes`, `/notes/[id]`, `/notes/trash`, `/notes/map` | `TRASH_RETENTION_DAYS`, `MAP_*` |
+| `vault`    | Encrypted secrets; reveal and copy after a step-up.                                         | `/vault`                                              | `ENCRYPTION_KEY`                |
+
+Core pieces:
+
+- **Authentication and security** (`src/lib/server/auth.ts`, `two-factor.ts`, `step-up.ts`, `sessions.ts`, `audit.ts`): sign in, two factor, step-up, sessions, the audit log. Pages: `/login`, `/forgot-password`, `/step-up`, `/settings/security`.
+- **Settings** (`src/routes/(app)/settings/`): profile and preferences, security, API keys, data export.
+- **Files** (`src/lib/server/files/`): storage, type detection from content, `/files/<id>`.
+- **Search** (`src/lib/server/search.ts`): merges the modules' search providers; `/search`, the command palette, `GET /api/v1/search`.
+- **API** (`src/lib/server/api/`): the router, keys (`api-keys.ts`), OpenAPI. **MCP** (`src/lib/server/mcp/`).
+- **Backup** (`src/lib/server/backup/`) and the **CLI** (`scripts/cli.ts`).
+
+## 3. Requirements
+
+- Node.js 24 and npm for development; Docker with Compose for the database, and for deployment.
+- PostgreSQL 17 with PostGIS 3.5 (the `postgis/postgis:17-3.5` image). An external database must allow creating the `postgis` and `pg_trgm` extensions.
+- `pg_dump` and `pg_restore` 17 for backups: the production image installs them. On a development machine without them, the backup code uses the dev database container's through `docker compose exec`.
+- The app listens on port 3000 in the image (5173 with `npm run dev`). The database is not published in production; the dev database listens on 127.0.0.1:5432.
+- Optional: an SMTP server, and a map tile server (OpenStreetMap by default).
+
+## 4. Configuration
+
+Every variable is read once at start and checked by `src/lib/server/env.ts`; a missing or malformed required one stops the app with a message naming it. `.env.example` documents them all with comments.
+
+| Variable                                            | Required         | Default                                                         | Purpose                                                                       |
+| --------------------------------------------------- | ---------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `ORIGIN`                                            | yes              |                                                                 | Public URL without trailing slash, e.g. `https://manifold.example.com`.       |
+| `ORGANIZATION_NAME`                                 | no               | `Manifold`                                                      | Display name in titles, the sidebar, sign in screens and mail.                |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | bundled database |                                                                 | Credentials of the compose database; the password must be URL safe.           |
+| `DATABASE_URL`                                      | yes              | built by `docker-compose.yml`                                   | `postgres://user:password@host:5432/db`.                                      |
+| `BETTER_AUTH_SECRET`                                | yes              |                                                                 | At least 32 characters; signs sessions.                                       |
+| `ENCRYPTION_KEY`                                    | yes              |                                                                 | 32 random bytes, base64; encrypts vault values.                               |
+| `OWNER_USERNAME`, `OWNER_EMAIL`, `OWNER_PASSWORD`   | first start      |                                                                 | The owner account created when no user exists.                                |
+| `SMTP_HOST`                                         | no               |                                                                 | Without it, mail features are off in production and printed in development.   |
+| `SMTP_PORT`, `SMTP_SECURE`                          | no               | `587`, `false`                                                  | `465` with `true` for implicit TLS.                                           |
+| `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`           | no               |                                                                 | Sender; the organization name is used as its display name when none is given. |
+| `MAP_TILE_URL`, `MAP_TILE_ATTRIBUTION`              | no               | OpenStreetMap                                                   | XYZ raster template and its attribution HTML.                                 |
+| `MAP_DEFAULT_CENTER`, `MAP_DEFAULT_ZOOM`            | no               | `0,20`, `2`                                                     | Map view without a saved one: `lon,lat` and a zoom level.                     |
+| `UPLOAD_DIR`                                        | no               | `/data/uploads` in production, `./.data/uploads` in development | Where uploaded files are kept.                                                |
+| `UPLOAD_MAX_BYTES`                                  | no               | `10485760`                                                      | Largest accepted upload.                                                      |
+| `TRASH_RETENTION_DAYS`                              | no               | `30`                                                            | Days a trashed note is kept.                                                  |
+| `AUDIT_RETENTION_DAYS`                              | no               | `180`                                                           | Days audit events are kept.                                                   |
+| `API_RATE_LIMIT_PER_MINUTE`                         | no               | `120`                                                           | Requests per minute per API key, REST and MCP together.                       |
+| `ADDRESS_HEADER`, `XFF_DEPTH`                       | set by compose   |                                                                 | How adapter-node finds the client address behind the proxy.                   |
+
+## 5. Local setup
+
+```bash
+git clone <repository> manifold
+cd manifold
+cp .env.example .env    # then fill in secrets and OWNER_PASSWORD
+cd frontend-manifold
+npm install
+npm run db:up           # PostGIS on 127.0.0.1:5432, with a manifold_test database for the tests
+npm run dev             # http://localhost:5173
+```
+
+The first start migrates the database and creates the owner. `npm run db:studio` opens Drizzle Studio on the development database. `npm run db:reset` deletes the development database after asking.
+
+## 6. Docker
+
+- `frontend-manifold/Dockerfile` builds the app and the CLI in a Node 24 Alpine image, installs the PostgreSQL 17 client tools for backups, and runs as the `node` user. The app serves on port 3000; `cli.js` sits next to it.
+- `docker-compose.yml` (production): `db` (PostGIS 17, volume `db-data`) and `app` (volume `uploads` at `/data/uploads`). Neither publishes a port; the app waits for the database's health check.
+- `docker-compose.override.example.yml`: copy it to `docker-compose.override.yml` to publish port 3000 on a plain Docker host.
+- `docker-compose.dev.yml`: the development database only, started by `npm run db:up`.
+
+## 7. Deployment
+
+On Coolify (unverified in this repository's tests, which cannot reach real infrastructure):
+
+1. Create a Docker Compose resource from the repository.
+2. Set the variables of `.env.example` in its environment settings: at least `ORIGIN` (the public https address), `POSTGRES_*`, `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY` and the `OWNER_*` for the first start.
+3. Point the domain at the `app` service, port 3000. Coolify's proxy terminates TLS and sets `X-Forwarded-*`, which the compose file tells the app to trust for one hop.
+4. Deploy. The first start creates the owner; remove `OWNER_PASSWORD` afterwards if you like.
+
+On a plain Docker host: fill `.env` next to `docker-compose.yml`, copy the override example, `docker compose up -d --build`, and put a TLS reverse proxy in front. With more than one proxy hop, raise `XFF_DEPTH` in `docker-compose.yml`.
+
+## 8. Database
+
+### Migrations
+
+Migrations are hand written SQL in `frontend-manifold/migrations/`, applied in order on start and by `node cli.js migrate`, each in its own transaction under an advisory lock, and recorded with a checksum in `schema_migrations`.
+
+To write one:
+
+1. Add `NNNN_<module-or-core>_<description>.sql` with the next number, for example `0012_notes_tags.sql`. The middle part is the module id, or `core`.
+2. Follow the table conventions: `uuid` primary keys with `DEFAULT gen_random_uuid()`, `timestamptz`, `created_at` and `updated_at`, snake_case, explicit foreign keys with a chosen `ON DELETE`, and an index for every foreign key and every column used to filter or sort.
+3. Mirror the tables by hand in the module's `schema.server.ts` (or `src/lib/server/db/*-schema.ts` for the core). PostGIS columns use the custom type in `src/lib/server/db/geometry.ts`.
+4. Never edit a migration once it ran anywhere; the checksum check stops the app. Add a new one instead.
+
+### Backup and restore
+
+`node cli.js backup [path]` writes a `.tar.gz` holding `manifest.json` (app version, newest migration, time), `database.dump` (`pg_dump --format=custom`) and `uploads/`. `node cli.js restore <path> [--force]` refuses a database with data unless forced, refuses archives from a newer migration, restores the database and the files, then applies newer migrations. Settings, Data streams the same archive after a step-up. `ENCRYPTION_KEY` is never in an archive; keep it separately, or the vault cannot be read after a restore.
+
+## 9. Testing
+
+From `frontend-manifold/`, with the development database running:
+
+```bash
+npm run check                 # svelte-check and TypeScript
+npm run lint                  # Prettier and ESLint
+npm run test:unit -- --run    # Vitest, src/**/*.test.ts
+npm run test:int              # Vitest against manifold_test, src/**/*.int.test.ts
+npm run test:e2e              # Playwright against `node build`, tests/e2e/, desktop and Pixel 7
+```
+
+Integration tests reset and migrate `manifold_test` before each run and seed the test owner; tests that need their own tables use an isolated schema. End to end tests build the app, reset `manifold_test` and start it with `node build`; every test sends its own `X-Forwarded-For` address so rate limits do not carry over. Map tiles are answered locally in the tests.
+
+## 10. Updating
+
+- Dependencies: `npm outdated`, update, then run the whole suite above. Pin nothing by hand; `package-lock.json` locks versions.
+- A new version: pull, rebuild the image, `docker compose up -d --build`. Migrations run on start; take a backup first.
+- A version whose migrations fail stops at start with the failing file named; restore the backup and report it.
+
+## 11. Operations
+
+- **Logs:** `docker compose logs -f app`. The app logs applied migrations, the owner bootstrap, failed housekeeping tasks and failed mails, never their content or secrets.
+- **Health:** `GET /healthz` answers `{"status":"ok"}` while the database answers, 503 otherwise.
+- **Housekeeping:** runs on start and daily: trash older than `TRASH_RETENTION_DAYS`, audit events older than `AUDIT_RETENTION_DAYS`, files nothing refers to for a day.
+- **Common failures:** a missing or malformed variable stops the start with its name; `Migration ... changed after it was applied` means a migration file was edited; `The database has migration ... applied, but this build has no such file` means an older image runs against a newer database; sign in attempts are limited to 5 a minute per address, API requests to `API_RATE_LIMIT_PER_MINUTE` per key.
+
+## 12. Security
+
+- **Secrets:** `BETTER_AUTH_SECRET` (changing it signs everyone out), `ENCRYPTION_KEY` (rotate with `node cli.js vault:rotate-key`, then set the new key and restart), the database password, `SMTP_PASSWORD`. Only the environment holds them; no log, archive or error message does.
+- **Roles:** one owner, no sign up. API keys carry scopes per module (`notes:read`, `notes:write`, ...); `vault:read` sees names only. Keys are stored as SHA-256 hashes.
+- **Sensitive actions** (email and password changes, API key creation, vault values, two factor changes, the export) need the password, and a TOTP code when two factor is on, within ten minutes.
+- **Audit log:** sign ins, security changes, API and MCP writes, vault actions and CLI changes, in Settings, Security.
+- Responses carry a content security policy, `X-Frame-Options: DENY`, `nosniff`, `noindex`, and HSTS on https.
+
+## 13. Known limitations and deviations
+
+- The map page loads every feature at once; a bounding box query should replace this beyond a few thousand features.
+- Editing notes needs JavaScript; lists, the trash, search and settings work without it.
+- API uploads accept images only.
+- SvelteKit's `csrf.checkOrigin` is turned off in favour of the same check in the server hooks, so API uploads work; the build prints a deprecation warning for it.
+- The Decisions section below lists every other choice the specification left open.
+
+## Adding a module
+
+1. **Folder:** `src/lib/modules/<id>/` holds the module's server code (`*.server.ts`), Zod schemas, types, components, API routes and MCP tools. Route files under `src/routes/` stay thin and re-export the module's loads and actions.
+2. **Manifest:** `manifest.ts` (browser safe) gives `id`, `label`, `icon`, `href`, `position` (sidebar order), `sidebar` (`link` or `group`), `scopes` and optional palette `commands`. `manifest.server.ts` gives the server half: `sidebarGroup` for groups (with `filterable` items, `filterLabel` and `filterSearch` to hand the filter to the search), `fileReferences`, `housekeeping`, `api`, `mcp` and `search`.
+3. **Registry:** add the manifest to `src/lib/modules/registry.ts` and the server half to `registry.server.ts`. The sidebar, the palette, the scope list, the OpenAPI document, the router, the MCP tools and the search follow from there; a unit test checks both halves list the same modules.
+4. **Migration:** `NNNN_<id>_<description>.sql`, as in section 8.
+5. **Scopes:** `<id>:read` and `<id>:write`, labelled with messages. A write scope does not include the read scope.
+6. **API:** declare routes with `defineRoute` (`src/lib/server/api/types.ts`): method, OpenAPI style path, scope, Zod schemas for params, query and body, the response schema, and an `audit` action for writes. The router checks scopes and validates input; the integration test checks every route refuses a key without its scope and appears in the OpenAPI document.
+7. **MCP:** declare tools with `defineTool` (`src/lib/server/mcp/types.ts`), usually running the module's API handlers through `callRoute`. Describe them for AI agents and name the scope they need.
+8. **Search:** a provider with a `type`, the read `scope` and a `search(query, limit)` that answers hits scored from 0 to 1.
+9. **Messages:** add every string to both `messages/en.json` and `messages/tr.json`.
 
 ## Decisions
 
-Choices the Batch 01 specification left open, with the reason for each.
+Choices the Batch 01 specification left open, with the reason for each, by phase.
 
 ### Phase 1: Foundation
 
@@ -158,3 +325,16 @@ Choices the Batch 01 specification left open, with the reason for each.
 - **Writes are audited with `via: mcp`** in the metadata, next to the same actions as the REST API.
 - **`search` is a core tool open to every key,** searching only the modules the key may read, like `GET /api/v1/search`.
 - **The server names itself after the instance** (`ORGANIZATION_NAME`) and reports the app version.
+
+### Phase 11: Backup, documentation and wrap-up
+
+- **The archive is written with a small ustar writer of its own** (`src/lib/server/backup/tar.ts`), because its entries come from two places (a temporary folder and `UPLOAD_DIR`) under names of the archive's choosing; the `tar` package reads archives back, since reading must cope with every variant.
+- **The dump goes to a temporary file first,** because a tar header needs the size before the content.
+- **Restoring over a database with data (`--force`) drops every schema but the system ones and recreates `public`,** extensions included. The PostGIS image adds `tiger` and `topology` next to `public`, and the dump would collide with them; whatever the old database held comes back only if the dump holds it.
+- **A forced restore empties `UPLOAD_DIR` instead of removing it,** because in the container the folder is a mounted volume and cannot be removed.
+- **`backup` opens the target file before any work** and refuses a file that already exists or a folder that is missing, so a wrong path fails at once and a failed backup leaves no half written archive behind.
+- **Only `/data/uploads` is a volume in the container.** An archive written elsewhere under `/data` is lost when the container is recreated, so the README copies it out with `docker compose cp` right after the backup.
+- **"Is the database empty" means no table of its own in `public`;** PostGIS's `spatial_ref_sys` does not count.
+- **When `pg_dump` is missing, the dev compose database container's tools are used** through `docker compose exec`. The production image always has them; the fallback lets development machines and the tests run backups without installing PostgreSQL.
+- **The export is a download link, not a form:** `/settings/data/export` streams the archive, and sends the owner through `/step-up` and back when the step-up is due, which also works without JavaScript.
+- **Backups and restores from the CLI are audited** (`data.backup`, `data.restore`), as is the export (`data.export`).

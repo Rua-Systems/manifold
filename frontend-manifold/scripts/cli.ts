@@ -1,16 +1,23 @@
 import { connect, type Connection } from '$lib/server/db';
 import { defaultMigrationsDirectory, MigrationError, runMigrations } from '$lib/server/db/migrate';
-import { EnvError, parseEnv } from '$lib/server/env';
+import { EnvError, parseEnv, type Env } from '$lib/server/env';
 import { parseVaultKey, VaultKeyError } from '$lib/modules/vault/crypto.server';
 import { rotateVaultKey } from '$lib/modules/vault/rotation.server';
 import { recordAudit } from '$lib/server/audit';
+import { restoreBackup, writeBackup } from '$lib/server/backup/backup';
+import { BackupError } from '$lib/server/backup/pg-tools';
 import {
 	disableOwnerTwoFactor,
 	findOwner,
 	OwnerError,
 	resetOwnerPassword
 } from '$lib/server/owner';
+import { once } from 'node:events';
+import { createWriteStream } from 'node:fs';
+import { rm } from 'node:fs/promises';
+import path from 'node:path';
 import { createInterface } from 'node:readline';
+import packageJson from '../package.json';
 
 // Bundled into build-cli/cli.js and shipped as /app/cli.js. It must only import plain modules that
 // do not depend on SvelteKit, because it runs outside the app.
@@ -23,9 +30,16 @@ Commands:
   owner:reset-password    Set a new owner password and sign out every session.
   owner:disable-2fa       Turn two factor authentication off and sign out every session.
   vault:rotate-key        Re-encrypt the vault with a new ENCRYPTION_KEY, taken from
-                          NEW_ENCRYPTION_KEY or asked for.`;
+                          NEW_ENCRYPTION_KEY or asked for.
+  backup [path]           Write a backup archive: database, uploaded files and a manifest.
+                          ENCRYPTION_KEY is not in it; keep that key safe separately.
+  restore <path> [--force]
+                          Restore a backup into an empty database (--force replaces a
+                          database that holds data), then apply newer migrations.`;
 
 class CancelledError extends Error {}
+
+const CLI_VERSION = packageJson.version;
 
 /** CLI commands act as themselves in the audit log. */
 const CLI_ACTOR = { type: 'cli', id: null } as const;
@@ -191,7 +205,78 @@ async function rotateKey(connection: Connection, currentKey: string): Promise<vo
 	console.log('Keep the old key until the restart is done, then discard it.');
 }
 
-async function run(command: string): Promise<void> {
+async function backup(connection: Connection, env: Env, target: string | undefined): Promise<void> {
+	const file = path.resolve(
+		target ??
+			`manifold-backup-${new Date().toISOString().replaceAll(':', '-').slice(0, 19)}.tar.gz`
+	);
+	// Opened first, so a missing folder or an existing file stops the command before any work.
+	const output = createWriteStream(file, { flags: 'wx' });
+	try {
+		await once(output, 'open');
+	} catch (cause) {
+		const code = (cause as NodeJS.ErrnoException).code;
+		throw new BackupError(
+			code === 'EEXIST'
+				? `${file} already exists. Choose another name.`
+				: `${file} cannot be written (${code ?? 'unknown error'}).`
+		);
+	}
+	let manifest;
+	try {
+		manifest = await writeBackup(output, {
+			databaseUrl: env.DATABASE_URL,
+			uploadDir: path.resolve(env.UPLOAD_DIR),
+			version: CLI_VERSION
+		});
+	} catch (cause) {
+		output.destroy();
+		await rm(file, { force: true });
+		throw cause;
+	}
+	await recordAudit(
+		{ actor: CLI_ACTOR, action: 'data.backup', metadata: { migration: manifest.migration } },
+		connection.db
+	);
+	console.log(`Wrote ${file} (migration ${manifest.migration}).`);
+	console.log(
+		'The archive does not hold ENCRYPTION_KEY: without that key the vault cannot be read.'
+	);
+}
+
+async function restore(env: Env, source: string | undefined, force: boolean): Promise<void> {
+	if (source === undefined) {
+		throw new BackupError('Name the archive to restore: restore <path> [--force].');
+	}
+	const { manifest, applied } = await restoreBackup(path.resolve(source), {
+		databaseUrl: env.DATABASE_URL,
+		uploadDir: path.resolve(env.UPLOAD_DIR),
+		migrationsDir: defaultMigrationsDirectory(),
+		force
+	});
+	const connection = connect(env.DATABASE_URL, { max: 1 });
+	try {
+		await recordAudit(
+			{
+				actor: CLI_ACTOR,
+				action: 'data.restore',
+				metadata: { migration: manifest.migration, created_at: manifest.createdAt }
+			},
+			connection.db
+		);
+	} finally {
+		await connection.sql.end();
+	}
+	console.log(`Restored the backup of ${manifest.createdAt} (migration ${manifest.migration}).`);
+	if (applied.length > 0) {
+		console.log(`Applied newer migrations: ${applied.join(', ')}`);
+	}
+	console.log(
+		'Restart the app. The vault opens only with the ENCRYPTION_KEY it was written with.'
+	);
+}
+
+async function run(command: string, args: string[]): Promise<void> {
 	const env = parseEnv(process.env, { dev: process.env.NODE_ENV !== 'production' });
 	const connection = connect(env.DATABASE_URL, { max: 2 });
 
@@ -212,6 +297,16 @@ async function run(command: string): Promise<void> {
 			case 'vault:rotate-key':
 				await rotateKey(connection, env.ENCRYPTION_KEY);
 				break;
+			case 'backup':
+				await backup(connection, env, args[0]);
+				break;
+			case 'restore':
+				await restore(
+					env,
+					args.find((arg) => !arg.startsWith('--')),
+					args.includes('--force')
+				);
+				break;
 		}
 	} finally {
 		await connection.sql.end();
@@ -223,11 +318,13 @@ const COMMANDS = new Set([
 	'owner:show',
 	'owner:reset-password',
 	'owner:disable-2fa',
-	'vault:rotate-key'
+	'vault:rotate-key',
+	'backup',
+	'restore'
 ]);
 
 async function main(): Promise<number> {
-	const [command] = process.argv.slice(2);
+	const [command, ...args] = process.argv.slice(2);
 	if (command === undefined || command === 'help' || command === '--help') {
 		console.log(USAGE);
 		return 0;
@@ -238,7 +335,7 @@ async function main(): Promise<number> {
 	}
 
 	try {
-		await run(command);
+		await run(command, args);
 		return 0;
 	} catch (error) {
 		const expected =
@@ -246,6 +343,7 @@ async function main(): Promise<number> {
 			error instanceof MigrationError ||
 			error instanceof OwnerError ||
 			error instanceof VaultKeyError ||
+			error instanceof BackupError ||
 			error instanceof CancelledError;
 		if (expected) {
 			console.error(error.message);

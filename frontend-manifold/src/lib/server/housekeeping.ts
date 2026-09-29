@@ -1,5 +1,5 @@
-// Periodic cleanup inside the app process: trash purge, audit retention and orphaned files register
-// their tasks here in later phases.
+// Periodic cleanup inside the app process. The tasks (trash purge, audit retention, unreferenced
+// files) are listed in tasks.ts.
 
 const DAY = 24 * 60 * 60 * 1000;
 
