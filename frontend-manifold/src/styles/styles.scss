@@ -1,6 +1,7 @@
 @use './colors' as clr;
 @use './variables' as vars;
 @use './themes' as themes;
+@use './editor';
 
 :root {
 	@include themes.lightTheme;

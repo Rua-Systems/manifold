@@ -1,3 +1,4 @@
+import { notesManifest } from './notes/manifest';
 import { servicesManifest } from './services/manifest';
 import type { ModuleManifest } from './types';
 
@@ -6,6 +7,9 @@ import type { ModuleManifest } from './types';
  * documentation are built from this list; a new module only needs to be added here and in
  * registry.server.ts.
  */
-export const MODULES: readonly ModuleManifest[] = [servicesManifest].sort(
+export const MODULES: readonly ModuleManifest[] = [servicesManifest, notesManifest].sort(
 	(first, second) => first.position - second.position
 );
+
+/** Dependency of the sidebar's `load`, invalidated after writes that change what it lists. */
+export const SIDEBAR_DEPENDENCY = 'app:sidebar';

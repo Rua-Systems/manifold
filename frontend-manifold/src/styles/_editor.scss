@@ -1,0 +1,16 @@
+@use './colors' as clr;
+@use './variables' as vars;
+
+// Bubble menus of the note editor. TipTap moves them to the end of the body, away from the
+// component that declares them, so their container is styled here.
+.editor-bubble {
+	z-index: 40;
+	display: flex;
+	gap: 0.15rem;
+	padding: 0.25rem;
+	background-color: clr.$panelColor;
+	border: 1px solid clr.$borderSubtleColor;
+	border-radius: vars.$radius;
+	box-shadow: 0 10px 30px clr.$shadowColor;
+	backdrop-filter: blur(10px);
+}

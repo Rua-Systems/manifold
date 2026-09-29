@@ -21,6 +21,10 @@
 	--color-scrim-soft: rgba(245, 244, 240, 0.55);
 	--color-scrim: rgba(245, 244, 240, 0.7);
 	--color-scrim-strong: rgba(245, 244, 240, 0.88);
+	--color-code-keyword: #7a4fa3;
+	--color-code-string: #2b7357;
+	--color-code-number: #9a6414;
+	--color-code-title: #2f5f9e;
 }
 
 @mixin darkTheme {
@@ -46,4 +50,8 @@
 	--color-scrim-soft: rgba(7, 9, 13, 0.55);
 	--color-scrim: rgba(7, 9, 13, 0.7);
 	--color-scrim-strong: rgba(7, 9, 13, 0.88);
+	--color-code-keyword: #b391d9;
+	--color-code-string: #5fb88e;
+	--color-code-number: #d6a55a;
+	--color-code-title: #7aa7e0;
 }

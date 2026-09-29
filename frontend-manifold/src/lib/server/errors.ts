@@ -17,3 +17,14 @@ export class NotFoundError extends Error {
 		this.name = 'NotFoundError';
 	}
 }
+
+/** A write was based on an older version than the stored one; `currentVersion` is the stored one. */
+export class ConflictError extends Error {
+	readonly currentVersion: number;
+
+	constructor(currentVersion: number) {
+		super('The record changed since it was loaded.');
+		this.name = 'ConflictError';
+		this.currentVersion = currentVersion;
+	}
+}

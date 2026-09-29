@@ -28,7 +28,8 @@
 	color: clr.$textMutedColor;
 }
 
-@mixin textInput {
+/** A text field without an error state, for fields that are never invalid, such as filters. */
+@mixin inputSurface {
 	width: 100%;
 	padding: 0.7rem 0.85rem;
 	font: inherit;
@@ -54,6 +55,10 @@
 		border-color: clr.$accentColor;
 		background-color: clr.$surfaceHoverColor;
 	}
+}
+
+@mixin textInput {
+	@include inputSurface;
 
 	&[aria-invalid='true'] {
 		border-color: clr.$errorColor;
@@ -193,4 +198,39 @@
 	&:hover {
 		color: clr.$accentColor;
 	}
+}
+
+/** Square icon button of the editor toolbar and its bubble menus. */
+@mixin toolButton {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: vars.$touchTarget;
+	height: vars.$touchTarget;
+	padding: 0;
+	color: clr.$textSecondaryColor;
+	background-color: transparent;
+	border: 0;
+	border-radius: vars.$radius;
+	cursor: pointer;
+	transition:
+		color 160ms ease,
+		background-color 160ms ease;
+
+	&:hover:not(:disabled) {
+		color: clr.$textPrimaryColor;
+		background-color: clr.$surfaceHoverColor;
+	}
+
+	&:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+}
+
+/** A tool button whose command is on, such as bold inside bold text. */
+@mixin toolButtonActive {
+	color: clr.$accentColor;
+	background-color: clr.$accentWashColor;
 }

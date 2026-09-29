@@ -1,0 +1,415 @@
+import { m } from '$lib/paraglide/messages.js';
+import type { Actor } from '$lib/server/actor';
+import { getDb } from '$lib/server/db';
+import { file } from '$lib/server/db/schema';
+import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
+import { isUuid } from '$lib/utils/uuid';
+import { fieldErrors } from '$lib/utils/validation';
+import { and, desc, eq, ilike, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
+import { emptyNoteContent, fileIdsInContent, type NoteContent } from './content';
+import { contentToText, validateNoteContent } from './content.server';
+import { note, noteFile, noteRevision } from './schema.server';
+import { noteTitleSchema } from './schemas';
+import type { NoteDetail, NoteRevisionSummary, NoteSummary } from './types';
+
+export const NOTES_MODULE = 'notes';
+
+const EXCERPT_LENGTH = 180;
+const REVISION_WINDOW_MS = 5 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+type Transaction = Parameters<Parameters<ReturnType<typeof getDb>['transaction']>[0]>[0];
+
+export interface NoteInput {
+	title?: string;
+	content?: unknown;
+}
+
+export interface ListNotesOptions {
+	query?: string;
+	trashed?: boolean;
+	limit?: number;
+}
+
+function excerptOf(text: string): string {
+	const flat = text.replace(/\s+/g, ' ').trim();
+	if (flat.length <= EXCERPT_LENGTH) {
+		return flat;
+	}
+	return `${flat.slice(0, EXCERPT_LENGTH).trimEnd()}…`;
+}
+
+function parseTitle(title: string | undefined, fallback: string): string {
+	if (title === undefined) {
+		return fallback;
+	}
+	const parsed = noteTitleSchema.safeParse(title);
+	if (!parsed.success) {
+		throw new ValidationError(fieldErrors(parsed.error));
+	}
+	return parsed.data;
+}
+
+function parseContent(content: unknown, fallback: NoteContent): NoteContent {
+	if (content === undefined) {
+		return fallback;
+	}
+	return validateNoteContent(content);
+}
+
+const summaryColumns = {
+	id: note.id,
+	title: note.title,
+	// Enough text for the excerpt without reading whole documents.
+	contentText: sql<string>`left(${note.contentText}, ${EXCERPT_LENGTH * 4})`,
+	updatedAt: note.updatedAt,
+	deletedAt: note.deletedAt
+};
+
+function toSummary(row: {
+	id: string;
+	title: string;
+	contentText: string;
+	updatedAt: Date;
+	deletedAt: Date | null;
+}): NoteSummary {
+	return {
+		id: row.id,
+		title: row.title,
+		excerpt: excerptOf(row.contentText),
+		updatedAt: row.updatedAt,
+		deletedAt: row.deletedAt
+	};
+}
+
+export async function listNotes(options: ListNotesOptions = {}): Promise<NoteSummary[]> {
+	const conditions = [isNull(note.deletedAt)];
+	if (options.trashed === true) {
+		conditions[0] = isNotNull(note.deletedAt);
+	}
+	const query = options.query?.trim() ?? '';
+	if (query.length > 0) {
+		const pattern = `%${query.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+		const match = or(ilike(note.title, pattern), ilike(note.contentText, pattern));
+		if (match !== undefined) {
+			conditions.push(match);
+		}
+	}
+
+	const rows = await getDb()
+		.select(summaryColumns)
+		.from(note)
+		.where(and(...conditions))
+		.orderBy(options.trashed === true ? desc(note.deletedAt) : desc(note.updatedAt))
+		.limit(options.limit ?? 1000);
+	return rows.map(toSummary);
+}
+
+async function findNote(id: string, includeTrashed: boolean): Promise<NoteDetail> {
+	if (!isUuid(id)) {
+		throw new NotFoundError('Note');
+	}
+	const [row] = await getDb().select().from(note).where(eq(note.id, id)).limit(1);
+	if (row === undefined || (row.deletedAt !== null && !includeTrashed)) {
+		throw new NotFoundError('Note');
+	}
+	return {
+		id: row.id,
+		title: row.title,
+		content: row.content,
+		version: row.version,
+		createdAt: row.createdAt,
+		updatedAt: row.updatedAt,
+		deletedAt: row.deletedAt
+	};
+}
+
+export async function getNote(id: string, options: { includeTrashed?: boolean } = {}) {
+	return findNote(id, options.includeTrashed ?? false);
+}
+
+/**
+ * Keeps `note_file` equal to the files the note shows: those in the new content, plus those an
+ * older revision still shows, so restoring that revision brings its images back. Ids with no file
+ * row are ignored. Runs after the revision is recorded.
+ */
+async function syncFiles(tx: Transaction, noteId: string, content: NoteContent): Promise<void> {
+	const referenced = fileIdsInContent(content);
+	const linked = await tx
+		.select({ fileId: noteFile.fileId })
+		.from(noteFile)
+		.where(eq(noteFile.noteId, noteId));
+
+	for (const { fileId } of linked) {
+		if (referenced.includes(fileId)) {
+			continue;
+		}
+		const [inRevision] = await tx
+			.select({ id: noteRevision.id })
+			.from(noteRevision)
+			.where(
+				and(
+					eq(noteRevision.noteId, noteId),
+					sql`${noteRevision.content}::text ilike ${`%/files/${fileId}%`}`
+				)
+			)
+			.limit(1);
+		if (inRevision === undefined) {
+			await tx
+				.delete(noteFile)
+				.where(and(eq(noteFile.noteId, noteId), eq(noteFile.fileId, fileId)));
+		}
+	}
+
+	if (referenced.length === 0) {
+		return;
+	}
+	const existing = await tx
+		.select({ id: file.id })
+		.from(file)
+		.where(inArray(file.id, referenced));
+	if (existing.length > 0) {
+		await tx
+			.insert(noteFile)
+			.values(existing.map((row) => ({ noteId, fileId: row.id })))
+			.onConflictDoNothing();
+	}
+}
+
+/**
+ * Records the note state after a write. The owner's edits within five minutes of the previous
+ * revision refresh that revision, so every editing session keeps its last state without one row
+ * per autosave. Another actor, an older revision, or a forced revision (API, MCP, restores) adds
+ * a new one.
+ */
+async function recordRevision(
+	tx: Transaction,
+	state: { noteId: string; version: number; title: string; content: NoteContent },
+	actor: Actor,
+	force: boolean,
+	now: Date
+): Promise<void> {
+	const [latest] = await tx
+		.select()
+		.from(noteRevision)
+		.where(eq(noteRevision.noteId, state.noteId))
+		.orderBy(desc(noteRevision.version))
+		.limit(1);
+
+	const sameActor =
+		latest !== undefined && latest.actorType === actor.type && latest.actorId === actor.id;
+	const recent =
+		latest !== undefined && now.getTime() - latest.createdAt.getTime() < REVISION_WINDOW_MS;
+
+	if (!force && actor.type === 'owner' && sameActor && recent) {
+		await tx
+			.update(noteRevision)
+			.set({
+				version: state.version,
+				title: state.title,
+				content: state.content,
+				updatedAt: now
+			})
+			.where(eq(noteRevision.id, latest.id));
+		return;
+	}
+
+	let actorType: 'owner' | 'api_key' | 'system' = 'system';
+	if (actor.type === 'owner' || actor.type === 'api_key') {
+		actorType = actor.type;
+	}
+	await tx.insert(noteRevision).values({
+		noteId: state.noteId,
+		version: state.version,
+		title: state.title,
+		content: state.content,
+		actorType,
+		actorId: actor.id,
+		createdAt: now,
+		updatedAt: now
+	});
+}
+
+export interface WriteOptions {
+	/** Always start a new revision, as API and MCP writes and restores do. */
+	forceRevision?: boolean;
+	now?: Date;
+}
+
+function forcedFor(actor: Actor, options: WriteOptions): boolean {
+	return options.forceRevision === true || actor.type !== 'owner';
+}
+
+export async function createNote(
+	input: NoteInput,
+	actor: Actor,
+	options: WriteOptions = {}
+): Promise<NoteDetail> {
+	const title = parseTitle(input.title, '');
+	const content = parseContent(input.content, emptyNoteContent());
+	const now = options.now ?? new Date();
+
+	const id = await getDb().transaction(async (tx) => {
+		const [created] = await tx
+			.insert(note)
+			.values({
+				title,
+				content,
+				contentText: contentToText(content),
+				version: 1,
+				createdAt: now,
+				updatedAt: now
+			})
+			.returning({ id: note.id });
+		await recordRevision(
+			tx,
+			{ noteId: created.id, version: 1, title, content },
+			actor,
+			forcedFor(actor, options),
+			now
+		);
+		await syncFiles(tx, created.id, content);
+		return created.id;
+	});
+	return findNote(id, false);
+}
+
+export interface NoteUpdate extends NoteInput {
+	/** The version the edit was based on; a different stored version is a conflict. */
+	baseVersion: number;
+}
+
+export async function updateNote(
+	id: string,
+	input: NoteUpdate,
+	actor: Actor,
+	options: WriteOptions = {}
+): Promise<NoteDetail> {
+	if (!isUuid(id)) {
+		throw new NotFoundError('Note');
+	}
+	const now = options.now ?? new Date();
+
+	await getDb().transaction(async (tx) => {
+		const [current] = await tx
+			.select()
+			.from(note)
+			.where(and(eq(note.id, id), isNull(note.deletedAt)))
+			.for('update');
+		if (current === undefined) {
+			throw new NotFoundError('Note');
+		}
+		if (current.version !== input.baseVersion) {
+			throw new ConflictError(current.version);
+		}
+
+		const title = parseTitle(input.title, current.title);
+		const content = parseContent(input.content, current.content);
+		const version = current.version + 1;
+
+		await tx
+			.update(note)
+			.set({ title, content, contentText: contentToText(content), version, updatedAt: now })
+			.where(eq(note.id, id));
+		await recordRevision(
+			tx,
+			{ noteId: id, version, title, content },
+			actor,
+			forcedFor(actor, options),
+			now
+		);
+		await syncFiles(tx, id, content);
+	});
+	return findNote(id, false);
+}
+
+/** Moves a note to the trash; its features and files stay until the trash is emptied. */
+export async function trashNote(id: string, now = new Date()): Promise<void> {
+	const found = await findNote(id, false);
+	await getDb()
+		.update(note)
+		.set({ deletedAt: now })
+		.where(and(eq(note.id, found.id), isNull(note.deletedAt)));
+}
+
+export async function restoreNote(id: string): Promise<NoteDetail> {
+	const found = await findNote(id, true);
+	if (found.deletedAt === null) {
+		return found;
+	}
+	await getDb().update(note).set({ deletedAt: null }).where(eq(note.id, found.id));
+	return findNote(found.id, false);
+}
+
+/** Deletes a trashed note for good, with its revisions; its files become unreferenced. */
+export async function deleteNotePermanently(id: string): Promise<void> {
+	const found = await findNote(id, true);
+	if (found.deletedAt === null) {
+		throw new ValidationError({ note: m.notes_error_not_trashed() });
+	}
+	await getDb().delete(note).where(eq(note.id, found.id));
+}
+
+export async function listRevisions(noteId: string): Promise<NoteRevisionSummary[]> {
+	const found = await findNote(noteId, true);
+	return getDb()
+		.select({
+			version: noteRevision.version,
+			title: noteRevision.title,
+			actorType: noteRevision.actorType,
+			actorId: noteRevision.actorId,
+			createdAt: noteRevision.createdAt,
+			updatedAt: noteRevision.updatedAt
+		})
+		.from(noteRevision)
+		.where(eq(noteRevision.noteId, found.id))
+		.orderBy(desc(noteRevision.version));
+}
+
+export async function getRevision(noteId: string, version: number) {
+	const found = await findNote(noteId, true);
+	const [row] = await getDb()
+		.select()
+		.from(noteRevision)
+		.where(and(eq(noteRevision.noteId, found.id), eq(noteRevision.version, version)))
+		.limit(1);
+	if (row === undefined) {
+		throw new NotFoundError('Revision');
+	}
+	return row;
+}
+
+/** Writes a revision's title and content as a new version on top of the current one. */
+export async function restoreRevision(
+	noteId: string,
+	version: number,
+	actor: Actor,
+	options: WriteOptions = {}
+): Promise<NoteDetail> {
+	const revision = await getRevision(noteId, version);
+	const current = await findNote(noteId, false);
+	return updateNote(
+		noteId,
+		{ title: revision.title, content: revision.content, baseVersion: current.version },
+		actor,
+		{ ...options, forceRevision: true }
+	);
+}
+
+/** Deletes notes that have been in the trash longer than the retention period. */
+export async function purgeTrashedNotes(now: Date, retentionDays: number): Promise<number> {
+	const cutoff = new Date(now.getTime() - retentionDays * DAY_MS);
+	const deleted = await getDb()
+		.delete(note)
+		.where(and(isNotNull(note.deletedAt), lt(note.deletedAt, cutoff)))
+		.returning({ id: note.id });
+	return deleted.length;
+}
+
+export async function countNotes(): Promise<number> {
+	const [row] = await getDb()
+		.select({ total: sql<number>`count(*)::int` })
+		.from(note)
+		.where(isNull(note.deletedAt));
+	return row.total;
+}

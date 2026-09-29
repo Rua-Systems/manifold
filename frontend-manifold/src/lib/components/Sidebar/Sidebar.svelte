@@ -42,8 +42,29 @@
 		return !sidebar.expanded && !window.matchMedia(MOBILE_QUERY).matches;
 	}
 
+	let filters = $state<Record<string, string>>({});
+
 	function groupItems(module: ModuleManifest): SidebarItem[] {
 		return data[module.id]?.items ?? [];
+	}
+
+	function isVisible(module: ModuleManifest, item: SidebarItem): boolean {
+		const filter = (filters[module.id] ?? '').trim().toLocaleLowerCase();
+		return (
+			filter.length === 0 ||
+			item.filterable !== true ||
+			item.label.toLocaleLowerCase().includes(filter)
+		);
+	}
+
+	function filterLabel(module: ModuleManifest): string | undefined {
+		return data[module.id]?.filterLabel;
+	}
+
+	/** The filter field sits right before the first filterable item of the group. */
+	function isFirstFilterable(module: ModuleManifest, item: SidebarItem): boolean {
+		const first = (data[module.id]?.items ?? []).find((entry) => entry.filterable === true);
+		return first?.id === item.id;
 	}
 
 	function isInModule(module: ModuleManifest): boolean {
@@ -164,29 +185,44 @@
 					{#if module.sidebar === 'group' && open}
 						<ul class="children" id="sidebarGroup-{module.id}">
 							{#each groupItems(module) as item (item.id)}
-								<li>
-									{#if item.link.kind === 'external'}
-										<a
-											class="child"
-											href={item.link.url}
-											target="_blank"
-											rel="external noopener noreferrer"
-										>
-											{@render itemIcon(item)}
-											<span class="child-label">{item.label}</span>
-										</a>
-									{:else}
-										<a
-											class="child"
-											class:active={currentPath === item.link.path}
-											href={localizedHref(item.link.path)}
-											aria-current={currentMarker(page.url, item.link.path)}
-										>
-											{@render itemIcon(item)}
-											<span class="child-label">{item.label}</span>
-										</a>
-									{/if}
-								</li>
+								{#if filterLabel(module) !== undefined && isFirstFilterable(module, item)}
+									<li class="filter">
+										<input
+											type="search"
+											aria-label={filterLabel(module)}
+											placeholder={filterLabel(module)}
+											bind:value={filters[module.id]}
+										/>
+									</li>
+								{/if}
+								{#if isVisible(module, item)}
+									<li>
+										{#if item.link.kind === 'external'}
+											<a
+												class="child"
+												href={item.link.url}
+												target="_blank"
+												rel="external noopener noreferrer"
+											>
+												{@render itemIcon(item)}
+												<span class="child-label">{item.label}</span>
+											</a>
+										{:else}
+											<a
+												class="child"
+												class:active={currentPath === item.link.path}
+												href={localizedHref(item.link.path)}
+												aria-current={currentMarker(
+													page.url,
+													item.link.path
+												)}
+											>
+												{@render itemIcon(item)}
+												<span class="child-label">{item.label}</span>
+											</a>
+										{/if}
+									</li>
+								{/if}
 							{/each}
 						</ul>
 					{/if}
@@ -457,6 +493,24 @@
 			min-width: 0;
 			overflow: hidden;
 			text-overflow: ellipsis;
+		}
+	}
+
+	.filter > input {
+		width: 100%;
+		min-height: vars.$touchTarget;
+		margin: 0.2rem 0;
+		padding: 0 0.7rem;
+		font: inherit;
+		font-size: 0.78rem;
+		color: clr.$textPrimaryColor;
+		background-color: clr.$backgroundColor;
+		border: 1px solid clr.$borderSubtleColor;
+		border-radius: vars.$radius;
+
+		&:focus {
+			outline: none;
+			border-color: clr.$accentColor;
 		}
 	}
 

@@ -33,10 +33,14 @@ export interface SidebarItem {
 	label: string;
 	link: SidebarLink;
 	icon?: SidebarIcon;
+	/** Hidden by the group's filter field when its label does not match. */
+	filterable?: boolean;
 }
 
 export interface SidebarGroup {
 	items: SidebarItem[];
+	/** Shows a filter field above the first filterable item, with this accessible label. */
+	filterLabel?: string;
 }
 
 /** Sidebar group contents by module id, loaded on the server for every protected page. */
