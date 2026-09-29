@@ -1,6 +1,8 @@
 import { connect, type Connection } from '$lib/server/db';
 import { defaultMigrationsDirectory, MigrationError, runMigrations } from '$lib/server/db/migrate';
 import { EnvError, parseEnv } from '$lib/server/env';
+import { parseVaultKey, VaultKeyError } from '$lib/modules/vault/crypto.server';
+import { rotateVaultKey } from '$lib/modules/vault/rotation.server';
 import { recordAudit } from '$lib/server/audit';
 import {
 	disableOwnerTwoFactor,
@@ -19,7 +21,9 @@ Commands:
   migrate                 Apply pending database migrations.
   owner:show              Print the owner's username and email.
   owner:reset-password    Set a new owner password and sign out every session.
-  owner:disable-2fa       Turn two factor authentication off and sign out every session.`;
+  owner:disable-2fa       Turn two factor authentication off and sign out every session.
+  vault:rotate-key        Re-encrypt the vault with a new ENCRYPTION_KEY, taken from
+                          NEW_ENCRYPTION_KEY or asked for.`;
 
 class CancelledError extends Error {}
 
@@ -158,6 +162,35 @@ async function disableTwoFactor(connection: Connection): Promise<void> {
 	console.log('Every session was signed out.');
 }
 
+async function rotateKey(connection: Connection, currentKey: string): Promise<void> {
+	const oldKey = parseVaultKey(currentKey);
+	const fromEnvironment = process.env.NEW_ENCRYPTION_KEY?.trim() ?? '';
+	const newKey = parseVaultKey(
+		fromEnvironment.length > 0
+			? fromEnvironment
+			: await promptHidden('New key (32 random bytes, base64): ')
+	);
+	if (newKey.equals(oldKey)) {
+		throw new VaultKeyError('The new key is the current one. Nothing was changed.');
+	}
+
+	const { count, keyVersion } = await rotateVaultKey(connection.db, oldKey, newKey);
+	await recordAudit(
+		{
+			actor: CLI_ACTOR,
+			action: 'vault.rotate_key',
+			metadata: { count, key_version: keyVersion }
+		},
+		connection.db
+	);
+	console.log(`Re-encrypted ${count} value(s) with the new key (key version ${keyVersion}).`);
+	console.log('Now:');
+	console.log('  1. Set ENCRYPTION_KEY to the new key where the app reads it (.env or Coolify).');
+	console.log('  2. Restart the app.');
+	console.log('Until the restart the running app holds the old key and cannot read the vault.');
+	console.log('Keep the old key until the restart is done, then discard it.');
+}
+
 async function run(command: string): Promise<void> {
 	const env = parseEnv(process.env, { dev: process.env.NODE_ENV !== 'production' });
 	const connection = connect(env.DATABASE_URL, { max: 2 });
@@ -176,13 +209,22 @@ async function run(command: string): Promise<void> {
 			case 'owner:disable-2fa':
 				await disableTwoFactor(connection);
 				break;
+			case 'vault:rotate-key':
+				await rotateKey(connection, env.ENCRYPTION_KEY);
+				break;
 		}
 	} finally {
 		await connection.sql.end();
 	}
 }
 
-const COMMANDS = new Set(['migrate', 'owner:show', 'owner:reset-password', 'owner:disable-2fa']);
+const COMMANDS = new Set([
+	'migrate',
+	'owner:show',
+	'owner:reset-password',
+	'owner:disable-2fa',
+	'vault:rotate-key'
+]);
 
 async function main(): Promise<number> {
 	const [command] = process.argv.slice(2);
@@ -203,6 +245,7 @@ async function main(): Promise<number> {
 			error instanceof EnvError ||
 			error instanceof MigrationError ||
 			error instanceof OwnerError ||
+			error instanceof VaultKeyError ||
 			error instanceof CancelledError;
 		if (expected) {
 			console.error(error.message);

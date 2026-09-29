@@ -122,3 +122,16 @@ Choices the Batch 01 specification left open, with the reason for each.
 - **Map features created through the API may bring their note along** as `note` (title and content or Markdown), created in the same transaction.
 - **SvelteKit's own cross-site form check is turned off and run in `hooks.server.ts` instead,** for every path except `/api/`. SvelteKit refuses any multipart post without a matching `Origin` header, which API clients uploading files do not send, and its check cannot leave out a path. The API authenticates by Bearer key only, never by cookie, so a cross-site form cannot act as the owner there. `csrf.checkOrigin` is deprecated and makes the build print a warning; `csrf.trustedOrigins` cannot express "no Origin".
 - **The request body limit answers in the API's error format under `/api/`** and as plain text elsewhere.
+
+### Phase 8: Vault
+
+- **Values are sealed with AES-256-GCM** under `ENCRYPTION_KEY`, with a random 12 byte IV per value and the row id as additional authenticated data, so a ciphertext copied onto another row does not open. The id is chosen before the insert for that reason.
+- **`key_version` is the number of rotations a value went through.** New values take the highest version in the table; the rotation command raises every row to the next one. The app itself only ever holds the current key.
+- **Rotation runs in one transaction and changes nothing if the current key fails to open any value.** It takes the new key from `NEW_ENCRYPTION_KEY` or a hidden prompt, so it works both in scripts and by hand, never prints a key, and does not touch `updated_at`, since the values did not change.
+- **The crypto and rotation code has no app dependencies** (`crypto.server.ts`, `rotation.server.ts`), so the CLI bundle can use it.
+- **Revealing and copying post the same form action,** which answers the value only after a step-up. The page keeps a revealed value in memory for 30 seconds and never in the address, storage or a cookie. A copy goes straight to the clipboard. Both are audited (`vault.reveal`, `vault.copy`), as are create, update, value change (`vault.update_value`) and delete, and `last_revealed_at` is set.
+- **Adding a secret needs no step-up;** changing a value does, while changing only its name, address or notes does not. The specification asks for step-up on revealing and editing values; adding one reveals nothing.
+- **Without JavaScript, "Reveal" shows the value on the returned page** and the step-up page is linked when it is due.
+- **Values are limited to 10,000 characters,** names to 100 and notes to 500.
+- **The vault is a sidebar link, not a group,** after Notes.
+- **The API has two routes, both reads, both metadata only.** A test checks that no vault route writes and that responses carry no value or ciphertext.
