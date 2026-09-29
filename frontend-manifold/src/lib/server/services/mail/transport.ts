@@ -1,13 +1,8 @@
 import { dev } from '$app/environment';
 import { createTransport, type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
-import { getEnv } from '../env';
-
-export interface MailMessage {
-	to: string;
-	subject: string;
-	text: string;
-}
+import { getEnv } from '../../env';
+import type { RenderedMail } from './layout';
 
 // One pooled SMTP connection shared by every request; it carries no per-user data.
 let transporter: Transporter | undefined;
@@ -43,11 +38,12 @@ export function senderAddress(mailFrom: string | undefined, organizationName: st
 	return `"${organizationName.replaceAll('"', '')}" <${mailFrom}>`;
 }
 
-export async function sendMail(message: MailMessage): Promise<void> {
+/** Sends a rendered mail. Development without SMTP prints the text part to the console instead. */
+export async function deliver(to: string, mail: RenderedMail): Promise<void> {
 	const transport = getTransporter();
 	if (transport === undefined) {
 		if (dev) {
-			console.info(`[mail] To: ${message.to}\n[mail] ${message.subject}\n${message.text}`);
+			console.info(`[mail] To: ${to}\n[mail] ${mail.subject}\n${mail.text}`);
 			return;
 		}
 		throw new Error('SMTP_HOST is not set, so mail cannot be sent.');
@@ -56,6 +52,9 @@ export async function sendMail(message: MailMessage): Promise<void> {
 	const env = getEnv();
 	await transport.sendMail({
 		from: senderAddress(env.MAIL_FROM, env.ORGANIZATION_NAME),
-		...message
+		to,
+		subject: mail.subject,
+		text: mail.text,
+		html: mail.html
 	});
 }

@@ -1,5 +1,5 @@
 import { getRequestEvent } from '$app/server';
-import { m } from '$lib/paraglide/messages.js';
+import { getLocale } from '$lib/paraglide/runtime.js';
 import {
 	CODE_LENGTH,
 	PASSWORD_MAX_LENGTH,
@@ -17,7 +17,8 @@ import { count } from 'drizzle-orm';
 import { getDb } from './db';
 import { user } from './db/schema';
 import { getEnv } from './env';
-import { sendMail, type MailMessage } from './services/mail';
+import { sendMailInBackground, type MailContent, type MailContext } from './services/mail';
+import { passwordResetCodeMail, signInCodeMail } from './services/mail/templates';
 
 const OTP_EXPIRES_IN_SECONDS = 60 * 5;
 
@@ -26,21 +27,13 @@ async function hasAnyUser(): Promise<boolean> {
 	return total > 0;
 }
 
-function otpMail(email: string, otp: string, type: string): MailMessage {
-	const minutes = OTP_EXPIRES_IN_SECONDS / 60;
+function otpMail(code: string, type: string): (context: MailContext) => MailContent {
+	const input = { code, minutes: OTP_EXPIRES_IN_SECONDS / 60 };
 
 	if (type === 'forget-password') {
-		return {
-			to: email,
-			subject: m.mail_reset_subject(),
-			text: `${m.mail_reset_body({ otp, minutes })}\n\n${m.mail_ignore()}`
-		};
+		return (context) => passwordResetCodeMail(input, context);
 	}
-	return {
-		to: email,
-		subject: m.mail_sign_in_subject(),
-		text: `${m.mail_sign_in_body({ otp, minutes })}\n\n${m.mail_ignore()}`
-	};
+	return (context) => signInCodeMail(input, context);
 }
 
 function createAuth() {
@@ -83,9 +76,7 @@ function createAuth() {
 				sendVerificationOTP: async ({ email, otp, type }) => {
 					// Not awaited, as Better Auth advises, so response timing does not reveal whether
 					// the address belongs to the owner.
-					sendMail(otpMail(email, otp, type)).catch((error: unknown) => {
-						console.error('Sending the verification code failed.', error);
-					});
+					sendMailInBackground(email, getLocale(), otpMail(otp, type));
 				}
 			}),
 			// Must stay last: it copies the cookies of every auth.api call onto the SvelteKit

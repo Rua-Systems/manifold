@@ -3,6 +3,7 @@ import { emailChangeSchema, passwordChangeSchema, profileSchema } from '$lib/sch
 import { changeEmail } from '$lib/server/account';
 import { getAuth } from '$lib/server/auth';
 import { requireUser } from '$lib/server/guard';
+import { notePasswordChanged } from '$lib/server/notices';
 import type { SettingsForm, SettingsFormState } from '$lib/types/settings';
 import type { FieldErrors } from '$lib/types/validation';
 import { fieldErrors, textValue } from '$lib/utils/validation';
@@ -75,8 +76,9 @@ export const actions: Actions = {
 		return formState('email', true, m.settings_email_saved());
 	},
 
-	password: async ({ request, locals }) => {
-		requireUser(locals);
+	password: async (event) => {
+		const { request, locals } = event;
+		const { user } = requireUser(locals);
 		const data = await request.formData();
 		const parsed = passwordChangeSchema.safeParse({
 			currentPassword: textValue(data, 'currentPassword'),
@@ -110,6 +112,7 @@ export const actions: Actions = {
 			}
 			throw cause;
 		}
+		notePasswordChanged(event, user.email);
 		return formState('password', true, m.settings_password_saved());
 	}
 };

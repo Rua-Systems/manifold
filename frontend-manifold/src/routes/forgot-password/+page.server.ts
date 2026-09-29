@@ -3,6 +3,7 @@ import { localizeHref } from '$lib/paraglide/runtime.js';
 import { codeRequestSchema, passwordResetSchema } from '$lib/schemas/auth';
 import { getAuth } from '$lib/server/auth';
 import { emailEnabled } from '$lib/server/features';
+import { notePasswordChanged } from '$lib/server/notices';
 import { isRateLimited } from '$lib/server/rate-limit';
 import type { ResetFormState, ResetStage } from '$lib/types/auth';
 import type { FieldErrors } from '$lib/types/validation';
@@ -100,6 +101,7 @@ export const actions: Actions = {
 			}
 			throw cause;
 		}
+		notePasswordChanged(event, parsed.data.email);
 		redirect(303, localizeHref('/login'));
 	}
 };

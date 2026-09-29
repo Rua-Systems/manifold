@@ -47,3 +47,9 @@ test('the inline theme script runs under the content security policy', async ({ 
 	await expect(page.locator('html')).toHaveAttribute('data-theme', /^(light|dark)$/);
 	expect(violations).toEqual([]);
 });
+
+test('the mail preview does not exist outside development', async ({ request }) => {
+	const response = await request.get('/dev/mail/sign-in-code');
+
+	expect(response.status()).toBe(404);
+});

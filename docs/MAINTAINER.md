@@ -27,3 +27,11 @@ Choices the Batch 01 specification left open, with the reason for each.
 - **End to end tests run the production build (`node build`)**, not `vite preview`, so they cover adapter-node. Each test sends its own random `X-Forwarded-For` address (`ADDRESS_HEADER` and `XFF_DEPTH` are set for the test server), which keeps the sign in rate limiter from carrying over between tests. The tests run one at a time because they share one database and one owner.
 - **Integration tests that create tables work in a schema of their own** (`test_<random>`, with `public` still on the search path for the extensions), so they never disturb the seeded schema other tests read.
 - **Migration checksums ignore line endings, and the repository forces LF** (`.gitattributes`). A Windows checkout with CRLF and the Linux image would otherwise disagree about files that did not change, and the app would refuse to start.
+
+### Phase 2: Email templates
+
+- **A browser counts as new when its user agent hash is not in `known_user_agent`.** Sessions disappear on sign out and audit events expire, so neither can tell whether a browser was seen before. The table keeps only a SHA-256 hash of the user agent, per user.
+- **Codes and notices are sent without awaiting the SMTP server.** Better Auth advises this for codes, so response timing reveals nothing; notices must never delay or fail a sign in or a password change. Failures are logged without the mail content.
+- **Code mails end with the ignore notice, notices with the reason they were sent.** "If you did not ask for this code" does not fit a notice about a password change.
+- **Mail times are shown in UTC with the zone name.** The server does not know the owner's time zone, and an unmarked local time would mislead.
+- **The development preview is a `+server.ts` route** that returns one HTML page per template with both locales, each as an `srcdoc` iframe next to its text part. It answers `404` outside development.
