@@ -2,13 +2,14 @@ import { m } from '$lib/paraglide/messages.js';
 import { localizeHref } from '$lib/paraglide/runtime.js';
 import { codeRequestSchema, passwordResetSchema } from '$lib/schemas/auth';
 import { getAuth } from '$lib/server/auth';
+import { emailEnabled } from '$lib/server/features';
 import { isRateLimited } from '$lib/server/rate-limit';
 import type { ResetFormState, ResetStage } from '$lib/types/auth';
 import type { FieldErrors } from '$lib/types/validation';
 import { fieldErrors, textValue } from '$lib/utils/validation';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 function resetState(
 	stage: ResetStage,
@@ -26,8 +27,20 @@ function parseStage(value: string): ResetStage {
 	return 'request';
 }
 
+// The reset works through emailed codes, so without mail the page does not exist.
+function requireEmail(): void {
+	if (!emailEnabled()) {
+		error(404);
+	}
+}
+
+export const load: PageServerLoad = () => {
+	requireEmail();
+};
+
 export const actions: Actions = {
 	requestCode: async (event) => {
+		requireEmail();
 		const data = await event.request.formData();
 		const email = textValue(data, 'email');
 		const stage = parseStage(textValue(data, 'stage'));
@@ -45,16 +58,17 @@ export const actions: Actions = {
 			await getAuth().api.requestPasswordResetEmailOTP({
 				body: { email: parsed.data.email }
 			});
-		} catch (error) {
-			if (isAPIError(error)) {
+		} catch (cause) {
+			if (isAPIError(cause)) {
 				return fail(400, resetState(stage, email, m.reset_error_send()));
 			}
-			throw error;
+			throw cause;
 		}
 		return resetState('verify', parsed.data.email);
 	},
 
 	reset: async (event) => {
+		requireEmail();
 		const data = await event.request.formData();
 		const email = textValue(data, 'email');
 
@@ -80,11 +94,11 @@ export const actions: Actions = {
 					password: parsed.data.password
 				}
 			});
-		} catch (error) {
-			if (isAPIError(error)) {
+		} catch (cause) {
+			if (isAPIError(cause)) {
 				return fail(400, resetState('verify', email, m.reset_error_code()));
 			}
-			throw error;
+			throw cause;
 		}
 		redirect(303, localizeHref('/login'));
 	}

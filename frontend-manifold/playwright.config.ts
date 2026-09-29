@@ -1,22 +1,36 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
+import { testEnvironment } from './tests/support/environment.ts';
+import { testDatabaseUrl } from './tests/support/test-database.ts';
 
 const PORT = 4173;
+const ORIGIN = `http://localhost:${PORT}`;
 
 export default defineConfig({
 	testDir: 'tests/e2e',
+	// One shared database and one owner account: tests run one after another.
+	workers: 1,
+	fullyParallel: false,
 	use: {
-		baseURL: `http://localhost:${PORT}`
+		baseURL: ORIGIN
 	},
+	projects: [
+		{ name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+		{ name: 'mobile', use: { ...devices['Pixel 7'] } }
+	],
 	webServer: {
-		command: 'npm run build && npm run preview',
+		// The production server (adapter-node) against a freshly reset manifold_test. It migrates and
+		// creates the test owner on start, like a real first start.
+		command: 'npm run build && node tests/e2e/reset-database.ts && node build',
 		port: PORT,
-		// The e2e flows never sign in, so these placeholders only have to let the server start.
-		// The database address points nowhere on purpose: tests must never touch a real database.
+		timeout: 240_000,
 		env: {
-			ORIGIN: `http://localhost:${PORT}`,
-			DATABASE_URL: 'postgres://e2e:e2e@127.0.0.1:1/manifold_e2e',
-			BETTER_AUTH_SECRET: 'e2e-only-secret-that-is-long-enough-to-pass',
-			OWNER_EMAIL: 'owner@example.test'
+			...testEnvironment(testDatabaseUrl(), ORIGIN),
+			NODE_ENV: 'production',
+			PORT: String(PORT),
+			// Every test sends its own X-Forwarded-For address, so the sign in rate limiter counts
+			// each test separately, as it would count separate visitors.
+			ADDRESS_HEADER: 'x-forwarded-for',
+			XFF_DEPTH: '1'
 		}
 	}
 });

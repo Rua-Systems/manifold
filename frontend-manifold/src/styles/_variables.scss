@@ -4,3 +4,9 @@ $radiusLarge: 8px;
 $contentWidth: 992px;
 
 $baseFont: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+// Below this width the app switches to its phone layout: drawer navigation, stacked tables, sheets.
+$mobileMax: 767.98px;
+
+// Smallest comfortable touch target.
+$touchTarget: 2.75rem;

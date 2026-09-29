@@ -2,10 +2,10 @@
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
-	import HamburgerIcon from '$lib/components/icons/HamburgerIcon.svelte';
+	import UserIcon from '$lib/components/icons/UserIcon.svelte';
 	import LocaleSwitch from '$lib/components/LocaleSwitch/LocaleSwitch.svelte';
 	import ThemeSwitch from '$lib/components/ThemeSwitch/ThemeSwitch.svelte';
-	import { ACCOUNT_LINKS, GUEST_LINKS, PUBLIC_LINKS } from '$lib/config/navigation';
+	import { ACCOUNT_LINKS, GUEST_LINKS } from '$lib/config/navigation';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { NavigationLink } from '$lib/types/navigation';
 	import { currentMarker, localizedHref } from '$lib/utils/navigation';
@@ -26,16 +26,9 @@
 		return links.map((link) => ({ ...link, current: currentMarker(page.url, link.href) }));
 	}
 
-	const primaryItems: NavigationItem[] = $derived.by(() => {
+	const items: NavigationItem[] = $derived.by(() => {
 		if (user === null) {
-			return decorate([...PUBLIC_LINKS, ...GUEST_LINKS]);
-		}
-		return decorate(PUBLIC_LINKS);
-	});
-
-	const accountItems: NavigationItem[] = $derived.by(() => {
-		if (user === null) {
-			return [];
+			return decorate(GUEST_LINKS);
 		}
 		return decorate(ACCOUNT_LINKS);
 	});
@@ -108,7 +101,7 @@
 	aria-controls="mainNavigation"
 	onclick={toggle}
 >
-	<HamburgerIcon />
+	<UserIcon />
 </button>
 {#if isOpen}
 	<button
@@ -130,8 +123,14 @@
 				<CloseIcon />
 			</button>
 		</div>
+		{#if user !== null}
+			<div class="account">
+				<p class="name">{user.name}</p>
+				<p class="identity">{user.username ?? user.email}</p>
+			</div>
+		{/if}
 		<ul>
-			{#each primaryItems as item, index (item.href)}
+			{#each items as item, index (item.href)}
 				<li style="--delay: {120 + index * 60}ms">
 					<a
 						href={localizedHref(item.href)}
@@ -143,22 +142,6 @@
 				</li>
 			{/each}
 		</ul>
-		{#if user !== null}
-			<div class="divider" role="presentation"></div>
-			<ul>
-				{#each accountItems as item, index (item.href)}
-					<li style="--delay: {300 + index * 60}ms">
-						<a
-							href={localizedHref(item.href)}
-							class:active={item.current}
-							aria-current={item.current}
-						>
-							{item.label()}
-						</a>
-					</li>
-				{/each}
-			</ul>
-		{/if}
 		<div class="footer">
 			<div class="preferences" data-keep-open>
 				<LocaleSwitch />
@@ -190,8 +173,8 @@
 
 	.trigger {
 		position: fixed;
-		top: clamp(0.9rem, 2.5vw, 1.5rem);
-		right: clamp(0.9rem, 2.5vw, 1.5rem);
+		top: calc(clamp(0.9rem, 2.5vw, 1.5rem) + env(safe-area-inset-top));
+		right: calc(clamp(0.9rem, 2.5vw, 1.5rem) + env(safe-area-inset-right));
 		z-index: 120;
 		display: flex;
 		align-items: center;
@@ -244,7 +227,10 @@
 		flex-direction: column;
 		gap: 1rem;
 		width: min(20rem, 82vw);
-		padding: clamp(0.9rem, 2.5vw, 1.5rem);
+		padding: calc(clamp(0.9rem, 2.5vw, 1.5rem) + env(safe-area-inset-top))
+			calc(clamp(0.9rem, 2.5vw, 1.5rem) + env(safe-area-inset-right))
+			calc(clamp(0.9rem, 2.5vw, 1.5rem) + env(safe-area-inset-bottom))
+			clamp(0.9rem, 2.5vw, 1.5rem);
 		overflow-y: auto;
 		background-color: clr.$panelColor;
 		border-left: 1px solid clr.$borderSubtleColor;
@@ -256,10 +242,26 @@
 			justify-content: flex-end;
 		}
 
-		> .divider {
-			height: 1px;
-			margin-inline: 0.85rem;
-			background-color: clr.$borderSubtleColor;
+		> .account {
+			padding: 0 0.85rem 0.9rem;
+			border-bottom: 1px solid clr.$borderMutedColor;
+
+			> .name {
+				overflow: hidden;
+				font-size: 0.9rem;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				color: clr.$textPrimaryColor;
+			}
+
+			> .identity {
+				overflow: hidden;
+				font-size: 0.7rem;
+				letter-spacing: 0.08em;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				color: clr.$textMutedColor;
+			}
 		}
 
 		> .footer {
@@ -345,6 +347,7 @@
 
 	.logout {
 		width: 100%;
+		min-height: vars.$touchTarget;
 		padding: 0.75rem 0.85rem;
 		font-size: 0.7rem;
 		letter-spacing: 0.18em;

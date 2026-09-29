@@ -2,10 +2,13 @@
 	import { page } from '$app/state';
 	import NavigationButton from '$lib/components/NavigationButton/NavigationButton.svelte';
 	import Notifications from '$lib/components/Notifications/Notifications.svelte';
+	import { PRODUCT_NAME } from '$lib/constants';
 	import { baseLocale, locales, localizeUrl } from '$lib/paraglide/runtime.js';
 	import { setNotifications } from '$lib/state/notifications.svelte';
 	import { setSidebarState } from '$lib/state/sidebar.svelte';
 	import { setThemeState } from '$lib/state/theme.svelte';
+	import '@fontsource/space-mono/400.css';
+	import '@fontsource/space-mono/700.css';
 	import '../styles/styles.scss';
 	import { onMount, untrack } from 'svelte';
 	import type { LayoutProps } from './$types';
@@ -24,6 +27,7 @@
 </script>
 
 <svelte:head>
+	<meta name="generator" content={PRODUCT_NAME} />
 	{#each locales as locale (locale)}
 		<link rel="alternate" hreflang={locale} href={localizeUrl(canonicalUrl, { locale }).href} />
 	{/each}

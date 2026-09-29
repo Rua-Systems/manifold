@@ -8,5 +8,3 @@ bun.lockb
 # Miscellaneous
 /static/
 
-# Generated migrations
-/drizzle/

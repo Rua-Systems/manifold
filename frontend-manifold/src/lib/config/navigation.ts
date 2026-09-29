@@ -1,15 +1,14 @@
+import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
 import { m } from '$lib/paraglide/messages.js';
-import type { NavigationLink } from '$lib/types/navigation';
+import type { AsideLink, NavigationLink } from '$lib/types/navigation';
 
-export const PUBLIC_LINKS: NavigationLink[] = [
-	{ href: '/', label: m.nav_home },
-	{ href: '/about', label: m.nav_about }
-];
-
+/** Account menu for visitors who are not signed in. */
 export const GUEST_LINKS: NavigationLink[] = [{ href: '/login', label: m.nav_login }];
 
-export const ACCOUNT_LINKS: NavigationLink[] = [
-	{ href: '/profile', label: m.nav_profile },
-	{ href: '/dashboard', label: m.nav_dashboard },
-	{ href: '/settings', label: m.nav_settings }
+/** Account menu for the signed in owner. */
+export const ACCOUNT_LINKS: NavigationLink[] = [{ href: '/settings', label: m.nav_settings }];
+
+/** Core sidebar entries that belong to no module; they follow the module sections. */
+export const CORE_SIDEBAR_LINKS: AsideLink[] = [
+	{ href: '/settings', label: m.nav_settings, icon: SettingsIcon }
 ];

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { pageTitle } from '$lib/constants';
+	import { page } from '$app/state';
+	import { pageTitle } from '$lib/utils/title';
 	import type { Snippet } from 'svelte';
-	import DashboardAside from '../DashboardAside/DashboardAside.svelte';
 
 	interface Props {
 		title: string;
@@ -23,11 +23,10 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle(title)}</title>
+	<title>{pageTitle(page.data.organizationName, title)}</title>
 	<meta name="description" content={metaDescription} />
 </svelte:head>
 
-<DashboardAside></DashboardAside>
 <section class="page">
 	<header class="head">
 		<div class="titles">
@@ -52,6 +51,7 @@
 
 <style lang="scss">
 	@use '../../../styles/colors' as clr;
+	@use '../../../styles/variables' as vars;
 
 	@keyframes pageIn {
 		from {
@@ -74,6 +74,12 @@
 		max-width: 68rem;
 		margin-inline: auto;
 		padding: clamp(4.5rem, 10vw, 6rem) clamp(1.2rem, 4vw, 2rem) clamp(2.5rem, 6vw, 4rem);
+
+		// The top bar already clears the account button on phones.
+		@media (max-width: vars.$mobileMax) {
+			padding: 1.5rem calc(1.1rem + env(safe-area-inset-right))
+				calc(2.5rem + env(safe-area-inset-bottom)) calc(1.1rem + env(safe-area-inset-left));
+		}
 	}
 
 	.head {

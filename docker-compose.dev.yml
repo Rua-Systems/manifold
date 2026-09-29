@@ -1,0 +1,26 @@
+# Development database only. The app runs on the host with `npm run dev`.
+# Start and stop it from frontend-manifold with `npm run db:up`, `npm run db:down` and `npm run db:reset`.
+name: manifold-dev
+
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Mounted as a single file so the image's own PostGIS init script stays in place.
+      - ./docker/dev-db/20-create-test-database.sql:/docker-entrypoint-initdb.d/20-create-test-database.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  db-data:

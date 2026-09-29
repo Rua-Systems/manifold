@@ -1,6 +1,9 @@
 import { existsSync } from 'node:fs';
 import { defineConfig } from 'drizzle-kit';
 
+// Only `npm run db:studio` uses drizzle-kit. Migrations are hand written SQL in migrations/ and run
+// by the app itself, so there is no `out` folder.
+
 // The app reads `.env` from the repository root (see `env.dir` in vite.config.ts); drizzle-kit
 // only looks in the working directory, so point it there too.
 const ROOT_ENV_FILE = '../.env';
@@ -15,9 +18,7 @@ if (!process.env.DATABASE_URL) {
 
 export default defineConfig({
 	schema: './src/lib/server/db/schema.ts',
-	out: './drizzle',
 	dialect: 'postgresql',
 	dbCredentials: { url: process.env.DATABASE_URL },
-	verbose: true,
 	strict: true
 });

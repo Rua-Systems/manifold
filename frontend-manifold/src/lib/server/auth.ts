@@ -1,19 +1,29 @@
 import { getRequestEvent } from '$app/server';
-import { env } from '$env/dynamic/private';
 import { m } from '$lib/paraglide/messages.js';
-import { CODE_LENGTH } from '$lib/schemas/auth';
-import { db } from '$lib/server/db';
-import { sendMail, type MailMessage } from '$lib/server/services/mail';
+import {
+	CODE_LENGTH,
+	PASSWORD_MAX_LENGTH,
+	PASSWORD_MIN_LENGTH,
+	USERNAME_MAX_LENGTH,
+	USERNAME_MIN_LENGTH,
+	USERNAME_PATTERN
+} from '$lib/schemas/rules';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { betterAuth } from 'better-auth/minimal';
-import { emailOTP } from 'better-auth/plugins';
+import { emailOTP, username } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
+import { count } from 'drizzle-orm';
+import { getDb } from './db';
+import { user } from './db/schema';
+import { getEnv } from './env';
+import { sendMail, type MailMessage } from './services/mail';
 
 const OTP_EXPIRES_IN_SECONDS = 60 * 5;
 
-function isOwnerEmail(email: string, ownerEmail: string): boolean {
-	return email.trim().toLowerCase() === ownerEmail.trim().toLowerCase();
+async function hasAnyUser(): Promise<boolean> {
+	const [{ total }] = await getDb().select({ total: count() }).from(user);
+	return total > 0;
 }
 
 function otpMail(email: string, otp: string, type: string): MailMessage {
@@ -34,52 +44,45 @@ function otpMail(email: string, otp: string, type: string): MailMessage {
 }
 
 function createAuth() {
-	const secret = env.BETTER_AUTH_SECRET;
-	const ownerEmail = env.OWNER_EMAIL;
-
-	if (!secret) {
-		throw new Error('BETTER_AUTH_SECRET is not set');
-	}
-	if (!ownerEmail) {
-		throw new Error('OWNER_EMAIL is not set');
-	}
+	const env = getEnv();
 
 	return betterAuth({
 		baseURL: env.ORIGIN,
-		secret,
-		database: drizzleAdapter(db, { provider: 'pg' }),
+		secret: env.BETTER_AUTH_SECRET,
+		database: drizzleAdapter(getDb(), { provider: 'pg' }),
 		emailAndPassword: {
 			enabled: true,
 			disableSignUp: true,
+			minPasswordLength: PASSWORD_MIN_LENGTH,
+			maxPasswordLength: PASSWORD_MAX_LENGTH,
 			revokeSessionsOnPasswordReset: true
 		},
 		databaseHooks: {
 			user: {
 				create: {
-					// The owner account is created by their first email code sign in. Nobody else
-					// gets one.
-					before: async (user) => {
-						if (!isOwnerEmail(user.email, ownerEmail)) {
+					// The owner is created by the startup bootstrap. Nothing may add a second user.
+					before: async (data) => {
+						if (await hasAnyUser()) {
 							throw new APIError('FORBIDDEN', { message: 'Sign up is closed.' });
 						}
-						return { data: user };
+						return { data };
 					}
 				}
 			}
 		},
 		plugins: [
+			username({
+				minUsernameLength: USERNAME_MIN_LENGTH,
+				maxUsernameLength: USERNAME_MAX_LENGTH,
+				usernameValidator: (value) => USERNAME_PATTERN.test(value)
+			}),
 			emailOTP({
 				otpLength: CODE_LENGTH,
 				expiresIn: OTP_EXPIRES_IN_SECONDS,
+				disableSignUp: true,
 				sendVerificationOTP: async ({ email, otp, type }) => {
-					// Sign up is open for email codes, so codes for any other address are dropped
-					// here instead of turning the server into a mailer for strangers.
-					if (!isOwnerEmail(email, ownerEmail)) {
-						return;
-					}
-
-					// Not awaited, as Better Auth advises, so response timing does not reveal the
-					// owner address.
+					// Not awaited, as Better Auth advises, so response timing does not reveal whether
+					// the address belongs to the owner.
 					sendMail(otpMail(email, otp, type)).catch((error: unknown) => {
 						console.error('Sending the verification code failed.', error);
 					});
@@ -93,6 +96,10 @@ function createAuth() {
 }
 
 export type Auth = ReturnType<typeof createAuth>;
+
+export type AuthUser = Auth['$Infer']['Session']['user'];
+
+export type AuthSession = Auth['$Infer']['Session']['session'];
 
 // Shared by every request; it holds configuration, never per-user data.
 let instance: Auth | undefined;

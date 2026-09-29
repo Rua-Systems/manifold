@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { SITE_NAME, SITE_URL } from '$lib/constants';
-	import { m } from '$lib/paraglide/messages.js';
-	import { localizedHref } from '$lib/utils/navigation';
+	import { page } from '$app/state';
+	import Credit from '$lib/components/Credit/Credit.svelte';
+	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -23,10 +23,12 @@
 	</div>
 	<div class="panel">
 		<div class="head">
-			<a class="back" href={localizedHref('/')}>
-				<span class="chevron" aria-hidden="true"></span>
-				<span>{m.nav_home()}</span>
-			</a>
+			<p class="brand">
+				<span class="mark" aria-hidden="true">
+					<ManifoldLogo />
+				</span>
+				<span class="organization">{page.data.organizationName}</span>
+			</p>
 		</div>
 		<div class="body">
 			<div class="frame">
@@ -34,10 +36,7 @@
 			</div>
 		</div>
 		<div class="foot">
-			<p>
-				{m.auth_credit()}
-				<a href={SITE_URL} target="_blank" rel="external noreferrer">{SITE_NAME}</a>
-			</p>
+			<Credit />
 		</div>
 	</div>
 </div>
@@ -117,30 +116,30 @@
 			display: flex;
 			animation: riseIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 
-			> .back {
-				display: inline-flex;
+			> .brand {
+				display: flex;
 				align-items: center;
-				gap: 0.5rem;
-				font-size: 0.72rem;
-				letter-spacing: 0.16em;
-				text-transform: uppercase;
-				text-decoration: none;
-				color: clr.$textMutedColor;
-				transition:
-					color 160ms ease,
-					transform 160ms ease;
+				gap: 0.7rem;
+				min-width: 0;
+				padding-right: 3.5rem;
 
-				> .chevron {
-					width: 0.4rem;
-					height: 0.4rem;
-					border-left: 1px solid currentColor;
-					border-bottom: 1px solid currentColor;
-					transform: rotate(45deg);
+				> .mark {
+					flex: none;
+					width: 1.6rem;
+					aspect-ratio: 500 / 434.9;
+					color: clr.$textPrimaryColor;
 				}
 
-				&:hover {
-					color: clr.$accentColor;
-					transform: translateX(-3px);
+				> .organization {
+					min-width: 0;
+					overflow: hidden;
+					font-size: 0.72rem;
+					font-weight: 700;
+					letter-spacing: 0.2em;
+					text-transform: uppercase;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					color: clr.$textPrimaryColor;
 				}
 			}
 		}
@@ -160,23 +159,6 @@
 			justify-content: center;
 			animation: riseIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 			animation-delay: 620ms;
-
-			> p {
-				font-size: 0.68rem;
-				letter-spacing: 0.14em;
-				text-transform: uppercase;
-				color: clr.$textMutedColor;
-
-				> a {
-					color: clr.$textSecondaryColor;
-					text-decoration: none;
-					transition: color 160ms ease;
-
-					&:hover {
-						color: clr.$accentColor;
-					}
-				}
-			}
 		}
 	}
 

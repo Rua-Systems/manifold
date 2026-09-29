@@ -1,0 +1,7 @@
+# Keep LF everywhere. Migration checksums, shell and SQL files must not change with the checkout platform.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary

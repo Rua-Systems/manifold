@@ -7,6 +7,10 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+/build-cli
+
+# Local uploads in development and tests
+/.data
 
 # OS
 .DS_Store

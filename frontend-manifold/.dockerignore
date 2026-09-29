@@ -1,7 +1,11 @@
 node_modules
 .svelte-kit
 build
+build-cli
+.data
 .git
 .env
 .env.*
 *.log
+test-results
+playwright-report

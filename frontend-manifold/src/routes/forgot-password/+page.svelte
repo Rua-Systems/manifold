@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import AuthShell from '$lib/components/AuthShell/AuthShell.svelte';
-	import { pageTitle } from '$lib/constants';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CODE_LENGTH, codeSchema, emailSchema, newPasswordSchema } from '$lib/schemas/auth';
 	import { Field, validateAll } from '$lib/state/field.svelte';
@@ -9,6 +9,7 @@
 	import type { ResetStage } from '$lib/types/auth';
 	import type { FieldErrors } from '$lib/types/validation';
 	import { localizedHref } from '$lib/utils/navigation';
+	import { pageTitle } from '$lib/utils/title';
 	import { fromSchema, matches } from '$lib/utils/validation';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { onDestroy } from 'svelte';
@@ -109,7 +110,7 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle(m.reset_title())}</title>
+	<title>{pageTitle(page.data.organizationName, m.reset_title())}</title>
 	<meta name="description" content={m.reset_meta_description()} />
 </svelte:head>
 
@@ -358,7 +359,7 @@
 
 			> .quiet,
 			> a {
-				text-align: center;
+				justify-content: center;
 			}
 		}
 	}

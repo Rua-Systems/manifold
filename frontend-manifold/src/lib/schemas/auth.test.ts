@@ -3,9 +3,12 @@ import {
 	CODE_LENGTH,
 	codeLoginSchema,
 	emailSchema,
+	identifierSchema,
 	newPasswordSchema,
+	passwordChangeSchema,
 	passwordResetSchema,
-	PASSWORD_MIN_LENGTH
+	PASSWORD_MIN_LENGTH,
+	usernameSchema
 } from './auth';
 
 describe('emailSchema', () => {
@@ -72,5 +75,51 @@ describe('passwordResetSchema', () => {
 		if (!result.success) {
 			expect(result.error.issues[0].path).toEqual(['confirmPassword']);
 		}
+	});
+});
+
+describe('usernameSchema', () => {
+	it('accepts 3 to 32 lowercase letters, digits, dots, underscores and hyphens', () => {
+		for (const value of ['abc', 'owner.name_1-x', 'a'.repeat(32)]) {
+			expect(usernameSchema.safeParse(value).success).toBe(true);
+		}
+	});
+
+	it('rejects anything else', () => {
+		for (const value of ['ab', 'a'.repeat(33), 'Owner', 'with space', 'emoji!', '']) {
+			expect(usernameSchema.safeParse(value).success).toBe(false);
+		}
+	});
+});
+
+describe('identifierSchema', () => {
+	it('accepts a username in any case or an email address', () => {
+		for (const value of ['owner', 'Owner', 'owner@example.com']) {
+			expect(identifierSchema.safeParse(value).success).toBe(true);
+		}
+	});
+
+	it('rejects malformed values', () => {
+		for (const value of ['', 'no', 'owner@', 'bad name']) {
+			expect(identifierSchema.safeParse(value).success).toBe(false);
+		}
+	});
+});
+
+describe('passwordChangeSchema', () => {
+	it('needs the current password and a matching new one', () => {
+		const valid = {
+			currentPassword: 'old',
+			password: 'new password',
+			confirmPassword: 'new password'
+		};
+
+		expect(passwordChangeSchema.safeParse(valid).success).toBe(true);
+		expect(passwordChangeSchema.safeParse({ ...valid, currentPassword: '' }).success).toBe(
+			false
+		);
+		expect(passwordChangeSchema.safeParse({ ...valid, confirmPassword: 'other' }).success).toBe(
+			false
+		);
 	});
 });

@@ -3,7 +3,10 @@ import adapter from '@sveltejs/adapter-node';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
+
+const packageJson = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
 export default defineConfig({
 	plugins: [
@@ -22,9 +25,34 @@ export default defineConfig({
 			env: {
 				dir: '..'
 			},
+			version: {
+				name: packageJson.version
+			},
+			csp: {
+				mode: 'auto',
+				directives: {
+					'default-src': ['self'],
+					'script-src': ['self'],
+					// Svelte transitions write inline styles.
+					'style-src': ['self', 'unsafe-inline'],
+					// Tile hosts are configured at runtime, so any https image source is allowed.
+					'img-src': ['self', 'data:', 'blob:', 'https:'],
+					'connect-src': ['self'],
+					'font-src': ['self'],
+					'frame-ancestors': ['none'],
+					'base-uri': ['self'],
+					'form-action': ['self'],
+					'object-src': ['none']
+				}
+			},
 			typescript: {
 				config: (config) => {
-					config.include.push('../drizzle.config.ts', '../playwright.config.ts');
+					config.include.push(
+						'../drizzle.config.ts',
+						'../playwright.config.ts',
+						'../vite.cli.config.ts',
+						'../scripts/**/*.ts'
+					);
 				}
 			}
 		}),
@@ -38,7 +66,29 @@ export default defineConfig({
 	],
 	test: {
 		expect: { requireAssertions: true },
-		environment: 'node',
-		include: ['src/**/*.test.ts']
+		projects: [
+			{
+				extends: true,
+				test: {
+					name: 'unit',
+					environment: 'node',
+					include: ['src/**/*.test.ts'],
+					exclude: ['src/**/*.int.test.ts']
+				}
+			},
+			{
+				extends: true,
+				test: {
+					name: 'integration',
+					environment: 'node',
+					include: ['src/**/*.int.test.ts'],
+					globalSetup: ['./tests/integration/global-setup.ts'],
+					setupFiles: ['./tests/integration/setup.ts'],
+					fileParallelism: false,
+					testTimeout: 30_000,
+					hookTimeout: 60_000
+				}
+			}
+		]
 	}
 });

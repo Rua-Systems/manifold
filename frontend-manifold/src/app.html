@@ -2,18 +2,12 @@
 <html lang="%paraglide.lang%" dir="%paraglide.dir%" data-theme="%manifold.theme%">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="text-scale" content="scale" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" sizes="32x32" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap"
-		/>
-		<script>
+		<script nonce="%sveltekit.nonce%">
 			// Without a theme cookie the server leaves data-theme empty. Pick the theme from the
 			// system preference here, before first paint, so the page never flashes the wrong one.
 			{

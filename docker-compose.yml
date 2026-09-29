@@ -1,27 +1,73 @@
+# Production stack for Coolify. Neither service publishes a port: Coolify's proxy reaches the app on
+# port 3000 inside the network. On a plain Docker host, copy docker-compose.override.example.yml to
+# docker-compose.override.yml to publish it.
 services:
-  frontend:
+  db:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  app:
     build:
       context: ./frontend-manifold
       dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3000
       ORIGIN: ${ORIGIN}
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: x-forwarded-host
-      # Coolify puts one reverse proxy in front of the app. The client address the rate limiter
-      # counts by is the last hop of X-Forwarded-For. Raise the depth for every extra proxy.
+      # Coolify puts one reverse proxy in front of the app. The client address the rate limiters
+      # count by is the last hop of X-Forwarded-For. Raise the depth for every extra proxy.
       ADDRESS_HEADER: x-forwarded-for
       XFF_DEPTH: '1'
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      ORGANIZATION_NAME: ${ORGANIZATION_NAME:-Manifold}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      OWNER_EMAIL: ${OWNER_EMAIL}
-      SMTP_HOST: ${SMTP_HOST}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OWNER_USERNAME: ${OWNER_USERNAME:-}
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+      SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-false}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      MAIL_FROM: ${MAIL_FROM}
-    ports:
-      - '3000:3000'
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      MAP_TILE_URL: ${MAP_TILE_URL:-}
+      MAP_TILE_ATTRIBUTION: ${MAP_TILE_ATTRIBUTION:-}
+      MAP_DEFAULT_CENTER: ${MAP_DEFAULT_CENTER:-}
+      MAP_DEFAULT_ZOOM: ${MAP_DEFAULT_ZOOM:-}
+      UPLOAD_DIR: /data/uploads
+      UPLOAD_MAX_BYTES: ${UPLOAD_MAX_BYTES:-}
+      TRASH_RETENTION_DAYS: ${TRASH_RETENTION_DAYS:-}
+      AUDIT_RETENTION_DAYS: ${AUDIT_RETENTION_DAYS:-}
+      API_RATE_LIMIT_PER_MINUTE: ${API_RATE_LIMIT_PER_MINUTE:-}
+    volumes:
+      - uploads:/data/uploads
+    expose:
+      - '3000'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/healthz']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
+
+volumes:
+  db-data:
+  uploads:

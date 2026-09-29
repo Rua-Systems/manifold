@@ -2,58 +2,84 @@ import { m } from '$lib/paraglide/messages.js';
 import { localizeHref } from '$lib/paraglide/runtime.js';
 import { codeLoginSchema, codeRequestSchema, passwordLoginSchema } from '$lib/schemas/auth';
 import { getAuth } from '$lib/server/auth';
+import { emailEnabled } from '$lib/server/features';
 import { isRateLimited } from '$lib/server/rate-limit';
 import type { LoginFormState, LoginMethod } from '$lib/types/auth';
 import type { FieldErrors } from '$lib/types/validation';
 import { safeRedirectTarget } from '$lib/utils/redirect';
 import { fieldErrors, textValue } from '$lib/utils/validation';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
 import type { Actions } from './$types';
 
 function loginState(
 	method: LoginMethod,
-	email: string,
+	identifier: string,
 	sent: boolean,
 	message = '',
 	errors: FieldErrors = {}
 ): LoginFormState {
-	return { method, email, sent, message, errors };
+	return { method, identifier, sent, message, errors };
 }
 
 function redirectTarget(data: FormData): string {
-	return safeRedirectTarget(data.get('redirectTo'), localizeHref('/dashboard'));
+	return safeRedirectTarget(data.get('redirectTo'), localizeHref('/services'));
+}
+
+function requireEmail(): void {
+	if (!emailEnabled()) {
+		error(404);
+	}
 }
 
 export const actions: Actions = {
 	password: async (event) => {
 		const data = await event.request.formData();
-		const email = textValue(data, 'email');
+		const identifier = textValue(data, 'identifier');
 
 		if (isRateLimited(event, 'signIn')) {
-			return fail(429, loginState('password', email, false, m.error_rate_limited()));
+			return fail(429, loginState('password', identifier, false, m.error_rate_limited()));
 		}
 
 		const parsed = passwordLoginSchema.safeParse({
-			email,
+			identifier,
 			password: textValue(data, 'password')
 		});
 		if (!parsed.success) {
-			return fail(400, loginState('password', email, false, '', fieldErrors(parsed.error)));
+			return fail(
+				400,
+				loginState('password', identifier, false, '', fieldErrors(parsed.error))
+			);
 		}
 
+		const { password } = parsed.data;
+		const headers = event.request.headers;
 		try {
-			await getAuth().api.signInEmail({ body: parsed.data, headers: event.request.headers });
-		} catch (error) {
-			if (isAPIError(error)) {
-				return fail(401, loginState('password', email, false, m.login_error_credentials()));
+			if (parsed.data.identifier.includes('@')) {
+				await getAuth().api.signInEmail({
+					body: { email: parsed.data.identifier, password },
+					headers
+				});
+			} else {
+				await getAuth().api.signInUsername({
+					body: { username: parsed.data.identifier.toLowerCase(), password },
+					headers
+				});
 			}
-			throw error;
+		} catch (cause) {
+			if (isAPIError(cause)) {
+				return fail(
+					401,
+					loginState('password', identifier, false, m.login_error_credentials())
+				);
+			}
+			throw cause;
 		}
 		redirect(303, redirectTarget(data));
 	},
 
 	requestCode: async (event) => {
+		requireEmail();
 		const data = await event.request.formData();
 		const email = textValue(data, 'email');
 
@@ -70,16 +96,17 @@ export const actions: Actions = {
 			await getAuth().api.sendVerificationOTP({
 				body: { email: parsed.data.email, type: 'sign-in' }
 			});
-		} catch (error) {
-			if (isAPIError(error)) {
+		} catch (cause) {
+			if (isAPIError(cause)) {
 				return fail(400, loginState('code', email, false, m.login_error_code_send()));
 			}
-			throw error;
+			throw cause;
 		}
 		return loginState('code', parsed.data.email, true);
 	},
 
 	verifyCode: async (event) => {
+		requireEmail();
 		const data = await event.request.formData();
 		const email = textValue(data, 'email');
 
@@ -97,11 +124,11 @@ export const actions: Actions = {
 				body: { email: parsed.data.email, otp: parsed.data.code },
 				headers: event.request.headers
 			});
-		} catch (error) {
-			if (isAPIError(error)) {
+		} catch (cause) {
+			if (isAPIError(cause)) {
 				return fail(401, loginState('code', email, true, m.login_error_code()));
 			}
-			throw error;
+			throw cause;
 		}
 		redirect(303, redirectTarget(data));
 	}

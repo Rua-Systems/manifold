@@ -1,3 +1,5 @@
-import type { User } from 'better-auth';
-
-export type SessionUser = Pick<User, 'name' | 'email'>;
+export interface SessionUser {
+	name: string;
+	email: string;
+	username: string | null;
+}

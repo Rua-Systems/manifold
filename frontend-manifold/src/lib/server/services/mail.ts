@@ -1,9 +1,7 @@
 import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
 import { createTransport, type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
-
-const DEFAULT_SMTP_PORT = 587;
+import { getEnv } from '../env';
 
 export interface MailMessage {
 	to: string;
@@ -15,22 +13,34 @@ export interface MailMessage {
 let transporter: Transporter | undefined;
 
 function getTransporter(): Transporter | undefined {
-	if (!env.SMTP_HOST) {
+	const env = getEnv();
+	if (env.SMTP_HOST === undefined) {
 		return undefined;
 	}
 
 	if (transporter === undefined) {
 		const options: SMTPTransport.Options = {
 			host: env.SMTP_HOST,
-			port: Number(env.SMTP_PORT ?? DEFAULT_SMTP_PORT),
-			secure: env.SMTP_SECURE === 'true'
+			port: env.SMTP_PORT,
+			secure: env.SMTP_SECURE
 		};
-		if (env.SMTP_USER) {
+		if (env.SMTP_USER !== undefined) {
 			options.auth = { user: env.SMTP_USER, pass: env.SMTP_PASSWORD };
 		}
 		transporter = createTransport(options);
 	}
 	return transporter;
+}
+
+/** MAIL_FROM without a display name gets the organization name as one. */
+export function senderAddress(mailFrom: string | undefined, organizationName: string): string {
+	if (mailFrom === undefined) {
+		return '';
+	}
+	if (mailFrom.includes('<')) {
+		return mailFrom;
+	}
+	return `"${organizationName.replaceAll('"', '')}" <${mailFrom}>`;
 }
 
 export async function sendMail(message: MailMessage): Promise<void> {
@@ -40,8 +50,12 @@ export async function sendMail(message: MailMessage): Promise<void> {
 			console.info(`[mail] To: ${message.to}\n[mail] ${message.subject}\n${message.text}`);
 			return;
 		}
-		throw new Error('SMTP_HOST is not set');
+		throw new Error('SMTP_HOST is not set, so mail cannot be sent.');
 	}
 
-	await transport.sendMail({ from: env.MAIL_FROM, ...message });
+	const env = getEnv();
+	await transport.sendMail({
+		from: senderAddress(env.MAIL_FROM, env.ORGANIZATION_NAME),
+		...message
+	});
 }

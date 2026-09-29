@@ -1,38 +1,38 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('english is served without a prefix', async ({ page }) => {
-	await page.goto('/');
+	await page.goto('/login');
 
 	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-	await expect(page.getByText('++ Welcome to the ++')).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1, name: 'Login' })).toBeVisible();
 });
 
 test('turkish is served under /tr', async ({ page }) => {
-	await page.goto('/tr/about');
+	await page.goto('/tr/login');
 
 	await expect(page.locator('html')).toHaveAttribute('lang', 'tr');
-	await expect(page.getByRole('heading', { level: 1, name: 'Hakkında' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1, name: 'Giriş' })).toBeVisible();
 });
 
 test('pages declare alternates for every locale', async ({ page }) => {
-	await page.goto('/about');
+	await page.goto('/login');
 
 	await expect(page.locator('link[rel="alternate"][hreflang="tr"]')).toHaveAttribute(
 		'href',
-		/\/tr\/about$/
+		/\/tr\/login$/
 	);
 	await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute(
 		'href',
-		/\/about$/
+		/\/login$/
 	);
 });
 
 test('the language switch moves to the same page in the other locale', async ({ page }) => {
-	await page.goto('/about', { waitUntil: 'networkidle' });
+	await page.goto('/login', { waitUntil: 'networkidle' });
 
-	await page.getByRole('button', { name: 'Menu' }).click();
+	await page.getByRole('button', { name: 'Account menu' }).click();
 	await page.getByRole('link', { name: 'Türkçe' }).click();
 
-	await expect(page).toHaveURL('/tr/about');
+	await expect(page).toHaveURL(/\/tr\/login$/);
 	await expect(page.locator('html')).toHaveAttribute('lang', 'tr');
 });

@@ -92,8 +92,9 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			width: 1.4rem;
-			height: 1.4rem;
+			width: vars.$touchTarget;
+			height: vars.$touchTarget;
+			margin: -0.7rem -0.6rem -0.7rem 0;
 			padding: 0;
 			color: clr.$textMutedColor;
 			background-color: transparent;

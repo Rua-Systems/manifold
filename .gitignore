@@ -6,7 +6,5 @@ node_modules/
 .env.*
 !.env.example
 
-# Local SSH tunnel scripts for the Manifold DB (they hold the SSH password)
-db-tunnel.bat
-db-tunnel.sh
-db-tunnel.command
+# Local copy of docker-compose.override.example.yml for plain Docker hosts
+docker-compose.override.yml

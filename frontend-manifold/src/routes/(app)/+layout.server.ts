@@ -1,10 +1,7 @@
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { redirect } from '@sveltejs/kit';
+import { requireUser } from '$lib/server/guard';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = ({ locals, url }) => {
-	if (locals.user === null) {
-		const target = encodeURIComponent(url.pathname + url.search);
-		redirect(303, `${localizeHref('/login')}?redirectTo=${target}`);
-	}
+// hooks.server.ts already sends guests to sign in; this keeps the invariant close to the routes.
+export const load: LayoutServerLoad = ({ locals }) => {
+	requireUser(locals);
 };

@@ -1,4 +1,3 @@
-import type { User } from 'better-auth';
 import { describe, expect, it } from 'vitest';
 import { toSessionUser } from './session';
 
@@ -8,16 +7,25 @@ describe('toSessionUser', () => {
 	});
 
 	it('keeps only the fields the browser may see', () => {
-		const user: User = {
+		const user = {
 			id: 'user-1',
 			name: 'Owner',
 			email: 'owner@example.com',
+			username: 'owner',
 			emailVerified: true,
 			image: null,
 			createdAt: new Date(0),
 			updatedAt: new Date(0)
 		};
 
-		expect(toSessionUser(user)).toEqual({ name: 'Owner', email: 'owner@example.com' });
+		expect(toSessionUser(user)).toEqual({
+			name: 'Owner',
+			email: 'owner@example.com',
+			username: 'owner'
+		});
+	});
+
+	it('reports a missing username as null', () => {
+		expect(toSessionUser({ name: 'Owner', email: 'owner@example.com' })?.username).toBeNull();
 	});
 });

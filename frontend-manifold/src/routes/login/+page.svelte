@@ -2,20 +2,27 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import AuthShell from '$lib/components/AuthShell/AuthShell.svelte';
-	import { pageTitle } from '$lib/constants';
 	import { m } from '$lib/paraglide/messages.js';
-	import { CODE_LENGTH, codeSchema, emailSchema, passwordSchema } from '$lib/schemas/auth';
+	import {
+		CODE_LENGTH,
+		codeSchema,
+		emailSchema,
+		identifierSchema,
+		passwordSchema
+	} from '$lib/schemas/auth';
 	import { Field, validateAll } from '$lib/state/field.svelte';
 	import { getNotifications } from '$lib/state/notifications.svelte';
 	import type { LoginMethod } from '$lib/types/auth';
 	import type { FieldErrors } from '$lib/types/validation';
 	import { localizedHref } from '$lib/utils/navigation';
+	import { pageTitle } from '$lib/utils/title';
 	import { fromSchema } from '$lib/utils/validation';
 	import type { PageProps } from './$types';
 
 	let { form }: PageProps = $props();
 
 	const notifications = getNotifications();
+	const identifierField = new Field([fromSchema(identifierSchema)]);
 	const emailField = new Field([fromSchema(emailSchema)]);
 	const passwordField = new Field([fromSchema(passwordSchema)]);
 	const codeField = new Field([fromSchema(codeSchema)]);
@@ -25,6 +32,8 @@
 	}
 
 	let method = $state<LoginMethod>(initialMethod());
+
+	const emailEnabled = $derived(page.data.features.email);
 	let hideServerMessage = $state(false);
 
 	const redirectTo = $derived(page.url.searchParams.get('redirectTo') ?? '');
@@ -58,13 +67,14 @@
 
 		method = next;
 		hideServerMessage = true;
+		identifierField.clearError();
 		emailField.clearError();
 		passwordField.clearError();
 		codeField.clearError();
 	}
 
 	function guardPassword(event: SubmitEvent): void {
-		if (!validateAll([emailField, passwordField])) {
+		if (!validateAll([identifierField, passwordField])) {
 			event.preventDefault();
 			return;
 		}
@@ -89,7 +99,7 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle(m.login_title())}</title>
+	<title>{pageTitle(page.data.organizationName, m.login_title())}</title>
 	<meta name="description" content={m.login_meta_description()} />
 </svelte:head>
 
@@ -99,35 +109,45 @@
 		<h1>{m.login_title()}</h1>
 		<p class="lead">{m.login_lead()}</p>
 	</div>
-	<div class="methods" role="group" aria-label={m.login_method_label()}>
-		<button
-			type="button"
-			aria-pressed={method === 'password'}
-			onclick={() => selectMethod('password')}
-		>
-			{m.login_method_password()}
-		</button>
-		<button type="button" aria-pressed={method === 'code'} onclick={() => selectMethod('code')}>
-			{m.login_method_code()}
-		</button>
-	</div>
-	{#if method === 'password'}
+	{#if emailEnabled}
+		<div class="methods" role="group" aria-label={m.login_method_label()}>
+			<button
+				type="button"
+				aria-pressed={method === 'password'}
+				onclick={() => selectMethod('password')}
+			>
+				{m.login_method_password()}
+			</button>
+			<button
+				type="button"
+				aria-pressed={method === 'code'}
+				onclick={() => selectMethod('code')}
+			>
+				{m.login_method_code()}
+			</button>
+		</div>
+	{/if}
+	{#if method === 'password' || !emailEnabled}
 		<form method="POST" action="?/password" use:enhance onsubmit={guardPassword} novalidate>
 			<input type="hidden" name="redirectTo" value={redirectTo} />
 			<div class="field">
-				<label for="loginEmail">{m.field_email()}</label>
+				<label for="loginIdentifier">{m.field_identifier()}</label>
 				<input
-					id="loginEmail"
-					name="email"
-					type="email"
-					autocomplete="email"
-					placeholder={m.field_email_placeholder()}
-					aria-invalid={errorFor(emailField, 'email').length > 0}
-					aria-describedby="loginEmailError"
-					bind:value={emailField.value}
-					onblur={() => emailField.markTouched()}
+					id="loginIdentifier"
+					name="identifier"
+					type="text"
+					autocomplete="username"
+					autocapitalize="none"
+					spellcheck="false"
+					placeholder={m.field_identifier_placeholder()}
+					aria-invalid={errorFor(identifierField, 'identifier').length > 0}
+					aria-describedby="loginIdentifierError"
+					bind:value={identifierField.value}
+					onblur={() => identifierField.markTouched()}
 				/>
-				<p class="error" id="loginEmailError">{errorFor(emailField, 'email')}</p>
+				<p class="error" id="loginIdentifierError">
+					{errorFor(identifierField, 'identifier')}
+				</p>
 			</div>
 			<div class="field">
 				<label for="loginPassword">{m.field_password()}</label>
@@ -148,7 +168,9 @@
 				<p class="notice" role="alert">{serverMessage}</p>
 				<div class="actions">
 					<button type="submit">{m.login_submit()}</button>
-					<a href={localizedHref('/forgot-password')}>{m.login_forgot_password()}</a>
+					{#if emailEnabled}
+						<a href={localizedHref('/forgot-password')}>{m.login_forgot_password()}</a>
+					{/if}
 				</div>
 			</div>
 		</form>
@@ -194,8 +216,8 @@
 	{:else}
 		<form method="POST" action="?/verifyCode" use:enhance onsubmit={guardCode} novalidate>
 			<input type="hidden" name="redirectTo" value={redirectTo} />
-			<input type="hidden" name="email" value={form?.email ?? emailField.value} />
-			<p class="sent">{m.login_code_sent_to()} <strong>{form?.email}</strong></p>
+			<input type="hidden" name="email" value={form?.identifier ?? emailField.value} />
+			<p class="sent">{m.login_code_sent_to()} <strong>{form?.identifier}</strong></p>
 			<div class="field">
 				<label for="loginCode">{m.field_code()}</label>
 				<input
@@ -332,7 +354,7 @@
 			}
 
 			> a {
-				text-align: center;
+				justify-content: center;
 			}
 		}
 	}
