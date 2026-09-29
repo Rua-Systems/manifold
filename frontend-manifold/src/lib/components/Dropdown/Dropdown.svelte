@@ -66,10 +66,7 @@
 		</span>
 	</button>
 	{#if isOpen}
-		<div
-			class="panel"
-			transition:fly={{ y: -6, duration: 180, easing: cubicOut }}
-		>
+		<div class="panel" transition:fly={{ y: -6, duration: 180, easing: cubicOut }}>
 			{@render children()}
 		</div>
 	{/if}

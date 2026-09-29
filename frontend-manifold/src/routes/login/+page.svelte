@@ -3,34 +3,32 @@
 	import { page } from '$app/state';
 	import AuthShell from '$lib/components/AuthShell/AuthShell.svelte';
 	import { pageTitle } from '$lib/constants';
+	import { m } from '$lib/paraglide/messages.js';
+	import { CODE_LENGTH, codeSchema, emailSchema, passwordSchema } from '$lib/schemas/auth';
 	import { Field, validateAll } from '$lib/state/field.svelte';
 	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { digits, email as emailRule, required } from '$lib/utils/validation';
+	import type { LoginMethod } from '$lib/types/auth';
+	import type { FieldErrors } from '$lib/types/validation';
+	import { localizedHref } from '$lib/utils/navigation';
+	import { fromSchema } from '$lib/utils/validation';
 	import type { PageProps } from './$types';
-
-	type Method = 'password' | 'code';
-
-	const CODE_LENGTH = 6;
 
 	let { form }: PageProps = $props();
 
 	const notifications = getNotifications();
-	const emailField = new Field([required(), emailRule()]);
-	const passwordField = new Field([required()]);
-	const codeField = new Field([required(), digits(CODE_LENGTH)]);
+	const emailField = new Field([fromSchema(emailSchema)]);
+	const passwordField = new Field([fromSchema(passwordSchema)]);
+	const codeField = new Field([fromSchema(codeSchema)]);
 
-	function initialMethod(): Method {
-		if (form !== null && form !== undefined && form.sent) {
-			return 'code';
-		}
-		return 'password';
+	function initialMethod(): LoginMethod {
+		return form?.method ?? 'password';
 	}
 
-	let method = $state<Method>(initialMethod());
+	let method = $state<LoginMethod>(initialMethod());
 	let hideServerMessage = $state(false);
 
 	const redirectTo = $derived(page.url.searchParams.get('redirectTo') ?? '');
-	const codeSent = $derived(form !== null && form !== undefined && form.sent);
+	const codeSent = $derived(form?.sent === true);
 
 	const serverMessage = $derived.by(() => {
 		if (hideServerMessage) {
@@ -39,7 +37,21 @@
 		return form?.message ?? '';
 	});
 
-	function selectMethod(next: Method): void {
+	const serverErrors: FieldErrors = $derived.by(() => {
+		if (hideServerMessage) {
+			return {};
+		}
+		return form?.errors ?? {};
+	});
+
+	function errorFor(field: Field, name: string): string {
+		if (field.message.length > 0) {
+			return field.message;
+		}
+		return serverErrors[name] ?? '';
+	}
+
+	function selectMethod(next: LoginMethod): void {
 		if (next === method) {
 			return;
 		}
@@ -77,65 +89,66 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle('Login')}</title>
+	<title>{pageTitle(m.login_title())}</title>
+	<meta name="description" content={m.login_meta_description()} />
 </svelte:head>
 
 <AuthShell>
 	<div class="intro">
-		<p class="sigil">++ Ident Verification ++</p>
-		<h1>Login</h1>
-		<p class="lead">Authorization required to proceed.</p>
+		<p class="sigil">++ {m.login_sigil()} ++</p>
+		<h1>{m.login_title()}</h1>
+		<p class="lead">{m.login_lead()}</p>
 	</div>
-	<div class="methods" role="group" aria-label="Login method">
+	<div class="methods" role="group" aria-label={m.login_method_label()}>
 		<button
 			type="button"
-			class:active={method === 'password'}
+			aria-pressed={method === 'password'}
 			onclick={() => selectMethod('password')}
 		>
-			Password
+			{m.login_method_password()}
 		</button>
-		<button type="button" class:active={method === 'code'} onclick={() => selectMethod('code')}>
-			Email Code
+		<button type="button" aria-pressed={method === 'code'} onclick={() => selectMethod('code')}>
+			{m.login_method_code()}
 		</button>
 	</div>
 	{#if method === 'password'}
 		<form method="POST" action="?/password" use:enhance onsubmit={guardPassword} novalidate>
 			<input type="hidden" name="redirectTo" value={redirectTo} />
 			<div class="field">
-				<label for="loginEmail">Email</label>
+				<label for="loginEmail">{m.field_email()}</label>
 				<input
 					id="loginEmail"
 					name="email"
 					type="email"
 					autocomplete="email"
-					placeholder="Enter Email"
-					aria-invalid={emailField.showError}
+					placeholder={m.field_email_placeholder()}
+					aria-invalid={errorFor(emailField, 'email').length > 0}
 					aria-describedby="loginEmailError"
 					bind:value={emailField.value}
 					onblur={() => emailField.markTouched()}
 				/>
-				<p class="error" id="loginEmailError">{emailField.message}</p>
+				<p class="error" id="loginEmailError">{errorFor(emailField, 'email')}</p>
 			</div>
 			<div class="field">
-				<label for="loginPassword">Password</label>
+				<label for="loginPassword">{m.field_password()}</label>
 				<input
 					id="loginPassword"
 					name="password"
 					type="password"
 					autocomplete="current-password"
-					placeholder="Enter Password"
-					aria-invalid={passwordField.showError}
+					placeholder={m.field_password_placeholder()}
+					aria-invalid={errorFor(passwordField, 'password').length > 0}
 					aria-describedby="loginPasswordError"
 					bind:value={passwordField.value}
 					onblur={() => passwordField.markTouched()}
 				/>
-				<p class="error" id="loginPasswordError">{passwordField.message}</p>
+				<p class="error" id="loginPasswordError">{errorFor(passwordField, 'password')}</p>
 			</div>
 			<div class="submit">
 				<p class="notice" role="alert">{serverMessage}</p>
 				<div class="actions">
-					<button type="submit">Authenticate</button>
-					<a href="/forgot-password">Forgot Password</a>
+					<button type="submit">{m.login_submit()}</button>
+					<a href={localizedHref('/forgot-password')}>{m.login_forgot_password()}</a>
 				</div>
 			</div>
 		</form>
@@ -148,7 +161,7 @@
 			use:enhance={() => {
 				return async ({ result, update }) => {
 					if (result.type === 'success') {
-						notifications.confirm('A sign in code has been sent.');
+						notifications.confirm(m.login_code_sent_notice());
 					}
 					await update({ reset: false });
 				};
@@ -156,25 +169,25 @@
 		>
 			<input type="hidden" name="redirectTo" value={redirectTo} />
 			<div class="field">
-				<label for="codeEmail">Email</label>
+				<label for="codeEmail">{m.field_email()}</label>
 				<input
 					id="codeEmail"
 					name="email"
 					type="email"
 					autocomplete="email"
-					placeholder="Enter Email"
-					aria-invalid={emailField.showError}
+					placeholder={m.field_email_placeholder()}
+					aria-invalid={errorFor(emailField, 'email').length > 0}
 					aria-describedby="codeEmailError"
 					bind:value={emailField.value}
 					onblur={() => emailField.markTouched()}
 				/>
-				<p class="error" id="codeEmailError">{emailField.message}</p>
+				<p class="error" id="codeEmailError">{errorFor(emailField, 'email')}</p>
 			</div>
 			<div class="submit">
 				<p class="notice" role="alert">{serverMessage}</p>
 				<div class="actions">
-					<button type="submit">Send Code</button>
-					<a href="/forgot-password">Forgot Password</a>
+					<button type="submit">{m.common_send_code()}</button>
+					<a href={localizedHref('/forgot-password')}>{m.login_forgot_password()}</a>
 				</div>
 			</div>
 		</form>
@@ -182,9 +195,9 @@
 		<form method="POST" action="?/verifyCode" use:enhance onsubmit={guardCode} novalidate>
 			<input type="hidden" name="redirectTo" value={redirectTo} />
 			<input type="hidden" name="email" value={form?.email ?? emailField.value} />
-			<p class="sent">Code sent to <strong>{form?.email}</strong></p>
+			<p class="sent">{m.login_code_sent_to()} <strong>{form?.email}</strong></p>
 			<div class="field">
-				<label for="loginCode">Verification Code</label>
+				<label for="loginCode">{m.field_code()}</label>
 				<input
 					id="loginCode"
 					name="code"
@@ -193,19 +206,19 @@
 					inputmode="numeric"
 					autocomplete="one-time-code"
 					maxlength={CODE_LENGTH}
-					placeholder="000000"
-					aria-invalid={codeField.showError}
+					placeholder={'0'.repeat(CODE_LENGTH)}
+					aria-invalid={errorFor(codeField, 'code').length > 0}
 					aria-describedby="loginCodeError"
 					bind:value={codeField.value}
 					onblur={() => codeField.markTouched()}
 				/>
-				<p class="error" id="loginCodeError">{codeField.message}</p>
+				<p class="error" id="loginCodeError">{errorFor(codeField, 'code')}</p>
 			</div>
 			<div class="submit">
 				<p class="notice" role="alert">{serverMessage}</p>
 				<div class="actions">
-					<button type="submit">Verify</button>
-					<a href="/login">Start over</a>
+					<button type="submit">{m.common_verify()}</button>
+					<a href={localizedHref('/login')}>{m.login_start_over()}</a>
 				</div>
 			</div>
 		</form>
@@ -215,7 +228,6 @@
 <style lang="scss">
 	@use '../../styles/colors' as clr;
 	@use '../../styles/forms' as forms;
-	@use '../../styles/variables' as vars;
 
 	.intro {
 		margin-bottom: 0.4rem;
@@ -236,34 +248,13 @@
 	}
 
 	.methods {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 2px;
-		padding: 2px;
-		border: 1px solid clr.$borderSubtleColor;
-		border-radius: vars.$radius;
+		@include forms.segmentedControl;
 
 		> button {
-			padding: 0.6rem 0.5rem;
-			font-size: 0.66rem;
-			letter-spacing: 0.16em;
-			text-transform: uppercase;
-			color: clr.$textMutedColor;
-			background-color: transparent;
-			border: 0;
-			border-radius: 2px;
-			cursor: pointer;
-			transition:
-				color 160ms ease,
-				background-color 160ms ease;
+			@include forms.segmentedOption;
 
-			&:hover {
-				color: clr.$textPrimaryColor;
-			}
-
-			&.active {
-				color: clr.$accentColor;
-				background-color: clr.$accentWashColor;
+			&[aria-pressed='true'] {
+				@include forms.segmentedOptionActive;
 			}
 		}
 	}

@@ -9,6 +9,19 @@ services:
       ORIGIN: ${ORIGIN}
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: x-forwarded-host
+      # Coolify puts one reverse proxy in front of the app. The client address the rate limiter
+      # counts by is the last hop of X-Forwarded-For. Raise the depth for every extra proxy.
+      ADDRESS_HEADER: x-forwarded-for
+      XFF_DEPTH: '1'
+      DATABASE_URL: ${DATABASE_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      OWNER_EMAIL: ${OWNER_EMAIL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
     ports:
       - '3000:3000'
     restart: unless-stopped

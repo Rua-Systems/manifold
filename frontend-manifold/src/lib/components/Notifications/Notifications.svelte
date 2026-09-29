@@ -1,10 +1,17 @@
 <script lang="ts">
 	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { NOTIFICATION_LABELS } from '$lib/types/notification';
+	import type { NotificationKind } from '$lib/types/notification';
 	import { flip } from 'svelte/animate';
 	import { cubicOut } from 'svelte/easing';
 	import { fly } from 'svelte/transition';
+
+	const LABELS: Record<NotificationKind, () => string> = {
+		notice: m.notification_notice,
+		confirm: m.notification_confirm,
+		fault: m.notification_fault
+	};
 
 	const store = getNotifications();
 </script>
@@ -17,10 +24,14 @@
 			transition:fly={{ x: 28, duration: 260, easing: cubicOut }}
 		>
 			<div class="text">
-				<p class="label">++ {NOTIFICATION_LABELS[item.kind]} ++</p>
+				<p class="label">++ {LABELS[item.kind]()} ++</p>
 				<p class="message">{item.message}</p>
 			</div>
-			<button type="button" aria-label="Dismiss" onclick={() => store.dismiss(item.id)}>
+			<button
+				type="button"
+				aria-label={m.notification_dismiss()}
+				onclick={() => store.dismiss(item.id)}
+			>
 				<CloseIcon size="0.9rem" />
 			</button>
 		</div>

@@ -1,8 +1,9 @@
+import type { Pathname } from '$app/types';
 import type { Component } from 'svelte';
 
 export interface NavigationLink {
-	href: string;
-	label: string;
+	href: Pathname;
+	label: () => string;
 }
 
 export interface AsideLink extends NavigationLink {

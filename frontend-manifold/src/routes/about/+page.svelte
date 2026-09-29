@@ -1,73 +1,78 @@
 <script lang="ts">
-	import placeholderImage from '$lib/assets/images/login-bg.jpg';
 	import YouTubeEmbed from '$lib/components/YouTubeEmbed/YouTubeEmbed.svelte';
 	import { APP_NAME, SITE_NAME, SITE_URL, pageTitle } from '$lib/constants';
+	import { m } from '$lib/paraglide/messages.js';
 </script>
 
 <svelte:head>
-	<title>{pageTitle('About')}</title>
+	<title>{pageTitle(m.about_title())}</title>
+	<meta name="description" content={m.about_meta_description()} />
 </svelte:head>
 
 <section class="about">
 	<div class="inner">
 		<header class="intro">
-			<p class="sigil">++ Project Overview ++</p>
-			<h1>About</h1>
-			<p class="lead">
-				Placeholder. One short paragraph saying what {APP_NAME} is and who it is for.
-			</p>
+			<p class="sigil">++ {m.about_sigil()} ++</p>
+			<h1>{m.about_title()}</h1>
+			<p class="lead">{m.about_lead({ app: APP_NAME })}</p>
 		</header>
 		<article class="block">
-			<h2>What it is</h2>
-			<p>
-				Placeholder. Describe the problem this solves and the approach taken. Replace
-				once the scope settles.
-			</p>
+			<h2>{m.about_what_title()}</h2>
+			<p>{m.about_what_body()}</p>
 			<figure>
-				<img src={placeholderImage} alt="" />
-				<figcaption>Fig. I / Placeholder image</figcaption>
+				<enhanced:img
+					class="image"
+					src="$lib/assets/images/login-bg.jpg"
+					alt=""
+					sizes="(max-width: 704px) 100vw, 704px"
+					loading="lazy"
+				/>
+				<figcaption>{m.about_figure_image_one()}</figcaption>
 			</figure>
 		</article>
 		<article class="block">
-			<h2>Why it exists</h2>
-			<p>
-				Placeholder. Explain what prompted the project and what the existing options did not
-				cover.
-			</p>
+			<h2>{m.about_why_title()}</h2>
+			<p>{m.about_why_body()}</p>
 			<figure>
-				<img src={placeholderImage} alt="" />
-				<figcaption>Fig. II / Placeholder image</figcaption>
+				<enhanced:img
+					class="image"
+					src="$lib/assets/images/login-bg.jpg"
+					alt=""
+					sizes="(max-width: 704px) 100vw, 704px"
+					loading="lazy"
+				/>
+				<figcaption>{m.about_figure_image_two()}</figcaption>
 			</figure>
 		</article>
 		<article class="block">
-			<h2>Walkthrough</h2>
-			<p>Placeholder. A short line introducing what the recording shows.</p>
+			<h2>{m.about_walkthrough_title()}</h2>
+			<p>{m.about_walkthrough_body()}</p>
 			<figure>
-				<YouTubeEmbed id="ztzq05IzYds" title="Manifold walkthrough" />
-				<figcaption>Fig. III / Placeholder video</figcaption>
+				<YouTubeEmbed id="ztzq05IzYds" title={m.about_video_title()} />
+				<figcaption>{m.about_figure_video()}</figcaption>
 			</figure>
 		</article>
 		<article class="block">
-			<h2>Where it stands</h2>
-			<p>Placeholder. Note the current state of development and what comes next.</p>
+			<h2>{m.about_status_title()}</h2>
+			<p>{m.about_status_body()}</p>
 		</article>
 		<dl class="record">
 			<div class="row">
-				<dt>Designation</dt>
+				<dt>{m.about_designation_label()}</dt>
 				<dd>{APP_NAME}</dd>
 			</div>
 			<div class="row">
-				<dt>Status</dt>
-				<dd>In development</dd>
+				<dt>{m.about_status_label()}</dt>
+				<dd>{m.about_status_value()}</dd>
 			</div>
 			<div class="row">
-				<dt>Access</dt>
-				<dd>Private</dd>
+				<dt>{m.about_access_label()}</dt>
+				<dd>{m.about_access_value()}</dd>
 			</div>
 			<div class="row">
-				<dt>Maintainer</dt>
+				<dt>{m.about_maintainer_label()}</dt>
 				<dd>
-					<a href={SITE_URL} target="_blank" rel="noreferrer">{SITE_NAME}</a>
+					<a href={SITE_URL} target="_blank" rel="external noreferrer">{SITE_NAME}</a>
 				</dd>
 			</div>
 		</dl>
@@ -200,9 +205,10 @@
 		> figure {
 			margin: 0.4rem 0 0;
 
-			> img {
+			.image {
 				display: block;
 				width: 100%;
+				height: auto;
 				aspect-ratio: 16 / 9;
 				object-fit: cover;
 				background-color: clr.$surfaceColor;

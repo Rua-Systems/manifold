@@ -1,6 +1,7 @@
 <script lang="ts">
-	import bgImage from '$lib/assets/images/login-bg.jpg';
 	import { SITE_NAME, SITE_URL } from '$lib/constants';
+	import { m } from '$lib/paraglide/messages.js';
+	import { localizedHref } from '$lib/utils/navigation';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -11,12 +12,20 @@
 </script>
 
 <div class="auth">
-	<div class="visual" style="--auth-bg: url({bgImage})"></div>
+	<div class="visual">
+		<enhanced:img
+			class="backdrop"
+			src="$lib/assets/images/login-bg.jpg"
+			alt=""
+			sizes="(max-width: 860px) 100vw, 55vw"
+			fetchpriority="high"
+		/>
+	</div>
 	<div class="panel">
 		<div class="head">
-			<a class="back" href="/">
+			<a class="back" href={localizedHref('/')}>
 				<span class="chevron" aria-hidden="true"></span>
-				<span>Home</span>
+				<span>{m.nav_home()}</span>
 			</a>
 		</div>
 		<div class="body">
@@ -26,8 +35,8 @@
 		</div>
 		<div class="foot">
 			<p>
-				Developed by
-				<a href={SITE_URL} target="_blank" rel="noreferrer">{SITE_NAME}</a>
+				{m.auth_credit()}
+				<a href={SITE_URL} target="_blank" rel="external noreferrer">{SITE_NAME}</a>
 			</p>
 		</div>
 	</div>
@@ -80,13 +89,13 @@
 		overflow: hidden;
 		background-color: clr.$surfaceColor;
 
-		&::before {
-			content: '';
+		.backdrop {
 			position: absolute;
 			inset: 0;
-			background-image: var(--auth-bg);
-			background-size: cover;
-			background-position: center;
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			object-position: center;
 			animation: settleIn 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
 		}
 
@@ -94,7 +103,7 @@
 			content: '';
 			position: absolute;
 			inset: 0;
-			box-shadow: inset -80px 0 80px -50px rgba(0, 0, 0, 0.9);
+			box-shadow: inset -80px 0 80px -50px clr.$imageEdgeColor;
 			background: linear-gradient(to top, clr.$scrimColor, transparent 55%);
 		}
 	}
@@ -238,8 +247,10 @@
 			inset: 0;
 			z-index: 0;
 
-			&::before {
+			.backdrop {
 				inset: -30px;
+				width: calc(100% + 60px);
+				height: calc(100% + 60px);
 				opacity: 0.3;
 				filter: blur(10px);
 			}

@@ -3,29 +3,30 @@
 	import Dropdown from '$lib/components/Dropdown/Dropdown.svelte';
 	import PageShell from '$lib/components/PageShell/PageShell.svelte';
 	import { DASHBOARD_ASIDE_LINKS } from '$lib/config/dashboard';
-
-	function currentMarker(href: string): 'page' | undefined {
-		if (page.url.pathname === href) {
-			return 'page';
-		}
-		return undefined;
-	}
+	import { m } from '$lib/paraglide/messages.js';
+	import { currentMarker, localizedHref } from '$lib/utils/navigation';
 </script>
 
 <PageShell
-	title="Map Notes"
-	sigil="Dashboard"
-	description="Placeholder. A short line describing what this view is for."
+	title={m.dashboard_map_notes()}
+	sigil={m.dashboard_title()}
+	description={m.page_placeholder_description()}
+	metaDescription={m.map_notes_meta_description()}
 >
 	{#snippet actions()}
-		<Dropdown label="Go to" ariaLabel="Go to dashboard section">
+		<Dropdown label={m.map_notes_go_to()} ariaLabel={m.map_notes_go_to_label()}>
 			{#each DASHBOARD_ASIDE_LINKS as link (link.href)}
-				<a href={link.href} aria-current={currentMarker(link.href)}>{link.label}</a>
+				<a
+					href={localizedHref(link.href)}
+					aria-current={currentMarker(page.url, link.href)}
+				>
+					{link.label()}
+				</a>
 			{/each}
 		</Dropdown>
-		<button type="button" class="action">New Note</button>
+		<button type="button" class="action">{m.map_notes_new()}</button>
 	{/snippet}
-	<p class="placeholder">Placeholder. Fill this in.</p>
+	<p class="placeholder">{m.page_placeholder_body()}</p>
 </PageShell>
 
 <style lang="scss">

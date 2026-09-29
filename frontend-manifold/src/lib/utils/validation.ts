@@ -1,56 +1,42 @@
-import type { Validator } from '$lib/types/validation';
+import type { FieldErrors, Validator } from '$lib/types/validation';
+import type { z } from 'zod';
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const DIGITS_PATTERN = /^\d+$/;
-
-export function required(message = 'This field is required.'): Validator {
+/** Lets client fields reuse the Zod schemas the server validates with. */
+export function fromSchema(schema: z.ZodType): Validator {
 	return (value) => {
-		if (value.trim().length === 0) {
-			return message;
+		const result = schema.safeParse(value);
+		if (result.success) {
+			return null;
 		}
-		return null;
+		return result.error.issues[0]?.message ?? null;
 	};
 }
 
-export function email(message = 'Enter a valid email address.'): Validator {
+export function matches(other: () => string, message: () => string): Validator {
 	return (value) => {
-		if (value.trim().length === 0) {
+		if (value.length === 0 || value === other()) {
 			return null;
 		}
-		if (!EMAIL_PATTERN.test(value.trim())) {
-			return message;
-		}
-		return null;
+		return message();
 	};
 }
 
-export function minLength(length: number, message = ''): Validator {
-	return (value) => {
-		if (value.length === 0) {
-			return null;
+export function fieldErrors(error: z.ZodError): FieldErrors {
+	const errors: FieldErrors = {};
+
+	for (const issue of error.issues) {
+		const key = String(issue.path[0] ?? '');
+		if (key.length > 0 && errors[key] === undefined) {
+			errors[key] = issue.message;
 		}
-		if (value.length >= length) {
-			return null;
-		}
-		if (message.length > 0) {
-			return message;
-		}
-		return `Must be at least ${length} characters.`;
-	};
+	}
+	return errors;
 }
 
-export function digits(length: number, message = ''): Validator {
-	return (value) => {
-		const trimmed = value.trim();
-		if (trimmed.length === 0) {
-			return null;
-		}
-		if (DIGITS_PATTERN.test(trimmed) && trimmed.length === length) {
-			return null;
-		}
-		if (message.length > 0) {
-			return message;
-		}
-		return `Enter the ${length} digit code.`;
-	};
+export function textValue(data: FormData, name: string): string {
+	const value = data.get(name);
+	if (typeof value !== 'string') {
+		return '';
+	}
+	return value;
 }

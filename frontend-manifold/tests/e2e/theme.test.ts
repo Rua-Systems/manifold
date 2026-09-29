@@ -1,0 +1,25 @@
+import { expect, test } from '@playwright/test';
+
+test.use({ colorScheme: 'light' });
+
+test('the initial theme follows the system preference', async ({ page }) => {
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await page.goto('/');
+
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+});
+
+test('a chosen theme applies at once and survives a reload', async ({ page }) => {
+	await page.goto('/', { waitUntil: 'networkidle' });
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+	const darkOption = page.getByRole('button', { name: 'Dark' });
+
+	await page.getByRole('button', { name: 'Menu' }).click();
+	await darkOption.click();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+	await expect(darkOption).toHaveAttribute('aria-pressed', 'true');
+
+	await page.reload();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+});

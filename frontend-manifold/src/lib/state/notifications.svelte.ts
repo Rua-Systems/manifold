@@ -10,7 +10,6 @@ export class NotificationStore {
 	items = $state<Notification[]>([]);
 
 	private nextId = 1;
-	private timers = new Map<number, ReturnType<typeof setTimeout>>();
 
 	notice(message: string, duration = DEFAULT_DURATION): number {
 		return this.push('notice', message, duration);
@@ -34,29 +33,18 @@ export class NotificationStore {
 			this.dismiss(oldest.id);
 		}
 
+		// Timers are not tracked: one that fires after its notification is gone filters out nothing.
 		if (duration > 0) {
-			this.timers.set(
-				id,
-				setTimeout(() => this.dismiss(id), duration)
-			);
+			setTimeout(() => this.dismiss(id), duration);
 		}
 		return id;
 	}
 
 	dismiss(id: number): void {
-		const timer = this.timers.get(id);
-		if (timer !== undefined) {
-			clearTimeout(timer);
-			this.timers.delete(id);
-		}
 		this.items = this.items.filter((item) => item.id !== id);
 	}
 
 	clear(): void {
-		for (const timer of this.timers.values()) {
-			clearTimeout(timer);
-		}
-		this.timers.clear();
 		this.items = [];
 	}
 }

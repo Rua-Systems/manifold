@@ -1,72 +1,108 @@
-import { issueLoginCode, verifyLoginCode, verifyPassword } from '$lib/server/auth';
-import { writeSession } from '$lib/server/session';
+import { m } from '$lib/paraglide/messages.js';
+import { localizeHref } from '$lib/paraglide/runtime.js';
+import { codeLoginSchema, codeRequestSchema, passwordLoginSchema } from '$lib/schemas/auth';
+import { getAuth } from '$lib/server/auth';
+import { isRateLimited } from '$lib/server/rate-limit';
+import type { LoginFormState, LoginMethod } from '$lib/types/auth';
+import type { FieldErrors } from '$lib/types/validation';
+import { safeRedirectTarget } from '$lib/utils/redirect';
+import { fieldErrors, textValue } from '$lib/utils/validation';
 import { fail, redirect } from '@sveltejs/kit';
+import { isAPIError } from 'better-auth/api';
 import type { Actions } from './$types';
 
-const FALLBACK_TARGET = '/dashboard';
-
-function safeTarget(target: FormDataEntryValue | null): string {
-	if (typeof target !== 'string' || target.length === 0) {
-		return FALLBACK_TARGET;
-	}
-	if (target.startsWith('/') && !target.startsWith('//')) {
-		return target;
-	}
-	return FALLBACK_TARGET;
+function loginState(
+	method: LoginMethod,
+	email: string,
+	sent: boolean,
+	message = '',
+	errors: FieldErrors = {}
+): LoginFormState {
+	return { method, email, sent, message, errors };
 }
 
-function readField(data: FormData, name: string): string {
-	const value = data.get(name);
-	if (typeof value !== 'string') {
-		return '';
-	}
-	return value;
+function redirectTarget(data: FormData): string {
+	return safeRedirectTarget(data.get('redirectTo'), localizeHref('/dashboard'));
 }
 
 export const actions: Actions = {
-	password: async ({ request, cookies }) => {
-		const data = await request.formData();
-		const email = readField(data, 'email');
-		const password = readField(data, 'password');
+	password: async (event) => {
+		const data = await event.request.formData();
+		const email = textValue(data, 'email');
 
-		const user = verifyPassword(email, password);
-		if (user === null) {
-			return fail(401, {
-				email,
-				sent: false,
-				message: 'Those credentials were not accepted.'
-			});
+		if (isRateLimited(event, 'signIn')) {
+			return fail(429, loginState('password', email, false, m.error_rate_limited()));
 		}
 
-		writeSession(cookies, user);
-		redirect(303, safeTarget(data.get('redirectTo')));
+		const parsed = passwordLoginSchema.safeParse({
+			email,
+			password: textValue(data, 'password')
+		});
+		if (!parsed.success) {
+			return fail(400, loginState('password', email, false, '', fieldErrors(parsed.error)));
+		}
+
+		try {
+			await getAuth().api.signInEmail({ body: parsed.data, headers: event.request.headers });
+		} catch (error) {
+			if (isAPIError(error)) {
+				return fail(401, loginState('password', email, false, m.login_error_credentials()));
+			}
+			throw error;
+		}
+		redirect(303, redirectTarget(data));
 	},
 
-	requestCode: async ({ request }) => {
-		const data = await request.formData();
-		const email = readField(data, 'email');
+	requestCode: async (event) => {
+		const data = await event.request.formData();
+		const email = textValue(data, 'email');
 
-		if (!issueLoginCode(email)) {
-			return fail(400, {
-				email,
-				sent: false,
-				message: 'A code could not be sent to that address.'
-			});
+		if (isRateLimited(event, 'sendCode')) {
+			return fail(429, loginState('code', email, false, m.error_rate_limited()));
 		}
-		return { email, sent: true, message: '' };
+
+		const parsed = codeRequestSchema.safeParse({ email });
+		if (!parsed.success) {
+			return fail(400, loginState('code', email, false, '', fieldErrors(parsed.error)));
+		}
+
+		try {
+			await getAuth().api.sendVerificationOTP({
+				body: { email: parsed.data.email, type: 'sign-in' }
+			});
+		} catch (error) {
+			if (isAPIError(error)) {
+				return fail(400, loginState('code', email, false, m.login_error_code_send()));
+			}
+			throw error;
+		}
+		return loginState('code', parsed.data.email, true);
 	},
 
-	verifyCode: async ({ request, cookies }) => {
-		const data = await request.formData();
-		const email = readField(data, 'email');
-		const code = readField(data, 'code');
+	verifyCode: async (event) => {
+		const data = await event.request.formData();
+		const email = textValue(data, 'email');
 
-		const user = verifyLoginCode(email, code);
-		if (user === null) {
-			return fail(401, { email, sent: true, message: 'That code was not accepted.' });
+		if (isRateLimited(event, 'signIn')) {
+			return fail(429, loginState('code', email, true, m.error_rate_limited()));
 		}
 
-		writeSession(cookies, user);
-		redirect(303, safeTarget(data.get('redirectTo')));
+		const parsed = codeLoginSchema.safeParse({ email, code: textValue(data, 'code') });
+		if (!parsed.success) {
+			return fail(400, loginState('code', email, true, '', fieldErrors(parsed.error)));
+		}
+
+		try {
+			await getAuth().api.signInEmailOTP({
+				body: { email: parsed.data.email, otp: parsed.data.code },
+				headers: event.request.headers
+			});
+		} catch (error) {
+			if (isAPIError(error)) {
+				return fail(401, loginState('code', email, true, m.login_error_code()));
+			}
+			throw error;
+		}
+		redirect(303, redirectTarget(data));
 	}
 };

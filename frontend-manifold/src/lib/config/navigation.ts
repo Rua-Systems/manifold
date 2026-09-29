@@ -1,19 +1,15 @@
+import { m } from '$lib/paraglide/messages.js';
 import type { NavigationLink } from '$lib/types/navigation';
 
 export const PUBLIC_LINKS: NavigationLink[] = [
-	{ href: '/', label: 'Home' },
-	{ href: '/about', label: 'About' }
+	{ href: '/', label: m.nav_home },
+	{ href: '/about', label: m.nav_about }
 ];
 
-export const GUEST_LINKS: NavigationLink[] = [{ href: '/login', label: 'Login' }];
+export const GUEST_LINKS: NavigationLink[] = [{ href: '/login', label: m.nav_login }];
 
 export const ACCOUNT_LINKS: NavigationLink[] = [
-	{ href: '/profile', label: 'Profile' },
-	{ href: '/dashboard', label: 'Dashboard' },
-	{ href: '/settings', label: 'Settings' }
-];
-
-export const DASHBOARD_LINKS: NavigationLink[] = [
-	{ href: '/dashboard', label: 'Overview' },
-	{ href: '/dashboard/map-notes', label: 'Map Notes' }
+	{ href: '/profile', label: m.nav_profile },
+	{ href: '/dashboard', label: m.nav_dashboard },
+	{ href: '/settings', label: m.nav_settings }
 ];

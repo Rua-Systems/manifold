@@ -3,6 +3,10 @@
 @use './themes' as themes;
 
 :root {
+	@include themes.lightTheme;
+}
+
+[data-theme='dark'] {
 	@include themes.darkTheme;
 }
 

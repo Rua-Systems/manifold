@@ -2,8 +2,10 @@
 	import { page } from '$app/state';
 	import ChevronIcon from '$lib/components/icons/ChevronIcon.svelte';
 	import { DASHBOARD_ASIDE_LINKS } from '$lib/config/dashboard';
+	import { m } from '$lib/paraglide/messages.js';
 	import { getSidebarState } from '$lib/state/sidebar.svelte';
 	import type { AsideLink } from '$lib/types/navigation';
+	import { currentMarker, localizedHref } from '$lib/utils/navigation';
 
 	interface AsideItem extends AsideLink {
 		current: 'page' | undefined;
@@ -12,19 +14,17 @@
 	const sidebar = getSidebarState();
 
 	const items: AsideItem[] = $derived(
-		DASHBOARD_ASIDE_LINKS.map((link) => {
-			if (page.url.pathname === link.href) {
-				return { ...link, current: 'page' as const };
-			}
-			return { ...link, current: undefined };
-		})
+		DASHBOARD_ASIDE_LINKS.map((link) => ({
+			...link,
+			current: currentMarker(page.url, link.href)
+		}))
 	);
 
 	const toggleLabel = $derived.by(() => {
 		if (sidebar.expanded) {
-			return 'Collapse sidebar';
+			return m.aside_collapse();
 		}
-		return 'Expand sidebar';
+		return m.aside_expand();
 	});
 </script>
 
@@ -43,21 +43,21 @@
 			</span>
 		</button>
 	</div>
-	<nav id="dashboardAsideNav" class="aside-body" aria-label="Dashboard sections">
+	<nav id="dashboardAsideNav" class="aside-body" aria-label={m.aside_label()}>
 		<ul>
 			{#each items as item (item.href)}
 				{@const Icon = item.icon}
 				<li>
 					<a
-						href={item.href}
+						href={localizedHref(item.href)}
 						class:active={item.current}
 						aria-current={item.current}
-						title={item.label}
+						title={item.label()}
 					>
 						<span class="icon">
 							<Icon />
 						</span>
-						<span class="label">{item.label}</span>
+						<span class="label">{item.label()}</span>
 					</a>
 				</li>
 			{/each}

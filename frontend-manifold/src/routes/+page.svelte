@@ -1,19 +1,28 @@
 <script lang="ts">
-	import logo from '$lib/assets/manifold-logo.svg';
+	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
 	import { DEFAULT_TITLE } from '$lib/constants';
+	import { m } from '$lib/paraglide/messages.js';
+	import { localizedHref } from '$lib/utils/navigation';
 </script>
 
 <svelte:head>
 	<title>{DEFAULT_TITLE}</title>
+	<meta name="description" content={m.home_meta_description()} />
 </svelte:head>
 
 <section class="hero">
-	<p class="greeting">++ Welcome to the ++</p>
+	<p class="greeting">++ {m.home_greeting()} ++</p>
 	<div class="mark">
 		<h1 class="wordmark">manifold</h1>
-		<img class="logo" src={logo} alt="" />
+		<span class="logo">
+			<ManifoldLogo />
+		</span>
 	</div>
-	<p class="hint">To get info about the project, visit <a href="/about">about</a></p>
+	<p class="hint">
+		{m.home_hint_before()}
+		<a href={localizedHref('/about')}>{m.home_hint_link()}</a>
+		{m.home_hint_after()}
+	</p>
 </section>
 
 <style lang="scss">
@@ -95,8 +104,10 @@
 			}
 
 			> .logo {
-				width: auto;
+				display: block;
 				height: var(--wordmark-size);
+				aspect-ratio: 500 / 434.9;
+				color: clr.$textPrimaryColor;
 				animation: logoIn 1250ms cubic-bezier(0.18, 0.85, 0.3, 1) both;
 				animation-delay: 700ms;
 			}

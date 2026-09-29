@@ -3,8 +3,12 @@
 	import { page } from '$app/state';
 	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
 	import HamburgerIcon from '$lib/components/icons/HamburgerIcon.svelte';
+	import LocaleSwitch from '$lib/components/LocaleSwitch/LocaleSwitch.svelte';
+	import ThemeSwitch from '$lib/components/ThemeSwitch/ThemeSwitch.svelte';
 	import { ACCOUNT_LINKS, GUEST_LINKS, PUBLIC_LINKS } from '$lib/config/navigation';
+	import { m } from '$lib/paraglide/messages.js';
 	import type { NavigationLink } from '$lib/types/navigation';
+	import { currentMarker, localizedHref } from '$lib/utils/navigation';
 	import type { Action } from 'svelte/action';
 	import { cubicOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
@@ -19,12 +23,7 @@
 	const user = $derived(page.data.user);
 
 	function decorate(links: NavigationLink[]): NavigationItem[] {
-		return links.map((link) => {
-			if (page.url.pathname === link.href) {
-				return { ...link, current: 'page' as const };
-			}
-			return { ...link, current: undefined };
-		});
+		return links.map((link) => ({ ...link, current: currentMarker(page.url, link.href) }));
 	}
 
 	const primaryItems: NavigationItem[] = $derived.by(() => {
@@ -59,7 +58,7 @@
 	const dismissOnClick: Action<HTMLElement> = (node) => {
 		function onClick(event: MouseEvent): void {
 			const target = event.target;
-			if (target instanceof Element && target.closest('a') !== null) {
+			if (target instanceof Element && target.closest('a, [data-keep-open]') !== null) {
 				return;
 			}
 			close();
@@ -104,7 +103,7 @@
 	type="button"
 	class="trigger"
 	class:open={isOpen}
-	aria-label="Menu"
+	aria-label={m.nav_menu()}
 	aria-expanded={isOpen}
 	aria-controls="mainNavigation"
 	onclick={toggle}
@@ -115,27 +114,31 @@
 	<button
 		type="button"
 		class="backdrop"
-		aria-label="Close menu"
+		aria-label={m.nav_close_menu()}
 		onclick={close}
 		transition:fade={{ duration: 200 }}
 	></button>
 	<nav
 		id="mainNavigation"
 		class="panel"
-		aria-label="Main"
+		aria-label={m.nav_label()}
 		use:dismissOnClick
 		transition:fly={{ x: 340, duration: 340, easing: cubicOut }}
 	>
 		<div class="panel-header">
-			<button type="button" class="close" aria-label="Close menu" onclick={close}>
+			<button type="button" class="close" aria-label={m.nav_close_menu()} onclick={close}>
 				<CloseIcon />
 			</button>
 		</div>
 		<ul>
 			{#each primaryItems as item, index (item.href)}
 				<li style="--delay: {120 + index * 60}ms">
-					<a href={item.href} class:active={item.current} aria-current={item.current}>
-						{item.label}
+					<a
+						href={localizedHref(item.href)}
+						class:active={item.current}
+						aria-current={item.current}
+					>
+						{item.label()}
 					</a>
 				</li>
 			{/each}
@@ -145,16 +148,28 @@
 			<ul>
 				{#each accountItems as item, index (item.href)}
 					<li style="--delay: {300 + index * 60}ms">
-						<a href={item.href} class:active={item.current} aria-current={item.current}>
-							{item.label}
+						<a
+							href={localizedHref(item.href)}
+							class:active={item.current}
+							aria-current={item.current}
+						>
+							{item.label()}
 						</a>
 					</li>
 				{/each}
 			</ul>
-			<form method="POST" action="/logout">
-				<button type="submit" class="logout">Logout</button>
-			</form>
 		{/if}
+		<div class="footer">
+			<div class="preferences" data-keep-open>
+				<LocaleSwitch />
+				<ThemeSwitch />
+			</div>
+			{#if user !== null}
+				<form method="POST" action={localizedHref('/logout')}>
+					<button type="submit" class="logout">{m.nav_logout()}</button>
+				</form>
+			{/if}
+		</div>
 	</nav>
 {/if}
 
@@ -247,10 +262,20 @@
 			background-color: clr.$borderSubtleColor;
 		}
 
-		> form {
+		> .footer {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
 			margin-top: auto;
 			padding-top: 1rem;
 			border-top: 1px solid clr.$borderMutedColor;
+
+			> .preferences {
+				display: flex;
+				flex-direction: column;
+				gap: 0.9rem;
+				padding-inline: 0.85rem;
+			}
 		}
 
 		> ul {

@@ -1,26 +1,42 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import AuthShell from '$lib/components/AuthShell/AuthShell.svelte';
 	import { pageTitle } from '$lib/constants';
+	import { m } from '$lib/paraglide/messages.js';
+	import { CODE_LENGTH, codeSchema, emailSchema, newPasswordSchema } from '$lib/schemas/auth';
 	import { Field, validateAll } from '$lib/state/field.svelte';
 	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { digits, email, required } from '$lib/utils/validation';
+	import type { ResetStage } from '$lib/types/auth';
+	import type { FieldErrors } from '$lib/types/validation';
+	import { localizedHref } from '$lib/utils/navigation';
+	import { fromSchema, matches } from '$lib/utils/validation';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import { onDestroy } from 'svelte';
-
-	type Stage = 'request' | 'verify';
+	import type { PageProps } from './$types';
 
 	const RESEND_SECONDS = 60;
-	const CODE_LENGTH = 6;
+	const RESEND_ACTION = '?/requestCode';
+
+	let { form }: PageProps = $props();
 
 	const notifications = getNotifications();
-	const emailField = new Field([required(), email()]);
-	const codeField = new Field([required(), digits(CODE_LENGTH)]);
+	const emailField = new Field([fromSchema(emailSchema)]);
+	const codeField = new Field([fromSchema(codeSchema)]);
+	const passwordField = new Field([fromSchema(newPasswordSchema)]);
+	const confirmField = new Field([
+		fromSchema(newPasswordSchema),
+		matches(() => passwordField.value, m.validation_password_mismatch)
+	]);
 
-	let stage = $state<Stage>('request');
 	let cooldown = $state(0);
-	let notice = $state('');
 	let codeInput: HTMLInputElement | undefined = $state();
 
 	let timer: ReturnType<typeof setInterval> | undefined;
+
+	const stage: ResetStage = $derived(form?.stage ?? 'request');
+	const recipient = $derived(form?.email ?? emailField.value.trim());
+	const notice = $derived(form?.message ?? '');
+	const serverErrors: FieldErrors = $derived(form?.errors ?? {});
 
 	$effect(() => {
 		if (stage === 'verify') {
@@ -29,6 +45,13 @@
 	});
 
 	onDestroy(() => clearInterval(timer));
+
+	function errorFor(field: Field, name: string): string {
+		if (field.message.length > 0) {
+			return field.message;
+		}
+		return serverErrors[name] ?? '';
+	}
 
 	function startCooldown(): void {
 		cooldown = RESEND_SECONDS;
@@ -42,127 +65,185 @@
 		}, 1000);
 	}
 
-	function requestCode(event: SubmitEvent): void {
-		event.preventDefault();
+	function guardRequest(event: SubmitEvent): void {
 		if (!validateAll([emailField])) {
+			event.preventDefault();
+		}
+	}
+
+	function guardReset(event: SubmitEvent): void {
+		const submitter = event.submitter;
+		if (submitter instanceof HTMLButtonElement && submitter.hasAttribute('formaction')) {
 			return;
 		}
-
-		notice = '';
-		stage = 'verify';
-		startCooldown();
-		notifications.confirm(`Verification code sent to ${emailField.value.trim()}.`);
-	}
-
-	function resendCode(): void {
-		if (cooldown > 0) {
-			return;
+		if (!validateAll([codeField, passwordField, confirmField])) {
+			event.preventDefault();
 		}
-
-		notice = '';
-		codeField.reset();
-		startCooldown();
-		notifications.confirm('A new verification code has been sent.');
 	}
 
-	function verifyCode(event: SubmitEvent): void {
-		event.preventDefault();
-		if (!validateAll([codeField])) {
-			return;
-		}
+	const handleRequest: SubmitFunction = () => {
+		return async ({ result, update }) => {
+			if (result.type === 'success') {
+				notifications.confirm(m.reset_code_sent({ email: emailField.value.trim() }));
+				startCooldown();
+			}
+			await update({ reset: false });
+		};
+	};
 
-		notice = 'Verification endpoint is not connected yet.';
-	}
+	const handleReset: SubmitFunction = ({ action }) => {
+		const resending = action.search === RESEND_ACTION;
 
-	function changeEmail(): void {
-		clearInterval(timer);
-		codeField.reset();
-		stage = 'request';
-		cooldown = 0;
-		notice = '';
-	}
+		return async ({ result, update }) => {
+			if (result.type === 'redirect') {
+				notifications.confirm(m.reset_success());
+			}
+			if (resending && result.type === 'success') {
+				notifications.confirm(m.reset_code_resent());
+				codeField.reset();
+				startCooldown();
+			}
+			await update({ reset: false });
+		};
+	};
 </script>
 
 <svelte:head>
-	<title>{pageTitle('Reset Password')}</title>
+	<title>{pageTitle(m.reset_title())}</title>
+	<meta name="description" content={m.reset_meta_description()} />
 </svelte:head>
 
 <AuthShell>
 	<div class="intro">
-		<p class="sigil">++ Access Recovery ++</p>
-		<h1>Reset Password</h1>
+		<p class="sigil">++ {m.reset_sigil()} ++</p>
+		<h1>{m.reset_title()}</h1>
 		{#if stage === 'request'}
-			<p class="lead">Enter your email and a verification code will be sent to it.</p>
+			<p class="lead">{m.reset_lead_request()}</p>
 		{:else}
 			<p class="lead">
-				A code was sent to <strong>{emailField.value}</strong>. Enter it below.
+				{m.reset_lead_verify_before()}
+				<strong>{recipient}</strong>. {m.reset_lead_verify_after()}
 			</p>
 		{/if}
 	</div>
 	{#if stage === 'request'}
-		<form class="step" onsubmit={requestCode} novalidate>
+		<form
+			class="step"
+			method="POST"
+			action="?/requestCode"
+			onsubmit={guardRequest}
+			use:enhance={handleRequest}
+			novalidate
+		>
+			<input type="hidden" name="stage" value="request" />
 			<div class="field">
-				<label for="recoveryEmail">Email</label>
+				<label for="recoveryEmail">{m.field_email()}</label>
 				<input
 					id="recoveryEmail"
+					name="email"
 					type="email"
 					autocomplete="email"
-					placeholder="Enter Email"
-					aria-invalid={emailField.showError}
+					placeholder={m.field_email_placeholder()}
+					aria-invalid={errorFor(emailField, 'email').length > 0}
 					aria-describedby="recoveryEmailError"
 					bind:value={emailField.value}
 					onblur={() => emailField.markTouched()}
 				/>
-				<p class="error" id="recoveryEmailError">{emailField.message}</p>
+				<p class="error" id="recoveryEmailError">{errorFor(emailField, 'email')}</p>
 			</div>
-			<div class="actions">
-				<button type="submit">Send Code</button>
-				<a href="/login">Back to login</a>
+			<div class="submit">
+				<p class="notice" role="alert">{notice}</p>
+				<div class="actions">
+					<button type="submit">{m.common_send_code()}</button>
+					<a href={localizedHref('/login')}>{m.common_back_to_login()}</a>
+				</div>
 			</div>
 		</form>
 	{:else}
-		<form class="step" onsubmit={verifyCode} novalidate>
+		<form
+			class="step"
+			method="POST"
+			action="?/reset"
+			onsubmit={guardReset}
+			use:enhance={handleReset}
+			novalidate
+		>
+			<input type="hidden" name="stage" value="verify" />
+			<input type="hidden" name="email" value={recipient} />
 			<div class="field">
-				<label for="recoveryCode">Verification Code</label>
+				<label for="recoveryCode">{m.field_code()}</label>
 				<input
 					bind:this={codeInput}
 					id="recoveryCode"
+					name="code"
 					class="code"
 					type="text"
 					inputmode="numeric"
 					autocomplete="one-time-code"
 					maxlength={CODE_LENGTH}
-					placeholder="000000"
-					aria-invalid={codeField.showError}
+					placeholder={'0'.repeat(CODE_LENGTH)}
+					aria-invalid={errorFor(codeField, 'code').length > 0}
 					aria-describedby="recoveryCodeError"
 					bind:value={codeField.value}
 					onblur={() => codeField.markTouched()}
 				/>
-				<p class="error" id="recoveryCodeError">{codeField.message}</p>
+				<p class="error" id="recoveryCodeError">{errorFor(codeField, 'code')}</p>
+			</div>
+			<div class="field">
+				<label for="recoveryPassword">{m.field_new_password()}</label>
+				<input
+					id="recoveryPassword"
+					name="password"
+					type="password"
+					autocomplete="new-password"
+					placeholder={m.field_new_password_placeholder()}
+					aria-invalid={errorFor(passwordField, 'password').length > 0}
+					aria-describedby="recoveryPasswordError"
+					bind:value={passwordField.value}
+					onblur={() => passwordField.markTouched()}
+				/>
+				<p class="error" id="recoveryPasswordError">
+					{errorFor(passwordField, 'password')}
+				</p>
+			</div>
+			<div class="field">
+				<label for="recoveryConfirm">{m.field_confirm_password()}</label>
+				<input
+					id="recoveryConfirm"
+					name="confirmPassword"
+					type="password"
+					autocomplete="new-password"
+					placeholder={m.field_confirm_password_placeholder()}
+					aria-invalid={errorFor(confirmField, 'confirmPassword').length > 0}
+					aria-describedby="recoveryConfirmError"
+					bind:value={confirmField.value}
+					onblur={() => confirmField.markTouched()}
+				/>
+				<p class="error" id="recoveryConfirmError">
+					{errorFor(confirmField, 'confirmPassword')}
+				</p>
 			</div>
 			<div class="submit">
-				<p class="notice" role="status">{notice}</p>
+				<p class="notice" role="alert">{notice}</p>
 				<div class="actions">
-					<button type="submit">Verify</button>
+					<button type="submit">{m.reset_submit()}</button>
 					<button
-						type="button"
+						type="submit"
 						class="quiet"
-						onclick={resendCode}
+						formaction={RESEND_ACTION}
 						disabled={cooldown > 0}
 					>
 						{#if cooldown > 0}
-							Resend in {cooldown}s
+							{m.reset_resend_in({ seconds: cooldown })}
 						{:else}
-							Resend code
+							{m.reset_resend()}
 						{/if}
 					</button>
 				</div>
 			</div>
 			<div class="foot-row">
-				<button type="button" class="quiet" onclick={changeEmail}>
-					Use a different email
-				</button>
-				<a href="/login">Back to login</a>
+				<a href={localizedHref('/forgot-password')}>{m.reset_change_email()}</a>
+				<a href={localizedHref('/login')}>{m.common_back_to_login()}</a>
 			</div>
 		</form>
 	{/if}
@@ -230,7 +311,7 @@
 		gap: 1rem;
 		flex-wrap: wrap;
 
-		> button[type='submit'] {
+		> button:not(.quiet) {
 			@include forms.primaryButton;
 		}
 
@@ -252,10 +333,6 @@
 		padding-top: 0.9rem;
 		border-top: 1px solid clr.$borderMutedColor;
 
-		> .quiet {
-			@include forms.quietButton;
-		}
-
 		> a {
 			@include forms.mutedLink;
 		}
@@ -275,7 +352,7 @@
 			align-items: stretch;
 			gap: 0.9rem;
 
-			> button[type='submit'] {
+			> button:not(.quiet) {
 				width: 100%;
 			}
 

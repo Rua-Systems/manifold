@@ -5,17 +5,26 @@
 
 	interface Props {
 		title: string;
+		metaDescription: string;
 		sigil?: string;
 		description?: string;
 		actions?: Snippet;
 		children: Snippet;
 	}
 
-	let { title, sigil = '', description = '', actions, children }: Props = $props();
+	let {
+		title,
+		metaDescription,
+		sigil = '',
+		description = '',
+		actions,
+		children
+	}: Props = $props();
 </script>
 
 <svelte:head>
 	<title>{pageTitle(title)}</title>
+	<meta name="description" content={metaDescription} />
 </svelte:head>
 
 <DashboardAside></DashboardAside>

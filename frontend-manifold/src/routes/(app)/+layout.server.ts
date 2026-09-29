@@ -1,9 +1,10 @@
+import { localizeHref } from '$lib/paraglide/runtime.js';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = ({ locals, url }) => {
 	if (locals.user === null) {
-		redirect(303, `/login?redirectTo=${encodeURIComponent(url.pathname)}`);
+		const target = encodeURIComponent(url.pathname + url.search);
+		redirect(303, `${localizeHref('/login')}?redirectTo=${target}`);
 	}
-	return { user: locals.user };
 };

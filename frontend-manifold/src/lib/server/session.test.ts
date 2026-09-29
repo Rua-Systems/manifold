@@ -1,0 +1,23 @@
+import type { User } from 'better-auth';
+import { describe, expect, it } from 'vitest';
+import { toSessionUser } from './session';
+
+describe('toSessionUser', () => {
+	it('returns null without a user', () => {
+		expect(toSessionUser(null)).toBeNull();
+	});
+
+	it('keeps only the fields the browser may see', () => {
+		const user: User = {
+			id: 'user-1',
+			name: 'Owner',
+			email: 'owner@example.com',
+			emailVerified: true,
+			image: null,
+			createdAt: new Date(0),
+			updatedAt: new Date(0)
+		};
+
+		expect(toSessionUser(user)).toEqual({ name: 'Owner', email: 'owner@example.com' });
+	});
+});

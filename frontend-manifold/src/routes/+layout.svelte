@@ -1,16 +1,38 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import NavigationButton from '$lib/components/NavigationButton/NavigationButton.svelte';
 	import Notifications from '$lib/components/Notifications/Notifications.svelte';
+	import { baseLocale, locales, localizeUrl } from '$lib/paraglide/runtime.js';
 	import { setNotifications } from '$lib/state/notifications.svelte';
 	import { setSidebarState } from '$lib/state/sidebar.svelte';
+	import { setThemeState } from '$lib/state/theme.svelte';
 	import '../styles/styles.scss';
+	import { onMount, untrack } from 'svelte';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { data, children }: LayoutProps = $props();
 
 	setNotifications();
 	setSidebarState();
+	const theme = setThemeState(untrack(() => data.theme));
+
+	const canonicalUrl = $derived(new URL(page.url.pathname, page.url.origin));
+
+	onMount(() => {
+		theme.syncFromDocument();
+	});
 </script>
+
+<svelte:head>
+	{#each locales as locale (locale)}
+		<link rel="alternate" hreflang={locale} href={localizeUrl(canonicalUrl, { locale }).href} />
+	{/each}
+	<link
+		rel="alternate"
+		hreflang="x-default"
+		href={localizeUrl(canonicalUrl, { locale: baseLocale }).href}
+	/>
+</svelte:head>
 
 <NavigationButton />
 <div class="shell">
