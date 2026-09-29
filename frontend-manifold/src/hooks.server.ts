@@ -3,12 +3,14 @@ import { env } from '$env/dynamic/private';
 import { getTextDirection } from '$lib/paraglide/runtime.js';
 import { paraglideMiddleware } from '$lib/paraglide/server.js';
 import { getAuth } from '$lib/server/auth';
+import { checkBodySize } from '$lib/server/body-limit';
 import { getDb, getSql } from '$lib/server/db';
 import { defaultMigrationsDirectory, runMigrations } from '$lib/server/db/migrate';
 import { getEnv, loadEnv } from '$lib/server/env';
 import { guardRequest } from '$lib/server/guard';
 import { startHousekeeping } from '$lib/server/housekeeping';
 import { bootstrapOwner } from '$lib/server/owner';
+import { housekeepingTasks } from '$lib/server/tasks';
 import { parseTheme, THEME_COOKIE } from '$lib/utils/theme';
 import type { Handle, ServerInit } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -33,7 +35,18 @@ export const init: ServerInit = async () => {
 		console.info(`Applied migrations: ${applied.join(', ')}`);
 	}
 	await bootstrapOwner(getDb(), config);
-	startHousekeeping([]);
+	startHousekeeping(housekeepingTasks());
+};
+
+const handleBodySize: Handle = ({ event, resolve }) => {
+	const check = checkBodySize(event.request);
+	if (check === 'too_large') {
+		return new Response('Payload Too Large', { status: 413 });
+	}
+	if (check === 'length_required') {
+		return new Response('Length Required', { status: 411 });
+	}
+	return resolve(event);
 };
 
 const handleLocale: Handle = ({ event, resolve }) =>
@@ -87,6 +100,7 @@ const handleSession: Handle = async ({ event, resolve }) => {
 export const handle: Handle = sequence(
 	handleLocale,
 	handleSecurityHeaders,
+	handleBodySize,
 	handleTheme,
 	handleSession
 );

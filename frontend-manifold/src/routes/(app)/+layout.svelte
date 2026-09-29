@@ -3,16 +3,17 @@
 	import HamburgerIcon from '$lib/components/icons/HamburgerIcon.svelte';
 	import Sidebar from '$lib/components/Sidebar/Sidebar.svelte';
 	import { m } from '$lib/paraglide/messages.js';
-	import { getSidebarState } from '$lib/state/sidebar.svelte';
+	import { setSidebarState } from '$lib/state/sidebar.svelte';
+	import { untrack } from 'svelte';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { data, children }: LayoutProps = $props();
 
-	const sidebar = getSidebarState();
+	const sidebar = setSidebarState(untrack(() => data.sidebarPreferences));
 </script>
 
 <div class="app">
-	<Sidebar />
+	<Sidebar data={data.sidebar} />
 	<div class="content">
 		<header class="topbar">
 			<button

@@ -1,3 +1,9 @@
+import {
+	serializeSidebarPreferences,
+	SIDEBAR_COOKIE,
+	SIDEBAR_COOKIE_MAX_AGE,
+	type SidebarPreferences
+} from '$lib/utils/sidebar-preferences';
 import { getContext, setContext } from 'svelte';
 
 const SIDEBAR_KEY = Symbol('sidebar');
@@ -9,12 +15,43 @@ export class SidebarState {
 	/** Mobile: the off-canvas drawer is showing. */
 	drawerOpen = $state(false);
 
-	toggle(): void {
-		this.expanded = !this.expanded;
+	closedGroups = $state<string[]>([]);
+
+	constructor(preferences: SidebarPreferences) {
+		this.expanded = !preferences.collapsed;
+		this.closedGroups = [...preferences.closedGroups];
 	}
 
-	collapse(): void {
-		this.expanded = false;
+	toggle(): void {
+		this.expanded = !this.expanded;
+		this.save();
+	}
+
+	expand(): void {
+		if (!this.expanded) {
+			this.expanded = true;
+			this.save();
+		}
+	}
+
+	isGroupOpen(id: string): boolean {
+		return !this.closedGroups.includes(id);
+	}
+
+	openGroup(id: string): void {
+		if (!this.isGroupOpen(id)) {
+			this.closedGroups = this.closedGroups.filter((group) => group !== id);
+			this.save();
+		}
+	}
+
+	toggleGroup(id: string): void {
+		if (this.isGroupOpen(id)) {
+			this.closedGroups = [...this.closedGroups, id];
+		} else {
+			this.closedGroups = this.closedGroups.filter((group) => group !== id);
+		}
+		this.save();
 	}
 
 	openDrawer(): void {
@@ -24,10 +61,18 @@ export class SidebarState {
 	closeDrawer(): void {
 		this.drawerOpen = false;
 	}
+
+	private save(): void {
+		const value = serializeSidebarPreferences({
+			collapsed: !this.expanded,
+			closedGroups: this.closedGroups
+		});
+		document.cookie = `${SIDEBAR_COOKIE}=${encodeURIComponent(value)}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; samesite=lax`;
+	}
 }
 
-export function setSidebarState(): SidebarState {
-	return setContext(SIDEBAR_KEY, new SidebarState());
+export function setSidebarState(preferences: SidebarPreferences): SidebarState {
+	return setContext(SIDEBAR_KEY, new SidebarState(preferences));
 }
 
 export function getSidebarState(): SidebarState {

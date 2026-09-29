@@ -5,7 +5,6 @@
 	import { PRODUCT_NAME } from '$lib/constants';
 	import { baseLocale, locales, localizeUrl } from '$lib/paraglide/runtime.js';
 	import { setNotifications } from '$lib/state/notifications.svelte';
-	import { setSidebarState } from '$lib/state/sidebar.svelte';
 	import { setThemeState } from '$lib/state/theme.svelte';
 	import '@fontsource/space-mono/400.css';
 	import '@fontsource/space-mono/700.css';
@@ -16,7 +15,6 @@
 	let { data, children }: LayoutProps = $props();
 
 	setNotifications();
-	setSidebarState();
 	const theme = setThemeState(untrack(() => data.theme));
 
 	const canonicalUrl = $derived(new URL(page.url.pathname, page.url.origin));

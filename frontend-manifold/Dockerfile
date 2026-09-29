@@ -10,6 +10,8 @@ FROM node:24-alpine AS runtime
 RUN apk add --no-cache postgresql17-client
 WORKDIR /app
 ENV NODE_ENV=production
+# The app enforces its own body limits (5 MB, uploads up to UPLOAD_MAX_BYTES) in hooks.server.ts.
+ENV BODY_SIZE_LIMIT=Infinity
 COPY --chown=node:node package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build --chown=node:node /app/build ./build

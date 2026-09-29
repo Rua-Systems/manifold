@@ -27,6 +27,8 @@ export default defineConfig({
 			...testEnvironment(testDatabaseUrl(), ORIGIN),
 			NODE_ENV: 'production',
 			PORT: String(PORT),
+			// As in the Dockerfile: hooks.server.ts enforces the body limits.
+			BODY_SIZE_LIMIT: 'Infinity',
 			// Every test sends its own X-Forwarded-For address, so the sign in rate limiter counts
 			// each test separately, as it would count separate visitors.
 			ADDRESS_HEADER: 'x-forwarded-for',

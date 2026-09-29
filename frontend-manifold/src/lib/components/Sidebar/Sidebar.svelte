@@ -6,18 +6,26 @@
 	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
 	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
 	import { CORE_SIDEBAR_LINKS } from '$lib/config/navigation';
+	import { MODULES } from '$lib/modules/registry';
+	import type { ModuleManifest, SidebarData, SidebarItem } from '$lib/modules/types';
 	import { m } from '$lib/paraglide/messages.js';
+	import { deLocalizeHref } from '$lib/paraglide/runtime.js';
 	import { getSidebarState } from '$lib/state/sidebar.svelte';
 	import { currentMarker, localizedHref } from '$lib/utils/navigation';
 	import { fade } from 'svelte/transition';
 
+	interface Props {
+		data: SidebarData;
+	}
+
+	let { data }: Props = $props();
+
+	const MOBILE_QUERY = '(max-width: 767.98px)';
+
 	const sidebar = getSidebarState();
 
 	const organizationName = $derived(page.data.organizationName);
-
-	const coreItems = $derived(
-		CORE_SIDEBAR_LINKS.map((link) => ({ ...link, current: currentMarker(page.url, link.href) }))
-	);
+	const currentPath = $derived(deLocalizeHref(page.url.pathname));
 
 	const toggleLabel = $derived.by(() => {
 		if (sidebar.expanded) {
@@ -30,6 +38,38 @@
 		sidebar.closeDrawer();
 	});
 
+	function isRail(): boolean {
+		return !sidebar.expanded && !window.matchMedia(MOBILE_QUERY).matches;
+	}
+
+	function groupItems(module: ModuleManifest): SidebarItem[] {
+		return data[module.id]?.items ?? [];
+	}
+
+	function isInModule(module: ModuleManifest): boolean {
+		return currentPath === module.href || currentPath.startsWith(`${module.href}/`);
+	}
+
+	function onGroupClick(event: MouseEvent, module: ModuleManifest): void {
+		if (module.sidebar !== 'group') {
+			return;
+		}
+		// On the icon rail a group has nowhere to show its items, so the first click opens the
+		// sidebar instead of leaving the page.
+		if (isRail()) {
+			event.preventDefault();
+			sidebar.expand();
+		}
+		sidebar.openGroup(module.id);
+	}
+
+	function toggleGroupLabel(module: ModuleManifest): string {
+		if (sidebar.isGroupOpen(module.id)) {
+			return m.sidebar_group_collapse({ group: module.label() });
+		}
+		return m.sidebar_group_expand({ group: module.label() });
+	}
+
 	function onWindowKeydown(event: KeyboardEvent): void {
 		if (event.key === 'Escape' && sidebar.drawerOpen) {
 			sidebar.closeDrawer();
@@ -38,6 +78,16 @@
 </script>
 
 <svelte:window onkeydown={onWindowKeydown} />
+
+{#snippet itemIcon(item: SidebarItem)}
+	{#if item.icon?.kind === 'image'}
+		<img class="item-icon" src={item.icon.src} alt="" loading="lazy" />
+	{:else if item.icon?.kind === 'letter'}
+		<span class="item-icon letter" aria-hidden="true">{item.icon.letter}</span>
+	{:else}
+		<span class="item-icon bullet" aria-hidden="true"></span>
+	{/if}
+{/snippet}
 
 {#if sidebar.drawerOpen}
 	<button
@@ -78,21 +128,87 @@
 		</button>
 	</div>
 	<nav id="appSidebarNav" class="body" aria-label={m.sidebar_label()}>
-		<ul>
-			{#each coreItems as item (item.href)}
-				{@const Icon = item.icon}
-				<li>
-					<a
-						href={localizedHref(item.href)}
-						class:active={item.current}
-						aria-current={item.current}
-						title={item.label()}
-					>
-						<span class="icon">
-							<Icon />
-						</span>
-						<span class="label">{item.label()}</span>
-					</a>
+		<ul class="entries">
+			{#each MODULES as module (module.id)}
+				{@const Icon = module.icon}
+				{@const open = sidebar.isGroupOpen(module.id)}
+				<li class="entry" class:group={module.sidebar === 'group'}>
+					<div class="entry-row">
+						<a
+							class="entry-link"
+							class:active={isInModule(module)}
+							href={localizedHref(module.href)}
+							aria-current={currentMarker(page.url, module.href)}
+							title={module.label()}
+							onclick={(event) => onGroupClick(event, module)}
+						>
+							<span class="icon">
+								<Icon />
+							</span>
+							<span class="label">{module.label()}</span>
+						</a>
+						{#if module.sidebar === 'group'}
+							<button
+								type="button"
+								class="group-toggle"
+								class:open
+								aria-label={toggleGroupLabel(module)}
+								aria-expanded={open}
+								aria-controls="sidebarGroup-{module.id}"
+								onclick={() => sidebar.toggleGroup(module.id)}
+							>
+								<ChevronIcon size="0.95rem" />
+							</button>
+						{/if}
+					</div>
+					{#if module.sidebar === 'group' && open}
+						<ul class="children" id="sidebarGroup-{module.id}">
+							{#each groupItems(module) as item (item.id)}
+								<li>
+									{#if item.link.kind === 'external'}
+										<a
+											class="child"
+											href={item.link.url}
+											target="_blank"
+											rel="external noopener noreferrer"
+										>
+											{@render itemIcon(item)}
+											<span class="child-label">{item.label}</span>
+										</a>
+									{:else}
+										<a
+											class="child"
+											class:active={currentPath === item.link.path}
+											href={localizedHref(item.link.path)}
+											aria-current={currentMarker(page.url, item.link.path)}
+										>
+											{@render itemIcon(item)}
+											<span class="child-label">{item.label}</span>
+										</a>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</li>
+			{/each}
+			{#each CORE_SIDEBAR_LINKS as link (link.href)}
+				{@const Icon = link.icon}
+				<li class="entry">
+					<div class="entry-row">
+						<a
+							class="entry-link"
+							class:active={currentMarker(page.url, link.href) === 'page'}
+							href={localizedHref(link.href)}
+							aria-current={currentMarker(page.url, link.href)}
+							title={link.label()}
+						>
+							<span class="icon">
+								<Icon />
+							</span>
+							<span class="label">{link.label()}</span>
+						</a>
+					</div>
 				</li>
 			{/each}
 		</ul>
@@ -133,7 +249,7 @@
 		transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1);
 
 		&.expanded {
-			width: 15rem;
+			width: 16rem;
 		}
 	}
 
@@ -208,62 +324,181 @@
 		min-height: 0;
 		overflow-x: hidden;
 		overflow-y: auto;
+	}
 
-		> ul {
+	.entries {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.entry-row {
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+	}
+
+	.entry-link {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		gap: 0.8rem;
+		min-width: 0;
+		min-height: vars.$touchTarget;
+		padding: 0 0.7rem;
+		color: clr.$textSecondaryColor;
+		text-decoration: none;
+		white-space: nowrap;
+		border-left: 1px solid transparent;
+		border-radius: vars.$radius;
+		transition:
+			color 160ms ease,
+			background-color 160ms ease,
+			border-color 160ms ease;
+
+		&:hover {
+			color: clr.$textPrimaryColor;
+			background-color: clr.$surfaceHoverColor;
+		}
+
+		&.active {
+			color: clr.$accentColor;
+			border-left-color: clr.$accentColor;
+			border-radius: 0 vars.$radius vars.$radius 0;
+		}
+
+		> .icon {
 			display: flex;
-			flex-direction: column;
-			gap: 0.2rem;
-			margin: 0;
-			padding: 0;
-			list-style: none;
+			flex: none;
+			align-items: center;
+			justify-content: center;
+			width: 1.35rem;
+		}
 
-			> li > a {
-				display: flex;
-				align-items: center;
-				gap: 0.8rem;
-				min-height: vars.$touchTarget;
-				padding: 0 0.7rem;
-				color: clr.$textSecondaryColor;
-				text-decoration: none;
-				white-space: nowrap;
-				border-left: 1px solid transparent;
-				border-radius: vars.$radius;
-				transition:
-					color 160ms ease,
-					background-color 160ms ease,
-					border-color 160ms ease;
-
-				&:hover {
-					color: clr.$textPrimaryColor;
-					background-color: clr.$surfaceHoverColor;
-				}
-
-				&.active {
-					color: clr.$accentColor;
-					border-left-color: clr.$accentColor;
-					border-radius: 0 vars.$radius vars.$radius 0;
-				}
-
-				> .icon {
-					display: flex;
-					flex: none;
-					align-items: center;
-					justify-content: center;
-					width: 1.35rem;
-				}
-
-				> .label {
-					font-size: 0.85rem;
-					letter-spacing: 0.02em;
-					opacity: 0;
-					transition: opacity 180ms ease;
-				}
-			}
+		> .label {
+			overflow: hidden;
+			font-size: 0.85rem;
+			letter-spacing: 0.02em;
+			text-overflow: ellipsis;
+			opacity: 0;
+			transition: opacity 180ms ease;
 		}
 	}
 
-	.sidebar.expanded .body > ul > li > a > .label {
-		opacity: 1;
+	.group-toggle {
+		display: none;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		width: vars.$touchTarget;
+		height: vars.$touchTarget;
+		padding: 0;
+		color: clr.$textMutedColor;
+		background-color: transparent;
+		border: 0;
+		border-radius: vars.$radius;
+		cursor: pointer;
+		transition:
+			color 160ms ease,
+			background-color 160ms ease;
+
+		&:hover {
+			color: clr.$textPrimaryColor;
+			background-color: clr.$surfaceHoverColor;
+		}
+
+		:global(svg) {
+			transform: rotate(90deg);
+			transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+		}
+
+		&.open :global(svg) {
+			transform: rotate(-90deg);
+		}
+	}
+
+	.children {
+		display: none;
+		flex-direction: column;
+		gap: 0.1rem;
+		margin: 0.1rem 0 0.4rem;
+		padding: 0 0 0 1.3rem;
+		list-style: none;
+	}
+
+	.child {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		min-height: vars.$touchTarget;
+		padding: 0 0.6rem;
+		font-size: 0.8rem;
+		color: clr.$textSecondaryColor;
+		text-decoration: none;
+		white-space: nowrap;
+		border-radius: vars.$radius;
+		transition:
+			color 160ms ease,
+			background-color 160ms ease;
+
+		&:hover {
+			color: clr.$textPrimaryColor;
+			background-color: clr.$surfaceHoverColor;
+		}
+
+		&.active {
+			color: clr.$accentColor;
+		}
+
+		> .child-label {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+	}
+
+	.item-icon {
+		display: flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		width: 1.2rem;
+		height: 1.2rem;
+		object-fit: contain;
+		border-radius: 3px;
+
+		&.letter {
+			font-size: 0.66rem;
+			font-weight: 700;
+			color: clr.$accentColor;
+			background-color: clr.$accentWashColor;
+			border: 1px solid clr.$accentMutedColor;
+		}
+
+		&.bullet::before {
+			content: '';
+			width: 0.3rem;
+			height: 0.3rem;
+			background-color: clr.$textMutedColor;
+			border-radius: 50%;
+		}
+	}
+
+	.sidebar.expanded {
+		.entry-link > .label {
+			opacity: 1;
+		}
+
+		.group-toggle {
+			display: flex;
+		}
+
+		.children {
+			display: flex;
+		}
 	}
 
 	.footer {
@@ -347,8 +582,16 @@
 			}
 		}
 
-		.body > ul > li > a > .label {
+		.entry-link > .label {
 			opacity: 1;
+		}
+
+		.group-toggle {
+			display: flex;
+		}
+
+		.children {
+			display: flex;
 		}
 
 		.footer {
