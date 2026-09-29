@@ -28,6 +28,11 @@ export default defineConfig({
 			version: {
 				name: packageJson.version
 			},
+			// hooks.server.ts runs the same origin check for form posts, except under /api/, where
+			// only Bearer keys count and API clients send no Origin header with their uploads.
+			csrf: {
+				checkOrigin: false
+			},
 			csp: {
 				mode: 'auto',
 				directives: {

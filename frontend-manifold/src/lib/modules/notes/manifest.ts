@@ -11,6 +11,8 @@ export const notesManifest: ModuleManifest = {
 	sidebar: 'group',
 	scopes: [
 		{ id: 'notes:read', access: 'read', label: m.scope_notes_read },
-		{ id: 'notes:write', access: 'write', label: m.scope_notes_write }
+		{ id: 'notes:write', access: 'write', label: m.scope_notes_write },
+		{ id: 'map:read', access: 'read', label: m.scope_map_read },
+		{ id: 'map:write', access: 'write', label: m.scope_map_write }
 	]
 };

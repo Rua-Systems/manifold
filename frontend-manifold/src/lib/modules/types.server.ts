@@ -1,3 +1,4 @@
+import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
 import type { SidebarGroup } from './types';
@@ -9,4 +10,6 @@ export interface ServerModuleManifest {
 	/** Columns that point at `file.id`, so housekeeping keeps those files. */
 	fileReferences?: FileReference[];
 	housekeeping?: HousekeepingTask[];
+	/** REST routes under /api/v1. */
+	api?: ApiRoute[];
 }

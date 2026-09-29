@@ -87,3 +87,21 @@ export const userSetting = pgTable('user_setting', {
 	createdAt: timestamptz('created_at').defaultNow().notNull(),
 	updatedAt: timestamptz('updated_at').defaultNow().notNull()
 });
+
+export const apiKey = pgTable(
+	'api_key',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		name: text('name').notNull(),
+		prefix: text('prefix').notNull().unique(),
+		keyHash: text('key_hash').notNull(),
+		scopes: text('scopes').array().notNull(),
+		expiresAt: timestamptz('expires_at'),
+		lastUsedAt: timestamptz('last_used_at'),
+		lastUsedIp: text('last_used_ip'),
+		revokedAt: timestamptz('revoked_at'),
+		createdAt: timestamptz('created_at').defaultNow().notNull(),
+		updatedAt: timestamptz('updated_at').defaultNow().notNull()
+	},
+	(table) => [index('api_key_created_at_idx').on(table.createdAt.desc())]
+);

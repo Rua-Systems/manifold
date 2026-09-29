@@ -2,6 +2,8 @@ import { m } from '$lib/paraglide/messages.js';
 import { getEnv } from '$lib/server/env';
 import type { SidebarItem } from '../types';
 import type { ServerModuleManifest } from '../types.server';
+import { notesApiRoutes } from './api.server';
+import { mapApiRoutes } from './map/api.server';
 import { listNotes, NOTES_MODULE, purgeTrashedNotes } from './notes.server';
 
 const SIDEBAR_NOTE_LIMIT = 100;
@@ -28,6 +30,7 @@ export const notesServerManifest: ServerModuleManifest = {
 		};
 	},
 	fileReferences: [{ table: 'note_file', column: 'file_id' }],
+	api: [...notesApiRoutes, ...mapApiRoutes],
 	housekeeping: [
 		{
 			name: 'notes.purge-trash',

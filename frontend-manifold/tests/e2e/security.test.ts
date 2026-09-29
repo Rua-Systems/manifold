@@ -53,3 +53,12 @@ test('the mail preview does not exist outside development', async ({ request }) 
 
 	expect(response.status()).toBe(404);
 });
+
+test('cross-site form posts are refused outside the API', async ({ page }) => {
+	const response = await page.request.post('/login?/password', {
+		form: { identifier: 'owner', password: 'x' },
+		headers: { Origin: 'https://attacker.example' }
+	});
+	expect(response.status()).toBe(403);
+	expect(await response.text()).toBe('Cross-site POST form submissions are forbidden');
+});

@@ -2,6 +2,7 @@ import { building, dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { getTextDirection } from '$lib/paraglide/runtime.js';
 import { paraglideMiddleware } from '$lib/paraglide/server.js';
+import { ApiError, errorResponse } from '$lib/server/api/errors';
 import { getAuth } from '$lib/server/auth';
 import { checkBodySize } from '$lib/server/body-limit';
 import { getDb, getSql } from '$lib/server/db';
@@ -39,13 +40,49 @@ export const init: ServerInit = async () => {
 	startHousekeeping(housekeepingTasks());
 };
 
+const FORM_CONTENT_TYPES = [
+	'application/x-www-form-urlencoded',
+	'multipart/form-data',
+	'text/plain'
+];
+const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/**
+ * SvelteKit's cross-site form check, run here so /api/ can be left out: a form post whose Origin
+ * is not this site is refused. The API authenticates by Bearer key alone, so a cross-site form
+ * could not act as the owner there.
+ */
+const handleCsrf: Handle = ({ event, resolve }) => {
+	const { request, url } = event;
+	const type = request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase() ?? '';
+	const isForm = FORM_CONTENT_TYPES.includes(type);
+	if (
+		isForm &&
+		UNSAFE_METHODS.has(request.method) &&
+		!url.pathname.startsWith('/api/') &&
+		request.headers.get('origin') !== url.origin
+	) {
+		return new Response(`Cross-site ${request.method} form submissions are forbidden`, {
+			status: 403
+		});
+	}
+	return resolve(event);
+};
+
 const handleBodySize: Handle = ({ event, resolve }) => {
 	const check = checkBodySize(event.request);
+	const api = event.url.pathname.startsWith('/api/');
 	if (check === 'too_large') {
-		return new Response('Payload Too Large', { status: 413 });
+		return api
+			? errorResponse(
+					new ApiError(413, 'payload_too_large', 'The body is larger than the limit.')
+				)
+			: new Response('Payload Too Large', { status: 413 });
 	}
 	if (check === 'length_required') {
-		return new Response('Length Required', { status: 411 });
+		return api
+			? errorResponse(new ApiError(411, 'length_required', 'Send a Content-Length header.'))
+			: new Response('Length Required', { status: 411 });
 	}
 	return resolve(event);
 };
@@ -108,6 +145,7 @@ const handleSession: Handle = async ({ event, resolve }) => {
 export const handle: Handle = sequence(
 	handleLocale,
 	handleSecurityHeaders,
+	handleCsrf,
 	handleBodySize,
 	handleSession,
 	handleTheme

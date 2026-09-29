@@ -29,4 +29,24 @@ describe('RateLimiter', () => {
 		expect(limiter.hit('a', LIMIT, 0)).toBe(true);
 		expect(limiter.hit('b', LIMIT, 0)).toBe(false);
 	});
+
+	it('reports what is left of the window', () => {
+		const limiter = new RateLimiter();
+
+		expect(limiter.consume('a', LIMIT, 100)).toEqual({
+			limited: false,
+			remaining: 1,
+			resetAt: 1100
+		});
+		expect(limiter.consume('a', LIMIT, 200)).toEqual({
+			limited: false,
+			remaining: 0,
+			resetAt: 1100
+		});
+		expect(limiter.consume('a', LIMIT, 300)).toEqual({
+			limited: true,
+			remaining: 0,
+			resetAt: 1100
+		});
+	});
 });

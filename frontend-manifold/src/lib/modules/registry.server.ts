@@ -1,3 +1,4 @@
+import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
 import { notesServerManifest } from './notes/manifest.server';
@@ -33,4 +34,8 @@ export function fileReferences(): FileReference[] {
 
 export function moduleHousekeeping(): HousekeepingTask[] {
 	return SERVER_MODULES.flatMap((module) => module.housekeeping ?? []);
+}
+
+export function moduleApiRoutes(): ApiRoute[] {
+	return SERVER_MODULES.flatMap((module) => module.api ?? []);
 }

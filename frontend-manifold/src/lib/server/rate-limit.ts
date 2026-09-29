@@ -1,8 +1,15 @@
 import type { RequestEvent } from '@sveltejs/kit';
 
-interface RateLimit {
+export interface RateLimit {
 	max: number;
 	windowMs: number;
+}
+
+export interface RateLimitState {
+	limited: boolean;
+	remaining: number;
+	/** When the window starts over, in milliseconds since the epoch. */
+	resetAt: number;
 }
 
 interface AttemptWindow {
@@ -30,18 +37,26 @@ export class RateLimiter {
 
 	/** Counts one attempt for `key` and reports whether it exceeds the limit. */
 	hit(key: string, limit: RateLimit, now: number): boolean {
+		return this.consume(key, limit, now).limited;
+	}
+
+	/** Counts one attempt and reports the state of the window, for rate limit headers. */
+	consume(key: string, limit: RateLimit, now: number): RateLimitState {
 		if (this.windows.size > PRUNE_THRESHOLD) {
 			this.prune(now);
 		}
 
-		const current = this.windows.get(key);
+		let current = this.windows.get(key);
 		if (current === undefined || current.resetAt <= now) {
-			this.windows.set(key, { count: 1, resetAt: now + limit.windowMs });
-			return false;
+			current = { count: 0, resetAt: now + limit.windowMs };
+			this.windows.set(key, current);
 		}
-
 		current.count += 1;
-		return current.count > limit.max;
+		return {
+			limited: current.count > limit.max,
+			remaining: Math.max(0, limit.max - current.count),
+			resetAt: current.resetAt
+		};
 	}
 
 	private prune(now: number): void {
@@ -60,4 +75,13 @@ const limiter = new RateLimiter();
 export function isRateLimited(event: RequestEvent, bucket: RateLimitBucket): boolean {
 	const key = `${bucket}:${event.getClientAddress()}`;
 	return limiter.hit(key, RATE_LIMITS[bucket], Date.now());
+}
+
+/** Counts one API request for a key against API_RATE_LIMIT_PER_MINUTE. */
+export function consumeApiRequest(
+	keyId: string,
+	perMinute: number,
+	now = Date.now()
+): RateLimitState {
+	return limiter.consume(`api:${keyId}`, { max: perMinute, windowMs: MINUTE }, now);
 }

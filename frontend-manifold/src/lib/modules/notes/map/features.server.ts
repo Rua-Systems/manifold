@@ -4,8 +4,8 @@ import { getDb } from '$lib/server/db';
 import { getEnv } from '$lib/server/env';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
 import { isUuid } from '$lib/utils/uuid';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
-import { getNote, insertNote } from '../notes.server';
+import { and, asc, eq, isNull, sql, type SQL } from 'drizzle-orm';
+import { getNote, insertNote, type NoteInput } from '../notes.server';
 import { mapFeature, note } from '../schema.server';
 import type { MapConfig } from './config';
 import {
@@ -122,25 +122,76 @@ export async function getMapFeature(id: string): Promise<MapFeatureView> {
 	return row;
 }
 
+export interface FeaturePageOptions {
+	/** `[west, south, east, north]` in degrees: only features that intersect it. */
+	bbox?: [number, number, number, number];
+	noteId?: string;
+	limit: number;
+	/** The last feature of the previous page. */
+	after?: { createdAt: Date; id: string };
+}
+
+/** A page of features, oldest first, with one row more than `limit` to tell whether more follow. */
+export async function listMapFeaturePage(
+	options: FeaturePageOptions
+): Promise<(MapFeatureView & { createdAt: Date; updatedAt: Date })[]> {
+	const conditions: SQL[] = [isNull(note.deletedAt)];
+	if (options.noteId !== undefined) {
+		if (!isUuid(options.noteId)) {
+			return [];
+		}
+		conditions.push(eq(mapFeature.noteId, options.noteId));
+	}
+	if (options.bbox !== undefined) {
+		const [west, south, east, north] = options.bbox;
+		conditions.push(
+			sql`ST_Intersects(${mapFeature.geometry}, ST_MakeEnvelope(${west}, ${south}, ${east}, ${north}, 4326))`
+		);
+	}
+	if (options.after !== undefined) {
+		conditions.push(
+			sql`(${mapFeature.createdAt}, ${mapFeature.id}) > (${options.after.createdAt.toISOString()}::timestamptz, ${options.after.id}::uuid)`
+		);
+	}
+	return getDb()
+		.select({
+			...featureColumns,
+			createdAt: mapFeature.createdAt,
+			updatedAt: mapFeature.updatedAt
+		})
+		.from(mapFeature)
+		.innerJoin(note, eq(note.id, mapFeature.noteId))
+		.where(and(...conditions))
+		.orderBy(asc(mapFeature.createdAt), asc(mapFeature.id))
+		.limit(options.limit + 1);
+}
+
 /** Links a new geometry to an existing note that is not in the trash. */
 export async function addFeature(noteId: string, input: unknown): Promise<MapFeatureView> {
 	const { geometry, kind } = await validateGeometry(input);
 	const target = await getNote(noteId);
+	// Set here rather than by the database, so paging cursors keep the full precision.
+	const now = new Date();
 	const [created] = await getDb()
 		.insert(mapFeature)
-		.values({ noteId: target.id, geometry, kind })
+		.values({ noteId: target.id, geometry, kind, createdAt: now, updatedAt: now })
 		.returning({ id: mapFeature.id });
 	return getMapFeature(created.id);
 }
 
-/** Creates an untitled note and links the geometry to it, in one transaction. */
-export async function addFeatureWithNewNote(input: unknown, actor: Actor): Promise<MapFeatureView> {
+/** Creates a note, untitled unless `noteInput` says otherwise, and links the geometry to it. */
+export async function addFeatureWithNewNote(
+	input: unknown,
+	actor: Actor,
+	noteInput: NoteInput = {}
+): Promise<MapFeatureView> {
 	const { geometry, kind } = await validateGeometry(input);
+	const now = new Date();
 	const id = await getDb().transaction(async (tx) => {
-		const noteId = await insertNote(tx, {}, actor);
+		const noteId = await insertNote(tx, noteInput, actor, { now });
 		const [created] = await tx
 			.insert(mapFeature)
-			.values({ noteId, geometry, kind })
+			.values({ noteId, geometry, kind, createdAt: now, updatedAt: now })
 			.returning({ id: mapFeature.id });
 		return created.id;
 	});

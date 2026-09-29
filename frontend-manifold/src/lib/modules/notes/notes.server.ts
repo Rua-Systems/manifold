@@ -5,7 +5,19 @@ import { file } from '$lib/server/db/schema';
 import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
 import { isUuid } from '$lib/utils/uuid';
 import { fieldErrors } from '$lib/utils/validation';
-import { and, desc, eq, ilike, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
+import {
+	and,
+	desc,
+	eq,
+	ilike,
+	inArray,
+	isNotNull,
+	isNull,
+	lt,
+	or,
+	sql,
+	type SQL
+} from 'drizzle-orm';
 import { emptyNoteContent, fileIdsInContent, type NoteContent } from './content';
 import { contentToText, validateNoteContent } from './content.server';
 import { note, noteFile, noteRevision } from './schema.server';
@@ -82,18 +94,24 @@ function toSummary(row: {
 	};
 }
 
+/** Title or text contains the query, case insensitively, with `%` and `_` taken literally. */
+function textMatch(query: string | undefined): SQL | undefined {
+	const trimmed = query?.trim() ?? '';
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+	const pattern = `%${trimmed.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+	return or(ilike(note.title, pattern), ilike(note.contentText, pattern));
+}
+
 export async function listNotes(options: ListNotesOptions = {}): Promise<NoteSummary[]> {
 	const conditions = [isNull(note.deletedAt)];
 	if (options.trashed === true) {
 		conditions[0] = isNotNull(note.deletedAt);
 	}
-	const query = options.query?.trim() ?? '';
-	if (query.length > 0) {
-		const pattern = `%${query.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
-		const match = or(ilike(note.title, pattern), ilike(note.contentText, pattern));
-		if (match !== undefined) {
-			conditions.push(match);
-		}
+	const match = textMatch(options.query);
+	if (match !== undefined) {
+		conditions.push(match);
 	}
 
 	const rows = await getDb()
@@ -412,6 +430,43 @@ export async function purgeTrashedNotes(now: Date, retentionDays: number): Promi
 		.where(and(isNotNull(note.deletedAt), lt(note.deletedAt, cutoff)))
 		.returning({ id: note.id });
 	return deleted.length;
+}
+
+export interface NotePageOptions {
+	query?: string;
+	includeTrashed?: boolean;
+	limit: number;
+	/** The last note of the previous page. */
+	after?: { updatedAt: Date; id: string };
+}
+
+/**
+ * A page of notes by last update, for the API: one row more than `limit`, so the caller can tell
+ * whether another page follows.
+ */
+export async function listNotePage(
+	options: NotePageOptions
+): Promise<(NoteSummary & { version: number })[]> {
+	const conditions = [];
+	if (options.includeTrashed !== true) {
+		conditions.push(isNull(note.deletedAt));
+	}
+	const match = textMatch(options.query);
+	if (match !== undefined) {
+		conditions.push(match);
+	}
+	if (options.after !== undefined) {
+		conditions.push(
+			sql`(${note.updatedAt}, ${note.id}) < (${options.after.updatedAt.toISOString()}::timestamptz, ${options.after.id}::uuid)`
+		);
+	}
+	const rows = await getDb()
+		.select({ ...summaryColumns, version: note.version })
+		.from(note)
+		.where(and(...conditions))
+		.orderBy(desc(note.updatedAt), desc(note.id))
+		.limit(options.limit + 1);
+	return rows.map((row) => ({ ...toSummary(row), version: row.version }));
 }
 
 /** Ids and titles of the notes outside the trash, newest first, for pickers. */

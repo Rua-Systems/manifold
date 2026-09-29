@@ -106,3 +106,19 @@ Choices the Batch 01 specification left open, with the reason for each.
 - **User settings are columns on `user_setting`:** `locale` and `theme`, where null means "not chosen". The locale is for mails sent outside a request (`preferredLocale()`); mails sent while handling a request keep using the request's locale. The theme is what a browser without its own theme cookie starts with. Both are cached in memory and replaced on save.
 - **Settings has two pages:** Profile (profile, preferences, email, password, about) and Security (two factor, sessions, audit log), with links between them.
 - **The CLI records the commands that change data** (`migrate` when it applied something, `owner:reset-password`, `owner:disable-2fa`) with the actor type `cli`.
+
+### Phase 7: API keys and REST API
+
+- **One endpoint serves the whole API.** `src/routes/api/v1/[...path]/+server.ts` hands every request to a router that matches it against the route definitions: the core's (`/me`, `/files`) and each module's, from the `api` field of its server manifest. The same definitions, with their Zod schemas, build the OpenAPI document, so a module adds routes without touching the router or the document.
+- **The router's order is fixed:** find the route (404 or 405), authenticate the Bearer key (401), count the key's rate limit (429), check the scope (403), validate path, query and body (400), then run the handler. A module's `ValidationError` answers 422, `NotFoundError` 404, a version conflict 409 with `current_version`, and a refused upload 413 or 422.
+- **Error messages of the API are English and meant for developers;** field messages coming from the modules' validation keep the request's locale, as in the UI.
+- **Keys look like `mfd_<prefix>_<secret>`.** The prefix is 8 lowercase letters and digits and finds the row; a revoked, expired or unknown key answers the same 401, so a response never tells which. Rotating a key is revoking it and creating another; only creation needs the step-up.
+- **API writes are recorded in the audit log by the router** after the handler succeeds, with the route's action (`note.update`, `map_feature.create` and so on), the key as actor and the target the handler reports. Reads only update the key's `last_used_at` and `last_used_ip`.
+- **Cursor paging uses keyset cursors** (last update and id for notes, creation time and id for map features) wrapped in opaque base64url. Services and revisions are short lists and page by offset behind the same kind of cursor. Pages are `{ "data": [...], "next_cursor": ... }`; the map's list is a GeoJSON FeatureCollection with `next_cursor` as a foreign member.
+- **API JSON uses snake_case field names,** like the query parameters the specification names (`include_trashed`, `note_id`).
+- **`DELETE` answers 204;** writes that change a record answer the record.
+- **Services through the API are alias and address only.** Icons are uploaded on the Services page; the API shows them as `icon_url`.
+- **Files uploaded through the API are images only** (the file store accepts nothing else in this batch) and belong to no module. Like every file, one that no note or service refers to is deleted after a day.
+- **Map features created through the API may bring their note along** as `note` (title and content or Markdown), created in the same transaction.
+- **SvelteKit's own cross-site form check is turned off and run in `hooks.server.ts` instead,** for every path except `/api/`. SvelteKit refuses any multipart post without a matching `Origin` header, which API clients uploading files do not send, and its check cannot leave out a path. The API authenticates by Bearer key only, never by cookie, so a cross-site form cannot act as the owner there. `csrf.checkOrigin` is deprecated and makes the build print a warning; `csrf.trustedOrigins` cannot express "no Origin".
+- **The request body limit answers in the API's error format under `/api/`** and as plain text elsewhere.

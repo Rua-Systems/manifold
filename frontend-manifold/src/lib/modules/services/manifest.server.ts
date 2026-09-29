@@ -1,6 +1,7 @@
 import { m } from '$lib/paraglide/messages.js';
 import type { SidebarItem } from '../types';
 import type { ServerModuleManifest } from '../types.server';
+import { servicesApiRoutes } from './api.server';
 import { listServices, SERVICES_MODULE } from './services.server';
 import type { Service } from './types';
 
@@ -39,5 +40,6 @@ export const servicesServerManifest: ServerModuleManifest = {
 			]
 		};
 	},
-	fileReferences: [{ table: 'service', column: 'icon_file_id' }]
+	fileReferences: [{ table: 'service', column: 'icon_file_id' }],
+	api: servicesApiRoutes
 };
