@@ -4,6 +4,8 @@ import type { SidebarItem } from '../types';
 import type { ServerModuleManifest } from '../types.server';
 import { notesApiRoutes } from './api.server';
 import { mapApiRoutes } from './map/api.server';
+import { mapMcpTools } from './map/mcp.server';
+import { notesMcpTools } from './mcp.server';
 import { listNotes, NOTES_MODULE, purgeTrashedNotes, searchNotes } from './notes.server';
 
 const SIDEBAR_NOTE_LIMIT = 100;
@@ -32,6 +34,7 @@ export const notesServerManifest: ServerModuleManifest = {
 	},
 	fileReferences: [{ table: 'note_file', column: 'file_id' }],
 	api: [...notesApiRoutes, ...mapApiRoutes],
+	mcp: [...notesMcpTools, ...mapMcpTools],
 	search: {
 		type: 'note',
 		scope: 'notes:read',

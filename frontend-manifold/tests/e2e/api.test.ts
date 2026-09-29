@@ -116,3 +116,42 @@ test('the OpenAPI document lists the API', async ({ page }) => {
 		])
 	);
 });
+
+test('the MCP endpoint serves tools to a key', async ({ page }) => {
+	const key = await createKey(page, `Agent ${Date.now()}`, ['notes:read']);
+	const headers = {
+		Authorization: `Bearer ${key}`,
+		Accept: 'application/json, text/event-stream'
+	};
+
+	const initialized = await page.request.post('/mcp', {
+		headers,
+		data: {
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'initialize',
+			params: {
+				protocolVersion: '2025-06-18',
+				capabilities: {},
+				clientInfo: { name: 'e2e', version: '1.0.0' }
+			}
+		}
+	});
+	expect(initialized.status()).toBe(200);
+	expect(await initialized.json()).toMatchObject({ result: { capabilities: { tools: {} } } });
+
+	const listed = await page.request.post('/mcp', {
+		headers,
+		data: { jsonrpc: '2.0', id: 2, method: 'tools/list' }
+	});
+	const names = ((await listed.json()) as { result: { tools: { name: string }[] } }).result.tools
+		.map((tool) => tool.name)
+		.sort();
+	expect(names).toEqual(['get_note', 'list_note_revisions', 'list_notes', 'search']);
+
+	const refused = await page.request.post('/mcp', {
+		headers: { Accept: headers.Accept },
+		data: { jsonrpc: '2.0', id: 3, method: 'tools/list' }
+	});
+	expect(refused.status()).toBe(401);
+});

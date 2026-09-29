@@ -57,3 +57,15 @@ docker compose exec app node cli.js vault:rotate-key
 In Coolify, run the same `node cli.js <command>` in the app container's terminal. `owner:reset-password` asks for the new password twice and signs every session out. `owner:disable-2fa` is for an owner who lost their authenticator and backup codes: it asks for confirmation, turns two factor authentication off and signs every session out. `vault:rotate-key` re-encrypts every vault value with a new key, read from `NEW_ENCRYPTION_KEY` or asked for (make one with `openssl rand -base64 32`), then tells you to put the new key into `ENCRYPTION_KEY` and restart. Commands that change data are recorded in the audit log.
 
 In development, `npm run build` first, then `npm run cli -- <command>`.
+
+## API and MCP
+
+Create a key in Settings, API Keys, choosing the scopes it needs. The REST API lives under `/api/v1` and describes itself at `/api/v1/openapi.json`; send the key as `Authorization: Bearer <key>`.
+
+The same keys open the MCP server at `/mcp` (streamable HTTP), whose tools follow the key's scopes. To connect Claude Code:
+
+```bash
+claude mcp add --transport http manifold https://<host>/mcp --header "Authorization: Bearer <key>"
+```
+
+Other MCP clients take the same address and header.

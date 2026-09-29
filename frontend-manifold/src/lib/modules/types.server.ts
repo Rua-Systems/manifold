@@ -1,6 +1,7 @@
 import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
+import type { McpTool } from '$lib/server/mcp/types';
 import type { SearchProvider } from '$lib/server/search';
 import type { SidebarGroup } from './types';
 
@@ -15,4 +16,6 @@ export interface ServerModuleManifest {
 	api?: ApiRoute[];
 	/** Answers the search and the command palette. */
 	search?: SearchProvider;
+	/** Tools of the MCP server at /mcp. */
+	mcp?: McpTool[];
 }

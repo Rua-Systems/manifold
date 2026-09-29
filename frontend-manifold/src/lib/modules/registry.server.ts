@@ -1,5 +1,6 @@
 import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
+import type { McpTool } from '$lib/server/mcp/types';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
 import { notesServerManifest } from './notes/manifest.server';
 import { servicesServerManifest } from './services/manifest.server';
@@ -40,4 +41,8 @@ export function moduleHousekeeping(): HousekeepingTask[] {
 
 export function moduleApiRoutes(): ApiRoute[] {
 	return SERVER_MODULES.flatMap((module) => module.api ?? []);
+}
+
+export function moduleMcpTools(): McpTool[] {
+	return SERVER_MODULES.flatMap((module) => module.mcp ?? []);
 }

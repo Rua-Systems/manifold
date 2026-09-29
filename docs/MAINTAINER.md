@@ -148,3 +148,13 @@ Choices the Batch 01 specification left open, with the reason for each.
 - **Modules offer palette entries in their client manifest** (`commands`), next to "Go to" entries made from every module page. Core entries cover the settings pages, the theme, the other locales and signing out. Services come from the sidebar data the layout already has, and open in a new tab.
 - **"New service" opens `/services?new`,** which starts the Services page with its form open.
 - **The palette follows the ARIA combobox pattern:** focus stays in the input, `aria-activedescendant` names the highlighted option, and options are not in the tab order. On desktop it also opens from a "Search" entry at the top of the sidebar, since there is no top bar there; on phones from the top bar.
+
+### Phase 10: MCP server
+
+- **The v1 SDK, `@modelcontextprotocol/sdk`, as the specification names it,** with its web standard streamable HTTP transport, which takes and returns `Request` and `Response` like a SvelteKit endpoint. A new server and transport answer each request (stateless, JSON responses, no sessions), so nothing is kept between calls.
+- **Each request authenticates with an API key and gets a server holding only the tools the key's scopes allow,** so `tools/list` follows the scopes and calling a missing tool fails. Requests count against the key's REST rate limit.
+- **Tools run the REST routes' handlers,** found by method and path, so validation, service functions and output shapes are shared; the tool layer only maps arguments and trims answers. Note tools read and write Markdown only; the TipTap JSON is left out of their answers.
+- **Tool errors are answered as tool results with `isError`,** carrying the REST error body, so a version conflict reaches the agent with its `current_version`.
+- **Writes are audited with `via: mcp`** in the metadata, next to the same actions as the REST API.
+- **`search` is a core tool open to every key,** searching only the modules the key may read, like `GET /api/v1/search`.
+- **The server names itself after the instance** (`ORGANIZATION_NAME`) and reports the app version.
