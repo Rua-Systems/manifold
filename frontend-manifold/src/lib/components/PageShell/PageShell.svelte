@@ -9,6 +9,8 @@
 		sigil?: string;
 		description?: string;
 		actions?: Snippet;
+		/** Fills the content area edge to edge, for pages such as the map; the header is only read out. */
+		fill?: boolean;
 		children: Snippet;
 	}
 
@@ -18,6 +20,7 @@
 		sigil = '',
 		description = '',
 		actions,
+		fill = false,
 		children
 	}: Props = $props();
 </script>
@@ -27,8 +30,8 @@
 	<meta name="description" content={metaDescription} />
 </svelte:head>
 
-<section class="page">
-	<header class="head">
+<section class="page" class:fill>
+	<header class="head" class:visually-hidden={fill}>
 		<div class="titles">
 			{#if sigil}
 				<p class="sigil">++ {sigil} ++</p>
@@ -79,6 +82,19 @@
 		@media (max-width: vars.$mobileMax) {
 			padding: 1.5rem calc(1.1rem + env(safe-area-inset-right))
 				calc(2.5rem + env(safe-area-inset-bottom)) calc(1.1rem + env(safe-area-inset-left));
+		}
+	}
+
+	.page.fill {
+		gap: 0;
+		max-width: none;
+		padding: 0;
+
+		> .body {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+			animation: none;
 		}
 	}
 

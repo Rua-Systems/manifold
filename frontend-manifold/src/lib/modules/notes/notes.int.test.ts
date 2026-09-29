@@ -338,7 +338,7 @@ describe('images', () => {
 });
 
 describe('sidebar', () => {
-	it('lists New note, the notes by last update, then Show all', async () => {
+	it('lists Map Notes, New note, the notes by last update, then Show all', async () => {
 		const start = new Date('2026-03-01T10:00:00Z');
 		await createNote({ title: 'Older' }, OWNER, { now: start });
 		await createNote({ title: '' }, OWNER, { now: new Date(start.getTime() + MINUTE) });
@@ -347,6 +347,7 @@ describe('sidebar', () => {
 
 		const group = await notesServerManifest.sidebarGroup?.();
 		expect(group?.items.map((item) => item.label)).toEqual([
+			'Map Notes',
 			'New Note',
 			'Untitled',
 			'Older',
@@ -354,12 +355,14 @@ describe('sidebar', () => {
 		]);
 		expect(group?.items.map((item) => item.filterable ?? false)).toEqual([
 			false,
+			false,
 			true,
 			true,
 			false
 		]);
-		expect(group?.items[0].link).toEqual({ kind: 'internal', path: '/notes/new' });
-		expect(group?.items[3].link).toEqual({ kind: 'internal', path: '/notes' });
+		expect(group?.items[0].link).toEqual({ kind: 'internal', path: '/notes/map' });
+		expect(group?.items[1].link).toEqual({ kind: 'internal', path: '/notes/new' });
+		expect(group?.items[4].link).toEqual({ kind: 'internal', path: '/notes' });
 		expect(group?.filterLabel).toBe('Filter notes');
 	});
 });

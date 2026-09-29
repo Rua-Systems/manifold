@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { deserialize, enhance } from '$app/forms';
+	import { enhance } from '$app/forms';
 	import { beforeNavigate, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import Dialog from '$lib/components/Dialog/Dialog.svelte';
@@ -8,14 +8,15 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale } from '$lib/paraglide/runtime.js';
 	import { getNotifications } from '$lib/state/notifications.svelte';
+	import { actionMessage, postAction } from '$lib/utils/actions';
 	import { formatMegabytes } from '$lib/utils/format';
 	import { localizedHref } from '$lib/utils/navigation';
 	import { relativeTime } from '$lib/utils/time';
 	import { pageTitle } from '$lib/utils/title';
 	import History from '@lucide/svelte/icons/history';
-	import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
-	import { untrack } from 'svelte';
-	import { emptyNoteContent, type NoteContent } from '../content';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import { onDestroy, untrack, type Snippet } from 'svelte';
+	import { emptyNoteContent } from '../content';
 	import {
 		NoteDraft,
 		type SaveRequest,
@@ -23,7 +24,7 @@
 		type SaveStatus
 	} from '../draft.svelte';
 	import { NEW_NOTE_ID, NOTE_DEPENDENCY } from '../paths';
-	import type { NoteDetail, NoteRevisionSummary } from '../types';
+	import type { NoteDetail, NoteEditorHost, NotePreview, NoteRevisionSummary } from '../types';
 	import NoteEditor from './NoteEditor.svelte';
 
 	interface Props {
@@ -31,13 +32,17 @@
 		note: NoteDetail | null;
 		revisions: NoteRevisionSummary[];
 		/** A revision shown read-only instead of the editor. */
-		preview: { version: number; title: string; content: NoteContent } | null;
+		preview: NotePreview | null;
 		uploadMaxBytes: number;
 		/** Called once the first save has created the note. */
 		oncreated?: (id: string) => Promise<void>;
+		/** Set when the editor is shown outside the note page; it then never navigates. */
+		host?: NoteEditorHost;
+		/** Rendered below the editor. */
+		children?: Snippet;
 	}
 
-	let { note, revisions, preview, uploadMaxBytes, oncreated }: Props = $props();
+	let { note, revisions, preview, uploadMaxBytes, oncreated, host, children }: Props = $props();
 
 	const STATUSES: SaveStatus[] = ['idle', 'saved', 'unsaved', 'saving', 'failed', 'conflict'];
 
@@ -85,45 +90,18 @@
 		return `${localizedHref(`/notes/${id ?? NEW_NOTE_ID}`)}?/${action}`;
 	}
 
-	async function post(url: string, body: FormData): Promise<ActionResult> {
-		const response = await fetch(url, {
-			method: 'POST',
-			body,
-			headers: { 'x-sveltekit-action': 'true' }
-		});
-		return deserialize(await response.text());
-	}
-
-	/** The first field error or message a failed action answered with. */
-	function failureMessage(result: ActionResult, fallback: string): string {
-		if (result.type !== 'failure') {
-			return fallback;
-		}
-		const data = result.data ?? {};
-		if (typeof data.message === 'string' && data.message.length > 0) {
-			return data.message;
-		}
-		const errors = data.errors;
-		if (typeof errors === 'object' && errors !== null) {
-			const first = Object.values(errors).find((value) => typeof value === 'string');
-			if (typeof first === 'string') {
-				return first;
-			}
-		}
-		return fallback;
-	}
-
 	async function send(request: SaveRequest): Promise<SaveResponse> {
-		const body = new FormData();
-		body.set('title', request.title);
-		body.set('content', JSON.stringify(request.content));
+		const fields: Record<string, string> = {
+			title: request.title,
+			content: JSON.stringify(request.content)
+		};
 		if (request.version !== null) {
-			body.set('version', String(request.version));
+			fields.version = String(request.version);
 		}
 
-		const result = await post(
+		const result = await postAction(
 			actionUrl(request.id, request.id === null ? 'create' : 'save'),
-			body
+			fields
 		);
 		if (result.type === 'success' && typeof result.data?.id === 'string') {
 			return { kind: 'saved', id: result.data.id, version: Number(result.data.version) };
@@ -131,7 +109,7 @@
 		if (result.type === 'failure' && result.data?.conflict === true) {
 			return { kind: 'conflict', currentVersion: Number(result.data.currentVersion) };
 		}
-		return { kind: 'failed', message: failureMessage(result, m.notes_save_failed()) };
+		return { kind: 'failed', message: actionMessage(result, m.notes_save_failed()) };
 	}
 
 	function onsaved(request: SaveRequest, saved: { id: string }): void {
@@ -151,14 +129,12 @@
 			);
 			return null;
 		}
-		const body = new FormData();
-		body.set('image', file);
 		try {
-			const result = await post(actionUrl(draft.id, 'upload'), body);
+			const result = await postAction(actionUrl(draft.id, 'upload'), { image: file });
 			if (result.type === 'success' && typeof result.data?.src === 'string') {
 				return result.data.src;
 			}
-			notifications.fault(failureMessage(result, m.notes_upload_failed()));
+			notifications.fault(actionMessage(result, m.notes_upload_failed()));
 		} catch {
 			notifications.fault(m.notes_upload_failed());
 		}
@@ -188,14 +164,28 @@
 		void draft.flush();
 	});
 
+	// Closing the map's panel, or another note taking this one's place, saves what is pending.
+	onDestroy(() => {
+		void draft.flush();
+	});
+
 	function onVisibilityChange(): void {
 		if (document.visibilityState === 'hidden') {
 			void draft.flush();
 		}
 	}
 
-	async function reload(): Promise<void> {
+	/** Loads the note again through the host, or by rerunning the page's `load`. */
+	async function refresh(revision: number | null): Promise<void> {
+		if (host !== undefined) {
+			await host.load(revision);
+			return;
+		}
 		await invalidate(NOTE_DEPENDENCY);
+	}
+
+	async function reload(): Promise<void> {
+		await refresh(null);
 		if (note !== null) {
 			draft.reset({
 				id: note.id,
@@ -209,7 +199,16 @@
 
 	function openHistory(): void {
 		historyOpen = true;
-		void invalidate(NOTE_DEPENDENCY);
+		void refresh(preview?.version ?? null);
+	}
+
+	/** In a host, revision links load in place instead of navigating. */
+	function showRevision(event: MouseEvent, revision: number | null): void {
+		historyOpen = false;
+		if (host !== undefined) {
+			event.preventDefault();
+			void host.load(revision);
+		}
 	}
 
 	const trashAfterSave: SubmitFunction = async () => {
@@ -218,6 +217,10 @@
 		return async ({ result, update }) => {
 			if (result.type === 'redirect') {
 				notifications.confirm(m.notes_trashed());
+				if (host !== undefined) {
+					host.ontrashed();
+					return;
+				}
 			}
 			await update();
 		};
@@ -228,6 +231,10 @@
 		return async ({ result, update }) => {
 			if (result.type === 'redirect') {
 				notifications.confirm(m.notes_revision_restored());
+				if (host !== undefined) {
+					await host.load(null);
+					return;
+				}
 			}
 			await update();
 		};
@@ -235,15 +242,19 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle(page.data.organizationName, displayTitle)}</title>
-	<meta name="description" content={m.notes_meta_description()} />
+	{#if host === undefined}
+		<title>{pageTitle(page.data.organizationName, displayTitle)}</title>
+		<meta name="description" content={m.notes_meta_description()} />
+	{/if}
 </svelte:head>
 
 <svelte:document onvisibilitychange={onVisibilityChange} />
 
-<article class="note-page">
+<article class="note-page" class:embedded={host !== undefined}>
 	<header class="bar">
-		<a class="back" href={localizedHref('/notes')}>{m.notes_all()}</a>
+		{#if host === undefined}
+			<a class="back" href={localizedHref('/notes')}>{m.notes_all()}</a>
+		{/if}
 		<div class="tools">
 			<p class="status" role="status">
 				{#each STATUSES as status (status)}
@@ -281,8 +292,10 @@
 		<div class="preview-bar">
 			<p>{m.notes_preview_notice({ version: preview.version })}</p>
 			<div class="preview-actions">
-				<a class="quiet" href={localizedHref(`/notes/${draft.id}`)}
-					>{m.notes_preview_back()}</a
+				<a
+					class="quiet"
+					href={localizedHref(`/notes/${draft.id}`)}
+					onclick={(event) => showRevision(event, null)}>{m.notes_preview_back()}</a
 				>
 				<form
 					method="POST"
@@ -325,6 +338,7 @@
 			/>
 		{/key}
 	{/if}
+	{@render children?.()}
 </article>
 
 {#if draft.status === 'conflict'}
@@ -350,7 +364,7 @@
 					<a
 						href={localizedHref(`/notes/${draft.id}?revision=${revision.version}`)}
 						aria-current={preview?.version === revision.version ? 'true' : undefined}
-						onclick={() => (historyOpen = false)}
+						onclick={(event) => showRevision(event, revision.version)}
 					>
 						<span class="version"
 							>{m.notes_history_version({ version: revision.version })}</span
@@ -388,6 +402,12 @@
 			padding: 1rem calc(1.1rem + env(safe-area-inset-right))
 				calc(2.5rem + env(safe-area-inset-bottom)) calc(1.1rem + env(safe-area-inset-left));
 		}
+
+		// Inside a panel, which has its own margins.
+		&.embedded {
+			max-width: none;
+			padding: 0;
+		}
 	}
 
 	.bar {
@@ -404,6 +424,7 @@
 			display: flex;
 			align-items: center;
 			gap: 0.3rem;
+			margin-left: auto;
 		}
 	}
 

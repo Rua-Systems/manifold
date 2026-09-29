@@ -20,6 +20,7 @@ export const notesServerManifest: ServerModuleManifest = {
 		return {
 			filterLabel: m.notes_filter(),
 			items: [
+				{ id: 'map', label: m.map_title(), link: { kind: 'internal', path: '/notes/map' } },
 				{ id: 'new', label: m.notes_new(), link: { kind: 'internal', path: '/notes/new' } },
 				...noteItems,
 				{ id: 'all', label: m.notes_show_all(), link: { kind: 'internal', path: '/notes' } }

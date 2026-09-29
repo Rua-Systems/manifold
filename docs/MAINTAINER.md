@@ -69,3 +69,24 @@ Choices the Batch 01 specification left open, with the reason for each.
 - **The toolbar is one horizontally scrolling row on phones,** rather than several rows of 44 px buttons above the text.
 - **Raw HTML in Markdown input is dropped by replacing `parseHTMLToken` on the Markdown manager instance,** because `@tiptap/markdown` has no option for it. Unit tests cover this and a round trip for every node type.
 - **The "Map Notes" sidebar item arrives with Phase 5,** together with the page it links to.
+
+### Phase 5: Map Notes
+
+- **The map page loads every geometry of the notes outside the trash in its `load`.** A bounding box query, loading what the view shows as it moves, should replace this if the number of geometries grows past a few thousand.
+- **OpenLayers 10 is imported by file (`ol/Map.js`),** as the package has no exports map; `@types/geojson` supplies the GeoJSON types it refers to. Only canvas layers are used, so no web workers are created and the CSP needs no `worker-src`.
+- **OpenLayers objects stay out of Svelte state.** `MapController` owns the map, its layers and the interactions of the current tool; components drive it through methods and hear back through callbacks. The map is created in an attachment whose body runs untracked, because an attachment reruns when state it reads changes, which would rebuild the map.
+- **Canvas colours come from theme tokens** (`--color-map-feature`, `--color-map-selected`, `--color-map-sketch`), read when the map starts and again when the theme changes, since canvas styles cannot use CSS variables.
+- **Geometries use a Drizzle custom type for `geometry(Geometry, 4326)`,** because Drizzle's own `geometry()` handles only points. Reads select `ST_AsGeoJSON(geometry, 7)`: seven decimals of a degree are about a centimetre.
+- **Validation runs in two steps:** a Zod schema for the shape (Point, LineString or Polygon, two dimensional positions within longitude and latitude, at most 10,000 vertices), then PostGIS's `ST_IsValid`, which also catches unclosed rings and self intersections. Check constraints on `map_feature` repeat the kind, validity and vertex rules for writers that skip the application. A geometry's kind follows its type, and moving vertices cannot change it.
+- **The map calls its page's form actions with `fetch` and `deserialize`:** `openNote` (the note for the feature panel), `createFeature`, `updateFeature` and `deleteFeature`. `openNote` is a form action although it only reads, because the application's own pages talk to the server through `load` and form actions only. The note editor in the panel posts to the note page's actions, exactly as on `/notes/[id]`.
+- **The feature panel shows the note page's editor in a "host" mode:** history, previews, restores and trashing happen inside the panel without navigating. Closing the panel or selecting another note saves pending changes first.
+- **"New note" on the map creates the untitled note and its geometry in one transaction.** After a drawing finishes, the tool returns to Select, so a drawing waits for its note before the next one starts.
+- **Attach mode is `/notes/map?attach=<id>`; "Show on map" is `/notes/map?note=<id>`,** which fits the view to the note's geometries and opens the first one. The attach parameter is dropped from the address once used or cancelled.
+- **The last view is kept in `localStorage`** (`manifold.map.view`), since it matters only to the browser that saw it. Unreadable or missing storage means the default view.
+- **The delete tool and "Unlink and delete this geometry" ask for confirmation,** as the deletion cannot be undone; the note always stays. Clicking the empty map closes the panel.
+- **"Undo last point" and "Cancel drawing" are buttons as well as keys** (Escape cancels), since phones have no keyboard. Hit and snap tolerances are 8 and 12 pixels, which suit fingers.
+- **On phones the toolbar is a row below the map rather than over it,** so the map's attribution stays visible, and the sheet sits on top of the toolbar. Dragging the sheet's handle up or tapping it switches between half and full height; dragging down from half height closes it. The map workspace is exactly the viewport's height, and the panel scrolls inside it.
+- **OpenLayers' zoom buttons move to the bottom left,** away from the toolbar; rotation is off and the attribution is collapsible.
+- **The note page's location map is still,** without panning or zooming, so it never captures page scrolling; "Show on map" is where geometries are explored.
+- **The note picker lists at most 50 matches** and reloads the titles when it opens.
+- **End to end tests draw with synthetic pointer events** on the map's viewport, of type `mouse` on desktop and `touch` on phones, over a random spot per test so that other tests' geometries never interfere. Map tiles are answered with a one pixel image, so tests never reach the tile host.

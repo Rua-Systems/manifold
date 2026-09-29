@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import NoteEditorPage from '$lib/modules/notes/components/NoteEditorPage.svelte';
+	import NoteLocation from '$lib/modules/notes/components/NoteLocation.svelte';
 	import { localizedHref } from '$lib/utils/navigation';
 	import type { PageProps } from './$types';
 
@@ -34,5 +35,9 @@
 		preview={data.preview}
 		uploadMaxBytes={data.uploadMaxBytes}
 		{oncreated}
-	/>
+	>
+		{#if data.note !== null}
+			<NoteLocation noteId={data.note.id} features={data.features} config={data.map} />
+		{/if}
+	</NoteEditorPage>
 {/key}

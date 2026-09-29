@@ -21,8 +21,10 @@ import {
 	trashNote,
 	updateNote
 } from './notes.server';
+import { listNoteFeatures, mapConfig } from './map/features.server';
 import { NEW_NOTE_ID } from './paths';
 import { noteVersionSchema } from './schemas';
+import type { NotePreview } from './types';
 
 // Loads and form actions behind /notes. The route files only re-export these.
 
@@ -69,44 +71,48 @@ export async function loadTrash() {
 	};
 }
 
+/** A note with its history, plus the revision to preview when `revision` names one. */
+export async function loadNoteData(id: string, revision: number | null) {
+	const current = await getNote(id);
+	const revisions = await listRevisions(id);
+
+	let preview: NotePreview | null = null;
+	if (revision !== null) {
+		const found = await getRevision(id, revision);
+		preview = { version: found.version, title: found.title, content: found.content };
+	}
+	return { note: current, revisions, preview };
+}
+
 /**
  * The editor page. `draftKey` identifies one editing session: the page keeps it while a new note
  * turns into a saved one, so the editor is not rebuilt under the owner's cursor.
  */
 export async function loadNotePage(id: string, url: URL) {
-	const uploadMaxBytes = getEnv().UPLOAD_MAX_BYTES;
+	const shared = { map: mapConfig(), uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES };
 	if (id === NEW_NOTE_ID) {
 		return {
 			note: null,
 			revisions: [],
 			preview: null,
+			features: [],
 			draftKey: crypto.randomUUID(),
-			uploadMaxBytes
+			...shared
 		};
 	}
 
+	const requested = noteVersionSchema.safeParse(url.searchParams.get('revision'));
+	const revision = url.searchParams.has('revision') && requested.success ? requested.data : null;
 	try {
-		const current = await getNote(id);
-		const revisions = await listRevisions(id);
-
-		let preview = null;
-		const requested = noteVersionSchema.safeParse(url.searchParams.get('revision'));
-		if (url.searchParams.has('revision') && requested.success) {
-			const revision = await getRevision(id, requested.data);
-			preview = {
-				version: revision.version,
-				title: revision.title,
-				content: revision.content
-			};
-		}
-		return { note: current, revisions, preview, draftKey: current.id, uploadMaxBytes };
+		const data = await loadNoteData(id, revision);
+		return { ...data, features: await listNoteFeatures(id), draftKey: id, ...shared };
 	} catch (cause) {
 		return notFoundAsPage(cause);
 	}
 }
 
 /** Stores an image pasted or picked in the editor and answers with its address. */
-async function uploadImage({ request, locals }: RequestEvent) {
+export async function uploadImage({ request, locals }: RequestEvent) {
 	requireUser(locals);
 	const data = await request.formData();
 	const upload = data.get('image');

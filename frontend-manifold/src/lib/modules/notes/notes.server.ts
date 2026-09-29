@@ -18,7 +18,7 @@ const EXCERPT_LENGTH = 180;
 const REVISION_WINDOW_MS = 5 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type Transaction = Parameters<Parameters<ReturnType<typeof getDb>['transaction']>[0]>[0];
+export type Transaction = Parameters<Parameters<ReturnType<typeof getDb>['transaction']>[0]>[0];
 
 export interface NoteInput {
 	title?: string;
@@ -240,37 +240,45 @@ function forcedFor(actor: Actor, options: WriteOptions): boolean {
 	return options.forceRevision === true || actor.type !== 'owner';
 }
 
+/** Inserts a note inside the caller's transaction, for writes that create other rows with it. */
+export async function insertNote(
+	tx: Transaction,
+	input: NoteInput,
+	actor: Actor,
+	options: WriteOptions = {}
+): Promise<string> {
+	const title = parseTitle(input.title, '');
+	const content = parseContent(input.content, emptyNoteContent());
+	const now = options.now ?? new Date();
+
+	const [created] = await tx
+		.insert(note)
+		.values({
+			title,
+			content,
+			contentText: contentToText(content),
+			version: 1,
+			createdAt: now,
+			updatedAt: now
+		})
+		.returning({ id: note.id });
+	await recordRevision(
+		tx,
+		{ noteId: created.id, version: 1, title, content },
+		actor,
+		forcedFor(actor, options),
+		now
+	);
+	await syncFiles(tx, created.id, content);
+	return created.id;
+}
+
 export async function createNote(
 	input: NoteInput,
 	actor: Actor,
 	options: WriteOptions = {}
 ): Promise<NoteDetail> {
-	const title = parseTitle(input.title, '');
-	const content = parseContent(input.content, emptyNoteContent());
-	const now = options.now ?? new Date();
-
-	const id = await getDb().transaction(async (tx) => {
-		const [created] = await tx
-			.insert(note)
-			.values({
-				title,
-				content,
-				contentText: contentToText(content),
-				version: 1,
-				createdAt: now,
-				updatedAt: now
-			})
-			.returning({ id: note.id });
-		await recordRevision(
-			tx,
-			{ noteId: created.id, version: 1, title, content },
-			actor,
-			forcedFor(actor, options),
-			now
-		);
-		await syncFiles(tx, created.id, content);
-		return created.id;
-	});
+	const id = await getDb().transaction((tx) => insertNote(tx, input, actor, options));
 	return findNote(id, false);
 }
 
@@ -404,6 +412,16 @@ export async function purgeTrashedNotes(now: Date, retentionDays: number): Promi
 		.where(and(isNotNull(note.deletedAt), lt(note.deletedAt, cutoff)))
 		.returning({ id: note.id });
 	return deleted.length;
+}
+
+/** Ids and titles of the notes outside the trash, newest first, for pickers. */
+export async function listNoteTitles(): Promise<{ id: string; title: string }[]> {
+	return getDb()
+		.select({ id: note.id, title: note.title })
+		.from(note)
+		.where(isNull(note.deletedAt))
+		.orderBy(desc(note.updatedAt))
+		.limit(1000);
 }
 
 export async function countNotes(): Promise<number> {

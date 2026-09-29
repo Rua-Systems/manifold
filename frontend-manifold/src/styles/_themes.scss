@@ -25,6 +25,9 @@
 	--color-code-string: #2b7357;
 	--color-code-number: #9a6414;
 	--color-code-title: #2f5f9e;
+	--color-map-feature: #2b7357;
+	--color-map-selected: #b45309;
+	--color-map-sketch: #2f5f9e;
 }
 
 @mixin darkTheme {
@@ -54,4 +57,7 @@
 	--color-code-string: #5fb88e;
 	--color-code-number: #d6a55a;
 	--color-code-title: #7aa7e0;
+	--color-map-feature: #3f9a73;
+	--color-map-selected: #e0a13a;
+	--color-map-sketch: #7aa7e0;
 }

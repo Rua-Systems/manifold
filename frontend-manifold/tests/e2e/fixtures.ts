@@ -11,6 +11,12 @@ function randomAddress(): string {
 	return `10.${(value >> 16) & 255}.${(value >> 8) & 255}.${value & 255}`;
 }
 
+/** A one pixel PNG served in place of map tiles, so tests never reach the tile host. */
+const TILE = Buffer.from(
+	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+	'base64'
+);
+
 export const test = base.extend<{ clientAddress: string }>({
 	// Playwright reads fixture dependencies from the destructured first argument, so it must stay
 	// an object pattern even when empty.
@@ -20,6 +26,12 @@ export const test = base.extend<{ clientAddress: string }>({
 	},
 	extraHTTPHeaders: async ({ clientAddress }, use) => {
 		await use({ 'X-Forwarded-For': clientAddress });
+	},
+	context: async ({ context }, use) => {
+		await context.route('https://tile.openstreetmap.org/**', (route) =>
+			route.fulfill({ contentType: 'image/png', body: TILE })
+		);
+		await use(context);
 	}
 });
 

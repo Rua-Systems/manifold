@@ -1,3 +1,4 @@
+import { geometry4326 } from '$lib/server/db/geometry';
 import { file } from '$lib/server/db/schema';
 import {
 	index,
@@ -11,8 +12,10 @@ import {
 	uuid
 } from 'drizzle-orm/pg-core';
 import type { NoteContent } from './content';
+import type { FeatureKind } from './map/geometry';
 
-// Mirror of migrations/0005_notes_init.sql. The SQL file is the source of truth.
+// Mirror of migrations/0005_notes_init.sql and 0006_notes_map_feature.sql. The SQL files are the
+// source of truth.
 
 function timestamptz(name: string) {
 	return timestamp(name, { withTimezone: true });
@@ -67,5 +70,23 @@ export const noteFile = pgTable(
 	(table) => [
 		primaryKey({ columns: [table.noteId, table.fileId] }),
 		index('note_file_file_id_idx').on(table.fileId)
+	]
+);
+
+export const mapFeature = pgTable(
+	'map_feature',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		noteId: uuid('note_id')
+			.notNull()
+			.references(() => note.id, { onDelete: 'cascade' }),
+		geometry: geometry4326('geometry').notNull(),
+		kind: text('kind').$type<FeatureKind>().notNull(),
+		createdAt: timestamptz('created_at').defaultNow().notNull(),
+		updatedAt: timestamptz('updated_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('map_feature_geometry_idx').using('gist', table.geometry),
+		index('map_feature_note_id_idx').on(table.noteId)
 	]
 );
