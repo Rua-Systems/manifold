@@ -13,13 +13,12 @@
 
 <div class="auth">
 	<div class="visual">
-		<enhanced:img
-			class="backdrop"
-			src="$lib/assets/images/login-bg.jpg"
-			alt=""
-			sizes="(max-width: 860px) 100vw, 55vw"
-			fetchpriority="high"
-		/>
+		<!-- A placeholder until the sign in image is chosen. -->
+		<div class="backdrop" aria-hidden="true">
+			<span class="emblem">
+				<ManifoldLogo />
+			</span>
+		</div>
 	</div>
 	<div class="panel">
 		<div class="head">
@@ -91,11 +90,21 @@
 		.backdrop {
 			position: absolute;
 			inset: 0;
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-			object-position: center;
+			display: grid;
+			place-items: center;
+			background-image:
+				linear-gradient(clr.$borderSubtleColor 1px, transparent 1px),
+				linear-gradient(90deg, clr.$borderSubtleColor 1px, transparent 1px);
+			background-position: center;
+			background-size: 48px 48px;
 			animation: settleIn 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+			> .emblem {
+				width: min(40%, 14rem);
+				aspect-ratio: 500 / 434.9;
+				color: clr.$textMutedColor;
+				opacity: 0.25;
+			}
 		}
 
 		&::after {
@@ -230,11 +239,7 @@
 			z-index: 0;
 
 			.backdrop {
-				inset: -30px;
-				width: calc(100% + 60px);
-				height: calc(100% + 60px);
 				opacity: 0.3;
-				filter: blur(10px);
 			}
 
 			&::after {
