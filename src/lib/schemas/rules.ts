@@ -12,6 +12,29 @@ export const DISPLAY_NAME_MAX_LENGTH = 100;
 
 export const CODE_LENGTH = 6;
 
+/** The longest address RFC 5321 allows. */
+export const EMAIL_MAX_LENGTH = 254;
+
+/** A password typed to sign in or confirm; new passwords stop at PASSWORD_MAX_LENGTH anyway. */
+export const PASSWORD_INPUT_MAX_LENGTH = 1024;
+
+/** Service and vault addresses. */
+export const URL_MAX_LENGTH = 2048;
+
+/** Versions are PostgreSQL `integer` columns. */
+export const VERSION_MAX = 2_147_483_647;
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Whether `value` is a real `YYYY-MM-DD` day, so `2026-13-45` is refused. */
+export function isCalendarDate(value: string): boolean {
+	if (!DATE_PATTERN.test(value)) {
+		return false;
+	}
+	const date = new Date(`${value}T00:00:00Z`);
+	return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export function isValidUsername(value: string): boolean {
 	return (
 		value.length >= USERNAME_MIN_LENGTH &&

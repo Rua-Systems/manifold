@@ -10,16 +10,19 @@ import {
 import { ownerActor, SYSTEM_ACTOR } from '$lib/server/actor';
 import { originOf, recordAudit } from '$lib/server/audit';
 import { getAuth } from '$lib/server/auth';
+import { getDb } from '$lib/server/db';
 import { emailEnabled } from '$lib/server/features';
 import { noteSignIn } from '$lib/server/notices';
+import { upgradeOwnerPasswordHash } from '$lib/server/owner';
 import { isRateLimited } from '$lib/server/rate-limit';
+import { rememberTotp, wasTotpUsed } from '$lib/server/totp-replay';
 import type { LoginFormState, LoginMethod, SecondFactor } from '$lib/types/auth';
 import type { FieldErrors } from '$lib/types/validation';
 import { safeRedirectTarget } from '$lib/utils/redirect';
 import { fieldErrors, textValue } from '$lib/utils/validation';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 function loginState(
 	method: LoginMethod,
@@ -88,6 +91,16 @@ function requireEmail(): void {
 	}
 }
 
+/** Signing in again while signed in would leave the first session behind; go to the app instead. */
+export const load: PageServerLoad = ({ locals, url }) => {
+	if (locals.user !== null) {
+		redirect(
+			303,
+			safeRedirectTarget(url.searchParams.get('redirectTo'), localizeHref('/services'))
+		);
+	}
+};
+
 export const actions: Actions = {
 	password: async (event) => {
 		const data = await event.request.formData();
@@ -133,6 +146,7 @@ export const actions: Actions = {
 			}
 			throw cause;
 		}
+		await upgradeOwnerPasswordHash(getDb(), password);
 		if (needsSecondFactor(result)) {
 			return twoFactorState('password');
 		}
@@ -223,6 +237,10 @@ export const actions: Actions = {
 		}
 
 		const headers = event.request.headers;
+		if (kind === 'totp' && wasTotpUsed(parsed.data)) {
+			await auditFailedSignIn(event, 'totp');
+			return fail(401, twoFactorState(method, '', { code: m.login_error_two_factor_code() }));
+		}
 		let signedIn: { id: string; email: string };
 		try {
 			const result =
@@ -230,6 +248,9 @@ export const actions: Actions = {
 					? await getAuth().api.verifyBackupCode({ body: { code: parsed.data }, headers })
 					: await getAuth().api.verifyTOTP({ body: { code: parsed.data }, headers });
 			signedIn = result.user;
+			if (kind === 'totp') {
+				rememberTotp(parsed.data);
+			}
 		} catch (cause) {
 			if (!isAPIError(cause)) {
 				throw cause;

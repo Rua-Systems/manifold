@@ -5,6 +5,7 @@ import { ownerActor } from './actor';
 import { originOf, recordAudit } from './audit';
 import { getAuth } from './auth';
 import type { SignedIn } from './guard';
+import { rememberTotp, wasTotpUsed } from './totp-replay';
 
 // Two factor authentication with TOTP and backup codes, always through Better Auth's twoFactor
 // plugin. Enabling it and turning it off give the session a new id (Better Auth rotates it).
@@ -66,12 +67,7 @@ export async function confirmSetup(
 	code: string
 ): Promise<{ backupCodes: string[] } | TwoFactorProblem> {
 	const auth = getAuth();
-	try {
-		await auth.api.verifyTOTP({ body: { code }, headers: event.request.headers });
-	} catch (cause) {
-		if (apiErrorCode(cause) === null) {
-			throw cause;
-		}
+	if (!(await checkCode(event, code))) {
 		return 'wrong_code';
 	}
 	const { backupCodes } = await auth.api.viewBackupCodes({ body: { userId: signedIn.user.id } });
@@ -83,10 +79,14 @@ export async function confirmSetup(
 	return { backupCodes };
 }
 
-/** Checks the current TOTP code of a signed in owner. */
+/** Checks the current TOTP code of a signed in owner. A code is accepted only once. */
 async function checkCode(event: RequestEvent, code: string): Promise<boolean> {
+	if (wasTotpUsed(code)) {
+		return false;
+	}
 	try {
 		await getAuth().api.verifyTOTP({ body: { code }, headers: event.request.headers });
+		rememberTotp(code);
 		return true;
 	} catch (cause) {
 		if (apiErrorCode(cause) === null) {

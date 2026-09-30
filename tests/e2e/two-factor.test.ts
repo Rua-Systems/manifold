@@ -16,7 +16,9 @@ test.afterEach(async () => {
 });
 
 /** Turns two factor authentication on through Settings and answers the secret and backup codes. */
-async function enableTwoFactor(page: Page): Promise<{ secret: string; backupCodes: string[] }> {
+async function enableTwoFactor(
+	page: Page
+): Promise<{ secret: string; code: () => string; backupCodes: string[] }> {
 	await page.goto('/settings/security', { waitUntil: 'networkidle' });
 	await expect(page.locator('.status')).toHaveText('Off');
 	await page.getByLabel('Password', { exact: true }).fill(TEST_OWNER.password);
@@ -26,7 +28,8 @@ async function enableTwoFactor(page: Page): Promise<{ secret: string; backupCode
 		page.getByRole('img', { name: 'QR code for your authenticator app' })
 	).toBeVisible();
 	const secret = ((await page.locator('.secret code').textContent()) ?? '').replace(/\s/g, '');
-	await page.getByLabel('Authenticator code').fill(totp(secret));
+	const code = authenticator(secret);
+	await page.getByLabel('Authenticator code').fill(code());
 	await page.getByRole('button', { name: 'Turn On' }).click();
 
 	await expect(page.getByText('Two factor authentication is on.')).toBeVisible();
@@ -34,7 +37,26 @@ async function enableTwoFactor(page: Page): Promise<{ secret: string; backupCode
 	const codes = page.getByRole('list', { name: 'Backup codes' }).getByRole('listitem');
 	await expect(codes).toHaveCount(10);
 	const backupCodes = (await codes.allTextContents()).map((code) => code.trim());
-	return { secret, backupCodes };
+	return { secret, code, backupCodes };
+}
+
+/**
+ * The owner's authenticator: each call answers a code the server accepts right now that was not
+ * used yet, since an accepted code is refused a second time. Better Auth also accepts the codes
+ * of the steps before and after the current one.
+ */
+function authenticator(secret: string): () => string {
+	const used = new Set<string>();
+	return () => {
+		for (const offset of [0, 30_000, -30_000]) {
+			const code = totp(secret, Date.now() + offset);
+			if (!used.has(code)) {
+				used.add(code);
+				return code;
+			}
+		}
+		throw new Error('Every code of the current window was used.');
+	};
 }
 
 /** The kind of code is a radio group drawn as a segmented control; the label takes the click. */
@@ -64,14 +86,19 @@ test('two factor sign in works with a TOTP code and with single use backup codes
 	page
 }) => {
 	await signIn(page);
-	const { secret, backupCodes } = await enableTwoFactor(page);
+	const { code, backupCodes } = await enableTwoFactor(page);
 
 	await signInToSecondStep(page);
-	await page.getByLabel('Authenticator code').fill(totp(secret));
+	const first = code();
+	await page.getByLabel('Authenticator code').fill(first);
 	await page.getByRole('button', { name: 'Verify' }).click();
 	await page.waitForURL(/\/services$/);
 
 	await signInToSecondStep(page);
+	await page.getByLabel('Authenticator code').fill(first);
+	await page.getByRole('button', { name: 'Verify' }).click();
+	await expect(page.locator('#loginSecondFactorError')).toHaveText('That code is not valid.');
+
 	await chooseSecondFactor(page, 'Backup code');
 	await page.getByRole('textbox', { name: 'Backup code' }).fill(backupCodes[0]);
 	await page.getByRole('button', { name: 'Verify' }).click();
@@ -84,14 +111,14 @@ test('two factor sign in works with a TOTP code and with single use backup codes
 	await expect(page.locator('#loginSecondFactorError')).toHaveText('That code is not valid.');
 
 	await chooseSecondFactor(page, 'Authenticator');
-	await page.getByLabel('Authenticator code').fill(totp(secret));
+	await page.getByLabel('Authenticator code').fill(code());
 	await page.getByRole('button', { name: 'Verify' }).click();
 	await page.waitForURL(/\/services$/);
 });
 
 test('a wrong code is refused and two factor can be turned off again', async ({ page }) => {
 	await signIn(page);
-	const { secret } = await enableTwoFactor(page);
+	const { secret, code } = await enableTwoFactor(page);
 
 	await signInToSecondStep(page);
 	await page
@@ -99,14 +126,14 @@ test('a wrong code is refused and two factor can be turned off again', async ({ 
 		.fill(totp(secret) === '000000' ? '111111' : '000000');
 	await page.getByRole('button', { name: 'Verify' }).click();
 	await expect(page.locator('#loginSecondFactorError')).toHaveText('That code is not valid.');
-	await page.getByLabel('Authenticator code').fill(totp(secret));
+	await page.getByLabel('Authenticator code').fill(code());
 	await page.getByRole('button', { name: 'Verify' }).click();
 	await page.waitForURL(/\/services$/);
 
 	await page.goto('/settings/security', { waitUntil: 'networkidle' });
 	const disable = page.locator('form[action="?/disableTwoFactor"]');
 	await disable.getByLabel('Password', { exact: true }).fill(TEST_OWNER.password);
-	await disable.getByLabel('Authenticator code').fill(totp(secret));
+	await disable.getByLabel('Authenticator code').fill(code());
 	await disable.getByRole('button', { name: 'Turn Off Two Factor Authentication' }).click();
 	await expect(page.getByText('Two factor authentication is off.')).toBeVisible();
 	await expect(page.locator('.status')).toHaveText('Off');
@@ -117,12 +144,12 @@ test('a wrong code is refused and two factor can be turned off again', async ({ 
 
 test('new backup codes replace the old ones', async ({ page }) => {
 	await signIn(page);
-	const { secret, backupCodes } = await enableTwoFactor(page);
+	const { code, backupCodes } = await enableTwoFactor(page);
 
 	await page.reload();
 	const regenerate = page.locator('form[action="?/regenerateBackupCodes"]');
 	await regenerate.getByLabel('Password', { exact: true }).fill(TEST_OWNER.password);
-	await regenerate.getByLabel('Authenticator code').fill(totp(secret));
+	await regenerate.getByLabel('Authenticator code').fill(code());
 	await regenerate.getByRole('button', { name: 'Create New Codes' }).click();
 	await expect(
 		page.getByText('New backup codes created. The old ones no longer work.')

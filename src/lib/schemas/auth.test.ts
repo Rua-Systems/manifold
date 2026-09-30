@@ -8,6 +8,7 @@ import {
 	passwordChangeSchema,
 	passwordResetSchema,
 	PASSWORD_MIN_LENGTH,
+	passwordSchema,
 	usernameSchema
 } from './auth';
 
@@ -121,5 +122,13 @@ describe('passwordChangeSchema', () => {
 		expect(passwordChangeSchema.safeParse({ ...valid, confirmPassword: 'other' }).success).toBe(
 			false
 		);
+	});
+});
+
+describe('input bounds', () => {
+	it('refuses overlong passwords and addresses', () => {
+		expect(passwordSchema.safeParse('x'.repeat(1024)).success).toBe(true);
+		expect(passwordSchema.safeParse('x'.repeat(1025)).success).toBe(false);
+		expect(emailSchema.safeParse(`${'a'.repeat(250)}@x.io`).success).toBe(false);
 	});
 });

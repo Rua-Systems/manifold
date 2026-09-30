@@ -3,6 +3,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale } from '$lib/paraglide/runtime.js';
 	import { getNotifications } from '$lib/state/notifications.svelte';
+	import { getStepUp, needsStepUp } from '$lib/state/step-up.svelte';
 	import type { SessionView } from '$lib/types/security';
 	import { relativeTime } from '$lib/utils/time';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -14,6 +15,7 @@
 	let { sessions }: Props = $props();
 
 	const notifications = getNotifications();
+	const stepUp = getStepUp();
 
 	const others = $derived(sessions.filter((item) => !item.current).length);
 
@@ -30,8 +32,15 @@
 		return m.security_device({ browser: item.browser, os: item.os });
 	}
 
-	const notifyResult: SubmitFunction = () => {
+	/** Ending sessions is a sensitive action: without a recent step-up the dialog asks first. */
+	const notifyResult: SubmitFunction = ({ formElement, submitter }) => {
 		return async ({ result, update }) => {
+			if (needsStepUp(result)) {
+				if (await stepUp.request()) {
+					formElement.requestSubmit(submitter);
+				}
+				return;
+			}
 			if (result.type === 'success' && typeof result.data?.message === 'string') {
 				notifications.confirm(result.data.message);
 			}

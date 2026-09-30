@@ -12,6 +12,8 @@ Manifold includes a Model Context Protocol (MCP) server at `/mcp`. AI agents suc
 - Writes are recorded in the audit log like REST writes, with the key as the actor and `via: mcp` in the details.
 - The server introduces itself with your `ORGANIZATION_NAME` and the version of Manifold.
 
+Give clients the `https` address of the server: the key travels in every request, and over plain HTTP it would cross the network in clear text.
+
 ## Creating a key for an agent
 
 Create a key under **Settings → API Keys** as described in [API keys](api.md#api-keys), and name it after the agent and the machine it runs on, such as "Claude Code on the laptop". Choose the scopes by what the agent should do:

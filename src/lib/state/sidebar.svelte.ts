@@ -67,7 +67,9 @@ export class SidebarState {
 			collapsed: !this.expanded,
 			closedGroups: this.closedGroups
 		});
-		document.cookie = `${SIDEBAR_COOKIE}=${encodeURIComponent(value)}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; samesite=lax`;
+		// Secure wherever the page itself is, so the cookie never travels over plain http.
+		const secure = location.protocol === 'https:' ? '; secure' : '';
+		document.cookie = `${SIDEBAR_COOKIE}=${encodeURIComponent(value)}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; samesite=lax${secure}`;
 	}
 }
 

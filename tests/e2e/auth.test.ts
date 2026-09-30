@@ -107,7 +107,11 @@ test('form actions behind the guard refuse requests without a session', async ({
 test('signing out ends the session', async ({ page }) => {
 	await signIn(page);
 	await page.getByRole('button', { name: 'Account menu' }).click();
+	const signOut = page.waitForResponse(
+		(response) => response.request().method() === 'POST' && response.url().includes('/logout')
+	);
 	await page.getByRole('button', { name: 'Logout' }).click();
+	expect((await (await signOut).allHeaders())['clear-site-data']).toBe('"cache", "storage"');
 
 	await expect(page).toHaveURL(/\/login$/);
 	await page.goto('/services');

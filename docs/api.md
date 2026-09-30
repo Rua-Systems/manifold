@@ -54,6 +54,8 @@ curl -H "Authorization: Bearer mfd_your_key" "https://manifold.example.com/api/v
 - The API never reads cookies. Being signed in to Manifold in the browser grants no API access.
 - Every accepted request records when and from which address the key was last used.
 
+Always use an `https` address: a key sent over plain HTTP crosses the network in clear text. Reverse proxies set up as in [Deployment](deployment.md) refuse plain HTTP requests that carry a key.
+
 ## Endpoints
 
 | Method   | Path                                             | Scope            | Purpose                                                           |
@@ -322,7 +324,7 @@ Manifold checks a request in a fixed order and answers the first problem it find
 
 ## Rate limits
 
-Each key may make `API_RATE_LIMIT_PER_MINUTE` requests per minute, 120 unless changed, see [Configuration](configuration.md). The count is per key and shared by the REST API and the [MCP server](mcp.md). Every answer after the key was accepted reports the state of the current window:
+Each key may make `API_RATE_LIMIT_PER_MINUTE` requests per minute, 120 unless changed, see [Configuration](configuration.md). The count is per key and shared by the REST API, the [MCP server](mcp.md) and file downloads from `/files/<id>` with the key. Every answer after the key was accepted reports the state of the current window:
 
 | Header                | Meaning                                         |
 | --------------------- | ----------------------------------------------- |

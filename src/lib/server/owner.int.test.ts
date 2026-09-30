@@ -1,11 +1,18 @@
-import { verifyPassword } from 'better-auth/crypto';
+import { hashPassword as hashLegacyPassword } from 'better-auth/crypto';
 import { count, eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 import { withIsolatedSchema } from '../../../tests/integration/isolated-schema';
 import type { Connection } from './db';
 import { defaultMigrationsDirectory, runMigrations } from './db/migrate';
 import { account, session, user } from './db/schema';
-import { bootstrapOwner, findOwner, OwnerError, resetOwnerPassword } from './owner';
+import {
+	bootstrapOwner,
+	findOwner,
+	OwnerError,
+	resetOwnerPassword,
+	upgradeOwnerPasswordHash
+} from './owner';
+import { verifyPassword } from './passwords/hash';
 
 const VARIABLES = {
 	OWNER_USERNAME: 'keeper',
@@ -42,12 +49,9 @@ describe('bootstrapOwner', () => {
 				.select({ password: account.password, providerId: account.providerId })
 				.from(account);
 			expect(credential.providerId).toBe('credential');
-			expect(
-				await verifyPassword({
-					hash: credential.password ?? '',
-					password: VARIABLES.OWNER_PASSWORD
-				})
-			).toBe(true);
+			expect(await verifyPassword(credential.password ?? '', VARIABLES.OWNER_PASSWORD)).toBe(
+				true
+			);
 		});
 	});
 
@@ -65,6 +69,9 @@ describe('bootstrapOwner', () => {
 			await expect(
 				bootstrapOwner(db, { ...VARIABLES, OWNER_PASSWORD: 'short' }, logger)
 			).rejects.toThrow(/OWNER_PASSWORD/);
+			await expect(
+				bootstrapOwner(db, { ...VARIABLES, OWNER_PASSWORD: 'qwertyuiop' }, logger)
+			).rejects.toThrow(/OWNER_PASSWORD is a common password/);
 
 			const [{ total }] = await db.select({ total: count() }).from(user);
 			expect(total).toBe(0);
@@ -124,12 +131,9 @@ describe('resetOwnerPassword', () => {
 				.select({ password: account.password })
 				.from(account)
 				.where(eq(account.userId, owner.id));
-			expect(
-				await verifyPassword({
-					hash: credential.password ?? '',
-					password: 'a brand new password'
-				})
-			).toBe(true);
+			expect(await verifyPassword(credential.password ?? '', 'a brand new password')).toBe(
+				true
+			);
 			const [{ total }] = await db.select({ total: count() }).from(session);
 			expect(total).toBe(0);
 		});
@@ -140,6 +144,29 @@ describe('resetOwnerPassword', () => {
 			await bootstrapOwner(db, VARIABLES, quietLogger());
 
 			await expect(resetOwnerPassword(db, 'short')).rejects.toThrow(/at least 8/);
+			await expect(resetOwnerPassword(db, 'qwertyuiop')).rejects.toThrow(/common password/);
+			await expect(resetOwnerPassword(db, 'the manifold of mine')).rejects.toThrow(
+				/must not contain/
+			);
+		});
+	});
+});
+
+describe('upgradeOwnerPasswordHash', () => {
+	it('replaces a hash of earlier parameters and keeps the password', async () => {
+		await migrated(async ({ db }) => {
+			await bootstrapOwner(db, VARIABLES, quietLogger());
+			await db
+				.update(account)
+				.set({ password: await hashLegacyPassword(VARIABLES.OWNER_PASSWORD) });
+
+			await upgradeOwnerPasswordHash(db, VARIABLES.OWNER_PASSWORD);
+
+			const [credential] = await db.select({ password: account.password }).from(account);
+			expect(credential.password).toMatch(/^\$scrypt\$ln=15,r=8,p=3\$/);
+			expect(await verifyPassword(credential.password ?? '', VARIABLES.OWNER_PASSWORD)).toBe(
+				true
+			);
 		});
 	});
 });

@@ -24,12 +24,12 @@ Optional, `Manifold` when empty, at most 80 characters. The display name of this
 
 ## Database
 
-| Variable            | Purpose                                                                                |
-| ------------------- | -------------------------------------------------------------------------------------- |
-| `POSTGRES_USER`     | User of the bundled database, `manifold` in `.env.example`.                            |
-| `POSTGRES_PASSWORD` | Password of that user. Replace `change-me` from `.env.example` before the first start. |
-| `POSTGRES_DB`       | Name of the database, `manifold` in `.env.example`.                                    |
-| `DATABASE_URL`      | Connection string of the app, starting with `postgres://` or `postgresql://`.          |
+| Variable            | Purpose                                                                                                                                        |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_USER`     | User of the bundled database, `manifold` in `.env.example`.                                                                                    |
+| `POSTGRES_PASSWORD` | Password of that user. Replace `change-me` from `.env.example` before the first start; the app refuses it when `ORIGIN` is an `https` address. |
+| `POSTGRES_DB`       | Name of the database, `manifold` in `.env.example`.                                                                                            |
+| `DATABASE_URL`      | Connection string of the app, starting with `postgres://` or `postgresql://`.                                                                  |
 
 The three `POSTGRES_*` variables are required by `docker-compose.yml`, which passes them to the `db` service and builds `DATABASE_URL` from them for the `app` service:
 
@@ -41,7 +41,7 @@ Because the password becomes part of this connection string, it may contain only
 
 The database image applies the `POSTGRES_*` values only when it creates the `db-data` volume on the first start. Changing them in `.env` later does not change the existing database, and the app can no longer connect; change the password inside PostgreSQL first.
 
-To use a database of your own instead of the bundled one, adapt the Compose file: set `DATABASE_URL` for the `app` service and remove the `db` service and the `depends_on` that waits for it. The database must be PostgreSQL 17 with PostGIS, the version the image's backup tools are made for, and must allow creating the `postgis` and `pg_trgm` extensions.
+To use a database of your own instead of the bundled one, adapt the Compose file: set `DATABASE_URL` for the `app` service and remove the `db` service and the `depends_on` that waits for it. The database must be PostgreSQL 17 with PostGIS, the version the image's backup tools are made for, and must allow creating the `postgis` and `pg_trgm` extensions. When the database is reached over a network you do not control, require TLS with a checked certificate: add `?sslmode=verify-full` to `DATABASE_URL` (postgres.js then verifies the server's certificate and name); `sslmode=require` encrypts without checking who answers.
 
 ## Secrets
 
@@ -67,15 +67,19 @@ A hex value such as the output of `openssl rand -hex 32` is refused. The key enc
 
 Never change it by simply replacing the value: the vault would become unreadable. `node cli.js vault:rotate-key` encrypts every value again with a new key, which it reads from `NEW_ENCRYPTION_KEY` or asks for; then you set `ENCRYPTION_KEY` to the new key and restart the app. [Operations](operations.md) describes the steps.
 
+### Secrets from files
+
+Instead of a value in the environment, `DATABASE_URL`, `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `OWNER_PASSWORD` and `SMTP_PASSWORD` can come from a file, such as a Docker secret: set `DATABASE_URL_FILE`, `BETTER_AUTH_SECRET_FILE` and so on to the path of the file. The app reads the file on start and drops one trailing line break. Set either the variable or its `_FILE` form, not both; a file that cannot be read stops the start with the variable's name. The variables must reach the `app` service, so add them to its `environment` in the Compose file together with the secret's mount.
+
 ## Owner account
 
 These variables are read only while the database has no user, to create the owner account on the first start.
 
-| Variable         | Rule                                                |
-| ---------------- | --------------------------------------------------- |
-| `OWNER_USERNAME` | 3 to 32 lowercase letters, digits, `.`, `_` or `-`. |
-| `OWNER_EMAIL`    | A valid email address.                              |
-| `OWNER_PASSWORD` | 8 to 128 characters.                                |
+| Variable         | Rule                                                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `OWNER_USERNAME` | 3 to 32 lowercase letters, digits, `.`, `_` or `-`.                                                                                 |
+| `OWNER_EMAIL`    | A valid email address.                                                                                                              |
+| `OWNER_PASSWORD` | 8 to 128 characters, not a common password, and without the product name, the organization name, the username or the email address. |
 
 If one of them is missing or breaks its rule on the first start, the app names it and refuses to start. Once the owner exists, the variables are ignored: they are never compared with the account or used to change it, and the log reminds you that they can be removed. Change the username, the email address and the password under **Settings → Profile** instead, see [Your account](account.md).
 
@@ -170,6 +174,8 @@ In production, set a release or a minor line, so that a new minor version arrive
 - `DATABASE_URL` must start with `postgres://` or `postgresql://`.
 - `BETTER_AUTH_SECRET` must have at least 32 characters.
 - `ENCRYPTION_KEY` must decode from base64 to exactly 32 bytes.
+- When `ORIGIN` is an `https` address, the database password must not be `change-me`, the example from `.env.example`.
+- A variable and its `_FILE` form may not both be set, and the file must be readable.
 - `ORGANIZATION_NAME` may have at most 80 characters.
 - `SMTP_PORT` must be a whole number from 1 to 65535.
 - `UPLOAD_MAX_BYTES`, `TRASH_RETENTION_DAYS`, `AUDIT_RETENTION_DAYS` and `API_RATE_LIMIT_PER_MINUTE` must be whole numbers of at least 1.

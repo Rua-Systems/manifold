@@ -2,7 +2,11 @@ import { m } from '$lib/paraglide/messages.js';
 import { codeSchema } from '$lib/schemas/auth';
 import { stepUpSchema } from '$lib/schemas/security';
 import { requireUser } from '$lib/server/guard';
-import { isRateLimited } from '$lib/server/rate-limit';
+import {
+	countFailedCredentialCheck,
+	isCredentialCheckBlocked,
+	isRateLimited
+} from '$lib/server/rate-limit';
 import { confirmIdentity } from '$lib/server/step-up';
 import { safeRedirectTarget } from '$lib/utils/redirect';
 import { fieldErrors, textValue } from '$lib/utils/validation';
@@ -20,7 +24,7 @@ export const actions = {
 		const signedIn = requireUser(event.locals);
 		const data = await event.request.formData();
 
-		if (isRateLimited(event, 'stepUp')) {
+		if (isRateLimited(event, 'stepUp') || isCredentialCheckBlocked(signedIn.user.id)) {
 			return fail(429, { errors: {}, message: m.error_rate_limited() });
 		}
 
@@ -39,6 +43,9 @@ export const actions = {
 		}
 
 		const result = await confirmIdentity(event, signedIn, parsed.data);
+		if (result !== 'confirmed') {
+			countFailedCredentialCheck(signedIn.user.id);
+		}
 		if (result === 'wrong_password') {
 			return fail(400, {
 				errors: { password: m.settings_error_current_password() },

@@ -5,6 +5,12 @@ import type { SessionUser } from '$lib/types/user';
 
 declare global {
 	namespace App {
+		interface Error {
+			message: string;
+			/** Quoted in the log line of an unexpected error. */
+			id?: string;
+		}
+
 		interface Locals {
 			user: AuthUser | null;
 			session: AuthSession | null;

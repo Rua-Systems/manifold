@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { RateLimiter } from './rate-limit';
+import {
+	countFailedCredentialCheck,
+	isCredentialCheckBlocked,
+	isUploadLimited,
+	RateLimiter
+} from './rate-limit';
 
 const LIMIT = { max: 2, windowMs: 1000 };
 
@@ -48,5 +53,32 @@ describe('RateLimiter', () => {
 			remaining: 0,
 			resetAt: 1100
 		});
+	});
+});
+
+describe('failed credential checks', () => {
+	it('block the account after five wrong entries within a minute', () => {
+		const userId = `owner-${Math.random()}`;
+		const start = 10_000_000;
+		for (let attempt = 0; attempt < 4; attempt += 1) {
+			countFailedCredentialCheck(userId, start + attempt);
+		}
+		expect(isCredentialCheckBlocked(userId, start + 5)).toBe(false);
+
+		countFailedCredentialCheck(userId, start + 6);
+		expect(isCredentialCheckBlocked(userId, start + 7)).toBe(true);
+		expect(isCredentialCheckBlocked(userId, start + 60_000)).toBe(false);
+	});
+});
+
+describe('editor uploads', () => {
+	it('allow thirty a minute per account', () => {
+		const userId = `owner-${Math.random()}`;
+		const start = 20_000_000;
+		for (let upload = 0; upload < 30; upload += 1) {
+			expect(isUploadLimited(userId, start + upload)).toBe(false);
+		}
+		expect(isUploadLimited(userId, start + 31)).toBe(true);
+		expect(isUploadLimited(userId, start + 60_000)).toBe(false);
 	});
 });

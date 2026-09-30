@@ -8,6 +8,7 @@ import { consumeApiRequest, type RateLimitState } from '../rate-limit';
 import { ApiError, apiErrorFrom, errorResponse, invalidRequest, jsonResponse } from './errors';
 import { API_BASE_PATH, apiRoutes } from './routes';
 import type { ApiRoute } from './types';
+import { log, logSecurityEvent } from '../log';
 
 // Serves /api/v1: finds the route, authenticates the Bearer key, applies the key's rate limit,
 // checks the scope, validates the input, runs the handler and records writes in the audit log.
@@ -102,6 +103,7 @@ export async function handleApiRequest(
 
 	const token = bearerToken(request);
 	if (token === null) {
+		logSecurityEvent('missing_key', { path, ip: options.origin.ip });
 		return errorResponse(
 			new ApiError(401, 'missing_key', 'Send an API key as `Authorization: Bearer <key>`.'),
 			{ 'WWW-Authenticate': 'Bearer' }
@@ -109,6 +111,7 @@ export async function handleApiRequest(
 	}
 	const key = await authenticateApiKey(token, { ip: options.origin.ip });
 	if (key === null) {
+		logSecurityEvent('invalid_key', { path, ip: options.origin.ip });
 		return errorResponse(
 			new ApiError(401, 'invalid_key', 'The API key is unknown, revoked or expired.'),
 			{ 'WWW-Authenticate': 'Bearer error="invalid_token"' }
@@ -120,12 +123,14 @@ export async function handleApiRequest(
 	const rate = consumeApiRequest(key.id, limit, now);
 	const headers = rateLimitHeaders(rate, limit, now);
 	if (rate.limited) {
+		logSecurityEvent('rate_limited', { bucket: 'api', keyId: key.id, path });
 		return errorResponse(new ApiError(429, 'rate_limited', 'Too many requests for this key.'), {
 			...headers,
 			'Retry-After': headers['RateLimit-Reset']
 		});
 	}
 	if (route.scope !== null && !key.scopes.includes(route.scope)) {
+		logSecurityEvent('insufficient_scope', { keyId: key.id, scope: route.scope, path });
 		return errorResponse(
 			new ApiError(403, 'insufficient_scope', `This key lacks the "${route.scope}" scope.`),
 			headers
@@ -178,7 +183,7 @@ export async function handleApiRequest(
 		if (known !== null) {
 			return errorResponse(known, headers);
 		}
-		console.error(`API ${request.method} ${path} failed.`, cause);
+		log('error', 'API request failed', { method: request.method, path }, cause);
 		return errorResponse(new ApiError(500, 'internal_error', 'Something went wrong.'), headers);
 	}
 }

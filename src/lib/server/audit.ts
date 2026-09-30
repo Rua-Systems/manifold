@@ -1,9 +1,10 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { and, count, desc, eq, gte, like, lt, lte, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, gte, like, lt, lte, sql, type SQL } from 'drizzle-orm';
 import type { Actor, ActorType } from './actor';
 import { getDb, type Database } from './db';
 import { auditEvent } from './db/schema';
 import type { AuditEventView } from '$lib/types/security';
+import { log } from './log';
 
 // The audit log: security events, writes from outside the browser and CLI changes. Metadata must
 // never carry secrets: no passwords, codes, keys, tokens or vault values.
@@ -69,8 +70,17 @@ export async function recordAudit(entry: AuditEntry, db: Database = getDb()): Pr
 			userAgent: entry.origin?.userAgent ?? null,
 			metadata: entry.metadata ?? {}
 		});
+		// Mirrored to the log, so the events also reach a system outside the database.
+		log('info', 'Audit event', {
+			action: entry.action,
+			actorType: entry.actor.type,
+			actorId: entry.actor.id,
+			targetType: entry.target?.type,
+			targetId: entry.target?.id,
+			ip: entry.origin?.ip
+		});
 	} catch (error) {
-		console.error(`Recording the audit event ${entry.action} failed.`, error);
+		log('error', 'Recording an audit event failed', { action: entry.action }, error);
 	}
 }
 
@@ -121,12 +131,18 @@ export async function listAuditEvents(
 	return { events, total };
 }
 
-/** Deletes events older than the retention period. */
+/**
+ * Deletes events older than the retention period. The audit table refuses deletes unless the
+ * transaction sets `manifold.audit_purge` (migration 0012), which only this function does.
+ */
 export async function purgeAuditEvents(now: Date, retentionDays: number): Promise<number> {
 	const cutoff = new Date(now.getTime() - retentionDays * DAY_MS);
-	const deleted = await getDb()
-		.delete(auditEvent)
-		.where(lt(auditEvent.occurredAt, cutoff))
-		.returning({ id: auditEvent.id });
-	return deleted.length;
+	return getDb().transaction(async (tx) => {
+		await tx.execute(sql`select set_config('manifold.audit_purge', 'on', true)`);
+		const deleted = await tx
+			.delete(auditEvent)
+			.where(lt(auditEvent.occurredAt, cutoff))
+			.returning({ id: auditEvent.id });
+		return deleted.length;
+	});
 }

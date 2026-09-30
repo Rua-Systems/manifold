@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ownerActor, SYSTEM_ACTOR } from './actor';
 import { listAuditEvents, purgeAuditEvents, recordAudit } from './audit';
-import { getDb } from './db';
+import { getDb, getSql } from './db';
 import { auditEvent, session, twoFactor, user, userSetting } from './db/schema';
 import { disableOwnerTwoFactor, findOwner } from './owner';
 import { listSessions, revokeOtherSessions, revokeSession } from './sessions';
@@ -34,7 +34,7 @@ async function addSession(userAgent: string, updatedAt = new Date()): Promise<st
 beforeEach(async () => {
 	const owner = await findOwner(getDb());
 	ownerId = owner?.id ?? '';
-	await getDb().delete(auditEvent);
+	await purgeAuditEvents(new Date(Date.now() + 60_000), 0);
 	await getDb().delete(session).where(eq(session.userId, ownerId));
 	await getDb().delete(userSetting);
 });
@@ -110,6 +110,17 @@ describe('audit log', () => {
 		expect(await purgeAuditEvents(now, 180)).toBe(1);
 		expect((await listAuditEvents()).events.map((event) => event.action)).toEqual([
 			'test.recent'
+		]);
+	});
+
+	it('refuses to change or delete events outside the retention task', async () => {
+		await recordAudit({ actor: SYSTEM_ACTOR, action: 'test.kept' });
+
+		await expect(getDb().update(auditEvent).set({ action: 'test.changed' })).rejects.toThrow();
+		await expect(getDb().delete(auditEvent)).rejects.toThrow();
+		await expect(getSql().unsafe('truncate audit_event')).rejects.toThrow();
+		expect((await listAuditEvents()).events.map((event) => event.action)).toEqual([
+			'test.kept'
 		]);
 	});
 });

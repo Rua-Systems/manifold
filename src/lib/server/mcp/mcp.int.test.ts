@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createApiKey } from '../api-keys';
 import { getDb } from '../db';
+import { purgeAuditEvents } from '../audit';
 import { auditEvent } from '../db/schema';
 import { handleMcpRequest, mcpTools } from './server';
 
@@ -53,7 +54,7 @@ beforeEach(async () => {
 	await getDb().delete(note);
 	await getDb().delete(service);
 	await getDb().delete(vaultSecret);
-	await getDb().delete(auditEvent);
+	await purgeAuditEvents(new Date(Date.now() + 60_000), 0);
 });
 
 afterEach(async () => {

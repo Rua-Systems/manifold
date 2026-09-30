@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { EnvError, parseEnv } from './env';
 
@@ -91,5 +94,39 @@ describe('parseEnv', () => {
 
 	it('requires the core variables', () => {
 		expect(() => parseEnv({}, { dev: false })).toThrow(/ORIGIN[\s\S]*DATABASE_URL/);
+	});
+
+	it('reads secrets from files named by the _FILE variables', () => {
+		const folder = mkdtempSync(path.join(tmpdir(), 'manifold-env-'));
+		const secretFile = path.join(folder, 'auth-secret');
+		writeFileSync(secretFile, `${'y'.repeat(40)}\n`);
+		const rest: Record<string, string> = { ...REQUIRED };
+		delete rest.BETTER_AUTH_SECRET;
+
+		const env = parseEnv({ ...rest, BETTER_AUTH_SECRET_FILE: secretFile }, { dev: false });
+		expect(env.BETTER_AUTH_SECRET).toBe('y'.repeat(40));
+
+		expect(() =>
+			parseEnv({ ...REQUIRED, BETTER_AUTH_SECRET_FILE: secretFile }, { dev: false })
+		).toThrow(/either BETTER_AUTH_SECRET or BETTER_AUTH_SECRET_FILE/);
+		expect(() =>
+			parseEnv(
+				{ ...rest, BETTER_AUTH_SECRET_FILE: path.join(folder, 'missing') },
+				{ dev: false }
+			)
+		).toThrow(/BETTER_AUTH_SECRET_FILE: The file cannot be read/);
+	});
+
+	it('refuses the example database password on a public address', () => {
+		const example = 'postgres://manifold:change-me@db:5432/manifold';
+		expect(() => parseEnv({ ...REQUIRED, DATABASE_URL: example }, { dev: false })).toThrow(
+			/example database password/
+		);
+		expect(
+			parseEnv(
+				{ ...REQUIRED, ORIGIN: 'http://localhost:3000', DATABASE_URL: example },
+				{ dev: false }
+			).DATABASE_URL
+		).toBe(example);
 	});
 });

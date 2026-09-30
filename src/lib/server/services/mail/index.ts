@@ -2,6 +2,7 @@ import type { Locale } from '$lib/paraglide/runtime.js';
 import { getEnv } from '../../env';
 import { renderMail, type MailContent, type MailContext } from './layout';
 import { deliver } from './transport';
+import { log } from '../../log';
 
 export type { MailContent, MailContext } from './layout';
 
@@ -25,6 +26,6 @@ export function sendMailInBackground(
 	build: (context: MailContext) => MailContent
 ): void {
 	sendMail(to, locale, build).catch((error: unknown) => {
-		console.error('Sending a mail failed.', error);
+		log('error', 'Sending a mail failed', {}, error);
 	});
 }

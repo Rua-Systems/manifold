@@ -22,14 +22,17 @@ Invalid environment configuration:
 
 Fix every listed variable in `.env` and run `docker compose up -d`. Typical messages:
 
-| Message                                                     | Fix                                                                                                                                                                      |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ORIGIN: Expected an http or https URL.`                    | Set `ORIGIN` to the public address, such as `https://manifold.example.com`.                                                                                              |
-| `ORIGIN: Remove the trailing slash.`                        | Write the address without a `/` at the end.                                                                                                                              |
-| `DATABASE_URL: Expected a postgres:// connection string.`   | Start the value with `postgres://` or `postgresql://`. `docker-compose.yml` builds it from the `POSTGRES_*` variables.                                                   |
-| `BETTER_AUTH_SECRET: Use at least 32 characters.`           | Generate a value with `openssl rand -base64 32`.                                                                                                                         |
-| `ENCRYPTION_KEY: Expected 32 random bytes, base64 encoded.` | Generate a key with `openssl rand -base64 32`. Never replace the key of an installation whose vault holds values; rotate it as described in [Operations](operations.md). |
-| `MAP_DEFAULT_CENTER: Expected "lon,lat" in degrees.`        | Write the longitude and the latitude separated by a comma, for example `13.4,52.5`.                                                                                      |
+| Message                                                                                   | Fix                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ORIGIN: Expected an http or https URL.`                                                  | Set `ORIGIN` to the public address, such as `https://manifold.example.com`.                                                                                                         |
+| `ORIGIN: Remove the trailing slash.`                                                      | Write the address without a `/` at the end.                                                                                                                                         |
+| `DATABASE_URL: Expected a postgres:// connection string.`                                 | Start the value with `postgres://` or `postgresql://`. `docker-compose.yml` builds it from the `POSTGRES_*` variables.                                                              |
+| `BETTER_AUTH_SECRET: Use at least 32 characters.`                                         | Generate a value with `openssl rand -base64 32`.                                                                                                                                    |
+| `ENCRYPTION_KEY: Expected 32 random bytes, base64 encoded.`                               | Generate a key with `openssl rand -base64 32`. Never replace the key of an installation whose vault holds values; rotate it as described in [Operations](operations.md).            |
+| `MAP_DEFAULT_CENTER: Expected "lon,lat" in degrees.`                                      | Write the longitude and the latitude separated by a comma, for example `13.4,52.5`.                                                                                                 |
+| `DATABASE_URL: Replace the example database password with a new one.`                     | `POSTGRES_PASSWORD` is still `change-me` from `.env.example`. Choose a new one; for an existing database, change it inside PostgreSQL first, see [Configuration](configuration.md). |
+| `BETTER_AUTH_SECRET: Set either BETTER_AUTH_SECRET or BETTER_AUTH_SECRET_FILE, not both.` | Remove one of the two; the same applies to the other `_FILE` variables.                                                                                                             |
+| `ENCRYPTION_KEY_FILE: The file cannot be read.`                                           | The path in the `_FILE` variable does not exist in the container, or the app may not read it.                                                                                       |
 
 Other lines name the variable in the standard wording of the validation library, for example for a missing value, for `SMTP_SECURE` with a value other than `true` or `false`, or for a number such as `UPLOAD_MAX_BYTES` that is not a positive whole number. The command line tool checks the same variables and prints the same message. [Configuration](configuration.md) describes every variable.
 
@@ -40,7 +43,7 @@ No owner account exists yet, so OWNER_USERNAME, OWNER_EMAIL and OWNER_PASSWORD a
   - OWNER_PASSWORD must be at least 8 characters
 ```
 
-Set all three: a username of 3 to 32 lowercase letters, digits, `.`, `_` or `-`, a valid email address, and a password of 8 to 128 characters.
+Set all three: a username of 3 to 32 lowercase letters, digits, `.`, `_` or `-`, a valid email address, and a password of 8 to 128 characters. `OWNER_PASSWORD is a common password; choose another one` and `OWNER_PASSWORD must not contain the product, organization or account name` mean what they say: choose a password that is not a common one and does not contain `manifold`, the organization name, the username or the email address.
 
 If the app cannot connect to the bundled database right after a new installation, check that `POSTGRES_PASSWORD` uses only letters, digits, `-`, `_`, `.` and `~`: it becomes part of `DATABASE_URL`.
 
@@ -68,6 +71,9 @@ Migrations run on every start, each in its own transaction. When one of them can
 - **`XFF_DEPTH is 2, but only found 1 addresses`**: `XFF_DEPTH` is higher than the number of proxies in front of the app. Set it to that number, see [Deployment](deployment.md).
 - **The audit log shows the same address for every sign in**: the app sees the proxy as the client of every request, so every visitor also shares one rate limit. Set `ADDRESS_HEADER` and `XFF_DEPTH` for your proxy.
 - **"Too many attempts. Wait a minute and try again."**: each client address may make 5 sign in attempts per minute, counting passwords and codes, request 3 emailed codes per minute and confirm its identity 5 times per minute. The counters are kept in the app's memory and start over after a restart.
+- **"Too many attempts. Wait a minute and try again." while signed in**: five wrong passwords or codes within a minute, in the identity confirmation, the password change or the two factor settings, block these forms for the rest of the minute, from every address.
+- **"That code is not valid." for a code that was just right**: an authenticator code works only once. Wait for the next code of the app.
+- **You are signed out after about a month although you use Manifold every day**: sessions end 30 days after their sign in at the latest. Sign in again.
 - **"Too many wrong codes. Try again in 15 minutes."**: after 10 wrong codes in a row in the second step, the account's second factor is locked for 15 minutes. Wait, then try again.
 - **"The sign in took too long. Start again."**: the second step expired after ten minutes, or too many wrong codes were entered in it. Sign in again from the start.
 - **"That code was not accepted."** for an emailed code: the code expired after 5 minutes, or it was entered wrong three times. Request a new one.
@@ -77,7 +83,8 @@ Migrations run on every start, each in its own transaction. When one of them can
 
 ## Emails do not arrive
 
-- Check the log for `Sending a mail failed.`, followed by the reason.
+- Check the log for `Sending a mail failed`, with the reason in the `error` field.
+- The server must offer TLS 1.2 or newer with a valid certificate: either implicit TLS on port 465 with `SMTP_SECURE=true`, or STARTTLS on port 587, which Manifold requires. Only a relay on `localhost` may be reached without TLS.
 - Port `465` needs `SMTP_SECURE=true`; port `587` works with `SMTP_SECURE=false` and STARTTLS.
 - Set `MAIL_FROM`. Most providers accept only a sender that belongs to the account in `SMTP_USER`.
 - Codes are only sent to the owner's address. `owner:show` prints it.
@@ -91,14 +98,17 @@ Migrations run on every start, each in its own transaction. When one of them can
 - **`/app/backup.tar.gz cannot be written (EROFS).`**: the path lies outside `/data`, and the root filesystem of the container is read-only. Relative paths start at `/app`. Leave the path out, or use an absolute path such as `/data/backups/before-update.tar.gz`.
 - **`... already exists. Choose another name.`**: the command never overwrites an archive.
 - **An error with `ENOSPC`**: the volume is full. A backup needs room for the database dump in `/data/tmp` and for the archive. Delete old archives after copying them elsewhere, or enlarge the disk.
-- **Download Export ends on an error page, and the log shows `The export cannot run.`**: the app cannot run `pg_dump`. The image always contains it; in development, install the PostgreSQL 17 client tools or start the development database.
-- **The export download breaks off, and the log shows `The export failed.`**: the error that follows it names the reason.
+- **Download Export answers "An export is already running."**: exports run one at a time. Wait until the other download has finished.
+- **Download Export ends on an error page, and the log shows `The export cannot run`**: the app cannot run `pg_dump`. The image always contains it; in development, install the PostgreSQL 17 client tools or start the development database.
+- **The export download breaks off, and the log shows `The export failed`**: the `error` field names the reason.
 
 ## Restore refuses to run
 
 - **`The database is not empty. Use --force to replace it.`**: once the app has started, the database always holds its tables. Add `--force` to replace everything.
 - **`The backup comes from a newer Manifold (migration 0012, this one knows 0011). Update first.`**: update this installation to at least the version that made the backup, then restore it.
 - **`The archive cannot be read.`**: the path is wrong, or the file is damaged or not a `.tar.gz` archive. Paths are inside the container: copy the archive into `/data/backups` first.
+- **`The archive holds entries that are not part of a Manifold backup.`**: the archive contains files, folders or links that Manifold never writes. Use an archive that Manifold wrote, unchanged.
+- **`Left out ... uploaded file(s) that are not images Manifold accepts.`**: some files in the archive's `uploads` folder are not images Manifold would accept today; they were not copied. Notes and services that used them show a missing image.
 - **`pg_restore failed:`** followed by the reason: the restore stopped at the first error. With `--force`, the database may now be incomplete; fix the cause and run the restore again.
 
 [Backups and restores](backups.md) lists every message. Nothing is changed when an archive is refused.

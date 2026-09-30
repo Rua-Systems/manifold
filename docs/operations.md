@@ -111,7 +111,7 @@ There is deliberately no environment variable for any of this. `OWNER_USERNAME`,
 
 ## Ending sessions
 
-**Settings → Security → Sessions** lists every signed in browser with its device, IP address and last activity. **Sign Out** ends one session, and **Sign Out All Other Sessions** ends every session except the current one. Changing the password under **Settings** also signs out every other session.
+**Settings → Security → Sessions** lists every signed in browser with its device, IP address and last activity. **Sign Out** ends one session, and **Sign Out All Other Sessions** ends every session except the current one; both ask you to confirm your identity first. Changing the password under **Settings** also signs out every other session, and every session ends 30 days after its sign in at the latest.
 
 Both `owner:reset-password` and `owner:disable-2fa` sign out every session, including your own. Changing `BETTER_AUTH_SECRET` signs out every browser as well.
 
@@ -175,24 +175,40 @@ The app cleans up after itself once when it starts and then every 24 hours:
 | `files.purge-unreferenced` | Uploaded files older than a day that no note and no service refers to any more, from the database and from the upload folder. |
 | `audit.purge`              | Audit events older than `AUDIT_RETENTION_DAYS` (default 180).                                                                 |
 
-The trash is emptied first, so images of purged notes are removed in the same run. A task that fails is logged as `Housekeeping task "<name>" failed.`, and the other tasks still run. The 24 hour interval starts with the app, so every restart runs all tasks once more.
+The trash is emptied first, so images of purged notes are removed in the same run. A task that fails is logged as `Housekeeping task failed` with the task's name, and the other tasks still run. The 24 hour interval starts with the app, so every restart runs all tasks once more.
 
 ## Logs
 
-Manifold writes plain text lines to standard output. Read them with:
+Manifold writes one JSON object per line to standard output, and errors to standard error. Read them with:
 
 ```bash
 docker compose logs -f app
 ```
 
-Add `-t` to see when each line was written. The log contains:
+Every line has `time` (UTC), `level` (`info`, `warn` or `error`) and `message`, and further fields that depend on the message, for example:
 
-- the start of the app: the migrations it applied (`Applied migrations: ...`), the creation of the owner account on the first start, and the address it listens on;
-- configuration and migration errors that stop the start;
-- errors that the app caught, each with a short description followed by the error itself, for example `Sending a mail failed.`, `Housekeeping task "audit.purge" failed.`, `The export failed.`, `API POST /notes failed.` or `MCP tool create_note failed.`;
-- unexpected errors of pages and form actions, logged by SvelteKit.
+```json
+{
+  "time": "2026-09-30T03:00:00.000Z",
+  "level": "warn",
+  "message": "Security event",
+  "event": "invalid_key",
+  "path": "/api/v1/notes",
+  "ip": "203.0.113.24"
+}
+```
 
-Requests, sign ins and other security events are not logged there: they go to the audit log under **Settings → Security → Audit Log**. Configuration errors name the variable and the rule, never the value; failed mails are logged without their content; and errors of the backup tools never include the database connection string.
+The log contains:
+
+- the start of the app: the migrations it applied (`Applied migrations`), the creation of the owner account on the first start, and the address it listens on;
+- every audit event (`Audit event`, with the action, the actor, the target and the address), so the audit log can be kept outside the server as well;
+- security events (`Security event`, at level `warn`): missing and invalid API keys, refused scopes, rate limits, blocked credential checks, cross-site form posts, oversized bodies and rejected uploads;
+- errors that the app caught, such as `Sending a mail failed`, `Housekeeping task failed`, `The export failed`, `API request failed` or `MCP tool failed`, with the error message and stack;
+- unexpected errors of pages and form actions (`Request failed`), with an `id` that the error page shows as well, so a visitor can quote it.
+
+Configuration errors that stop the start are printed as text and name the variable and the rule, never the value. The log never contains passwords, codes, keys, cookies, tokens, the two secrets or the contents of notes and the vault; failed mails are logged without their content, and errors of the backup tools never include the database connection string.
+
+Docker keeps the log of a container until it is removed. Limit its size with Docker's log options, see [Deployment](deployment.md), and ship it to a log system of your choice if you want to keep it longer than the server.
 
 ## Health check
 

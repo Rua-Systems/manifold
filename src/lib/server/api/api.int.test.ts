@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApiKey, listApiKeys, revokeApiKey } from '../api-keys';
 import { getDb } from '../db';
+import { purgeAuditEvents } from '../audit';
 import { apiKey, auditEvent } from '../db/schema';
 import { handleApiRequest } from './router';
 import { apiRoutes, openApiDocument } from './routes';
@@ -47,7 +48,7 @@ beforeEach(async () => {
 	await getDb().delete(apiKey);
 	await getDb().delete(note);
 	await getDb().delete(service);
-	await getDb().delete(auditEvent);
+	await purgeAuditEvents(new Date(Date.now() + 60_000), 0);
 	everything = await keyWith(allScopeIds());
 });
 
@@ -187,6 +188,15 @@ describe('notes', () => {
 		});
 		expect(response.status).toBe(422);
 		expect((await json(response)).error).toMatchObject({ code: 'validation_failed' });
+	});
+
+	it('answers 400, not a server error, for a version beyond the column', async () => {
+		const created = await json(
+			await call('POST', '/notes', everything, { markdown: 'Bounds' })
+		);
+		const response = await call('GET', `/notes/${created.id}/revisions/3000000000`, everything);
+		expect(response.status).toBe(400);
+		expect((await json(response)).error).toMatchObject({ code: 'invalid_request' });
 	});
 
 	it('pages with a cursor, trashes, restores and keeps a revision per write', async () => {

@@ -48,4 +48,4 @@ EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["node", "healthcheck.mjs"]
 
-CMD ["node", "build"]
+CMD ["node", "build/server.js"]

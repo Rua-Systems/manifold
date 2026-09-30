@@ -1,3 +1,5 @@
+import { log } from './log';
+
 // Periodic cleanup inside the app process. The tasks (trash purge, audit retention, unreferenced
 // files) are listed in tasks.ts.
 
@@ -13,7 +15,7 @@ export async function runHousekeeping(tasks: HousekeepingTask[], now = new Date(
 		try {
 			await task.run(now);
 		} catch (error) {
-			console.error(`Housekeeping task "${task.name}" failed.`, error);
+			log('error', 'Housekeeping task failed', { task: task.name }, error);
 		}
 	}
 }

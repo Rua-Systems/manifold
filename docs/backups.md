@@ -128,14 +128,14 @@ Restart the app. The vault opens only with the ENCRYPTION_KEY it was written wit
 
 ### What the restore does
 
-1. It unpacks the archive into a work folder in `/data/tmp`, so the volume needs free space for the unpacked archive.
+1. It unpacks the archive into a work folder in `/data/tmp`, so the volume needs free space for the unpacked archive. The archive may hold only `manifest.json`, `database.dump` and files in `uploads/`, all as plain files; anything else, such as another file, a folder of its own or a link, stops the restore. Before unpacking, it counts the entries and adds up their sizes: an archive with more than a million entries, or with more data than the volume has free space, is refused.
 2. It reads the manifest and refuses archives from a newer version of Manifold.
 3. It refuses a database with tables unless `--force` is given. With `--force`, it drops every schema of the database except PostgreSQL's own, with all tables, data and extensions in them.
 4. It restores the dump with `pg_restore`, which stops at the first error.
-5. With `--force`, it deletes every file in the upload folder. It then copies the uploaded files of the archive into it.
+5. With `--force`, it deletes every file in the upload folder. It then copies the uploaded files of the archive into it, after checking each one like a new upload: a file that is not an image Manifold accepts is left out, and the command says how many it left out.
 6. It applies the migrations that are newer than the backup, lists them, and records `data.restore` in the audit log.
 
-Nothing is changed until the archive has passed the checks of the first three steps, so a refused archive leaves the installation as it was. If a forced restore fails after that, the database may be incomplete: fix the cause and run the restore again with `--force`.
+Restore only archives that you made yourself: the database dump is applied as it is, with the rights of the database account. Nothing is changed until the archive has passed the checks of the first three steps, so a refused archive leaves the installation as it was. If a forced restore fails after that, the database may be incomplete: fix the cause and run the restore again with `--force`.
 
 ### Refusals
 
@@ -147,6 +147,8 @@ Nothing is changed until the archive has passed the checks of the first three st
 | `This is not a Manifold backup.`                                                              | The archive was not written by Manifold.                                                |
 | `The backup comes from a newer Manifold (migration 0012, this one knows 0011). Update first.` | Update this installation to at least the version that made the backup, then restore it. |
 | `The database is not empty. Use --force to replace it.`                                       | Add `--force` to replace the current data.                                              |
+| `The archive does not fit into the free space of the volume.`                                 | Free space on the volume, or restore on a larger disk.                                  |
+| `The archive holds entries that are not part of a Manifold backup.`                           | The archive was changed or made by something else; use an archive Manifold wrote.       |
 
 ### After a restore
 

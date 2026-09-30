@@ -40,7 +40,7 @@ export default defineConfig({
 					'connect-src': ['self'],
 					'font-src': ['self'],
 					'frame-ancestors': ['none'],
-					'base-uri': ['self'],
+					'base-uri': ['none'],
 					'form-action': ['self'],
 					'object-src': ['none']
 				}
@@ -51,6 +51,7 @@ export default defineConfig({
 						'../drizzle.config.ts',
 						'../playwright.config.ts',
 						'../vite.cli.config.ts',
+						'../vite.server.config.ts',
 						'../scripts/**/*.ts'
 					);
 				}

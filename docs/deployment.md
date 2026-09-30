@@ -43,7 +43,7 @@ The app container runs as an unprivileged user with a read-only root filesystem,
 
 ### Caddy
 
-Caddy obtains and renews certificates automatically. The first block serves the app; the second replaces Caddy's automatic redirect so that pages are redirected to `https` while plain `http` calls to the REST API and the MCP server fail instead of being redirected:
+Caddy obtains and renews certificates automatically. The first block serves the app; the second replaces Caddy's automatic redirect so that pages are redirected to `https` while plain `http` calls to the REST API and the MCP server, and any plain `http` request that carries an API key, fail instead of being redirected:
 
 ```text
 manifold.example.com {
@@ -51,7 +51,15 @@ manifold.example.com {
 }
 
 http://manifold.example.com {
-    @keys path /api/* /mcp
+    @keys {
+        path /api/* /mcp
+    }
+    @authorized {
+        header Authorization *
+    }
+    handle @authorized {
+        respond "Use https." 403
+    }
     handle @keys {
         respond "Use https." 403
     }
@@ -69,6 +77,10 @@ Caddy sends `X-Forwarded-For` by default, so the defaults of `docker-compose.yml
 server {
     listen 80;
     server_name manifold.example.com;
+
+    if ($http_authorization) {
+        return 403;
+    }
 
     location /api/ {
         return 403;
@@ -91,6 +103,8 @@ server {
     ssl_certificate /etc/letsencrypt/live/manifold.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/manifold.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
+    ssl_prefer_server_ciphers off;
 
     client_max_body_size 11m;
 
@@ -222,7 +236,7 @@ The next release then deploys itself, and the **Release image** run shows the de
 
 Serve only TLS 1.2 and 1.3 with a publicly trusted certificate; Caddy and Coolify do this by default. With an `https` origin, Manifold marks its session cookies `Secure` and sends `Strict-Transport-Security` with a lifetime of one year including subdomains, so browsers never fall back to plain HTTP once they have seen the site.
 
-Redirect plain `http` requests for pages to `https`, but do not redirect `/api/` and `/mcp`. An API or MCP client configured with an `http` address would otherwise send its key in clear text before being redirected; answering with an error makes the mistake visible.
+Redirect plain `http` requests for pages to `https`, but do not redirect `/api/`, `/mcp` or any request that carries an `Authorization` header, such as a file download with an API key. An API or MCP client configured with an `http` address would otherwise send its key in clear text before being redirected; answering with an error makes the mistake visible. Coolify's proxy redirects every plain `http` request, so there the only safeguard is to give clients `https` addresses. The Nginx example allows only TLS 1.2 and 1.3 with forward secret AEAD ciphers.
 
 ## Client addresses
 
@@ -237,17 +251,19 @@ The app must be reachable only through the proxy. Otherwise a client could choos
 
 ## Security headers
 
-Manifold sets its own security headers on the responses it renders, which are its pages, API responses and file downloads:
+Manifold sets its own security headers on every response, the static files of the build included: its server entry adds them before anything else, and the app completes them for the responses it renders:
 
-- `Content-Security-Policy` on pages: scripts, fonts and connections only from Manifold itself, styles from Manifold itself and inline, images also from `data:`, `blob:` and any `https` address for the map tiles, no framing, no plugins, and forms that submit only to Manifold.
+- `Content-Security-Policy`: on pages, scripts, fonts and connections only from Manifold itself, styles from Manifold itself and inline, images also from `data:`, `blob:` and any `https` address for the map tiles, no framing, no plugins, no change of the base address, and forms that submit only to Manifold. Every other response gets a policy that allows nothing.
 - `X-Frame-Options: DENY`.
 - `X-Content-Type-Options: nosniff`.
 - `Referrer-Policy: strict-origin-when-cross-origin`.
+- `Cross-Origin-Opener-Policy: same-origin`.
 - `Permissions-Policy`, which allows geolocation for Manifold itself, for the map's location button, and turns off the camera, the microphone, payments and USB.
 - `X-Robots-Tag: noindex, nofollow`, which asks search engines not to index the instance.
+- `Cache-Control: no-store` on pages, data and form answers.
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains`, when `ORIGIN` is an `https` address.
 
-The proxy does not need to add these headers and should not remove or replace them.
+The proxy does not need to add these headers and should not remove or replace them. Manifold refuses the methods `TRACE`, `TRACK` and `CONNECT` itself.
 
 ## Updating
 

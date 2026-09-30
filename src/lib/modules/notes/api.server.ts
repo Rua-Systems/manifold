@@ -1,4 +1,5 @@
 import { decodeCursor, pageOf, pageQuery, pageSchema } from '$lib/server/api/paging';
+import { VERSION_MAX } from '$lib/schemas/rules';
 import { defineRoute, type ApiRoute } from '$lib/server/api/types';
 import { z } from 'zod';
 import type { NoteContent } from './content';
@@ -33,7 +34,12 @@ type Format = z.output<typeof formatQuery>['format'];
 const idParams = z.object({ id: z.string().meta({ description: 'The note id.' }) });
 
 const revisionParams = idParams.extend({
-	version: z.coerce.number().int().min(1).meta({ description: 'The revision version.' })
+	version: z.coerce
+		.number()
+		.int()
+		.min(1)
+		.max(VERSION_MAX)
+		.meta({ description: 'The revision version.' })
 });
 
 const tiptapDocument = z
@@ -60,7 +66,7 @@ const createBody = z.object(contentFields).refine(eitherContentOrMarkdown, EITHE
 
 const updateBody = z
 	.object({
-		version: z.number().int().min(1).meta({
+		version: z.number().int().min(1).max(VERSION_MAX).meta({
 			description:
 				'The version the change is based on; a different stored version answers 409.'
 		}),

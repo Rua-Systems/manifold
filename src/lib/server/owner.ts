@@ -5,12 +5,13 @@ import {
 	USERNAME_MAX_LENGTH,
 	USERNAME_MIN_LENGTH
 } from '$lib/schemas/rules';
-import { hashPassword } from 'better-auth/crypto';
 import { and, count, eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { Database } from './db';
 import { account, session, twoFactor, user } from './db/schema';
+import { hashPassword, passwordHashNeedsUpgrade } from './passwords/hash';
+import { passwordProblem, type PasswordProblem } from './passwords/policy';
 
 // Plain module: the startup hook and the CLI both use it.
 
@@ -26,16 +27,38 @@ export const ownerPasswordRule = z
 	.min(PASSWORD_MIN_LENGTH, { message: `must be at least ${PASSWORD_MIN_LENGTH} characters` })
 	.max(PASSWORD_MAX_LENGTH, { message: `must be at most ${PASSWORD_MAX_LENGTH} characters` });
 
-const ownerVariablesSchema = z.object({
-	OWNER_USERNAME: usernameRule,
-	OWNER_EMAIL: z.email({ error: 'must be a valid email address' }),
-	OWNER_PASSWORD: ownerPasswordRule
-});
+const PASSWORD_PROBLEMS: Record<PasswordProblem, string> = {
+	common: 'is a common password; choose another one',
+	context: 'must not contain the product, organization or account name'
+};
+
+const ownerVariablesSchema = z
+	.object({
+		OWNER_USERNAME: usernameRule,
+		OWNER_EMAIL: z.email({ error: 'must be a valid email address' }),
+		OWNER_PASSWORD: ownerPasswordRule,
+		ORGANIZATION_NAME: z.string().optional()
+	})
+	.superRefine((value, context) => {
+		const problem = passwordProblem(value.OWNER_PASSWORD, {
+			username: value.OWNER_USERNAME,
+			email: value.OWNER_EMAIL,
+			organizationName: value.ORGANIZATION_NAME
+		});
+		if (problem !== null) {
+			context.addIssue({
+				code: 'custom',
+				path: ['OWNER_PASSWORD'],
+				message: PASSWORD_PROBLEMS[problem]
+			});
+		}
+	});
 
 export interface OwnerVariables {
 	OWNER_USERNAME?: string;
 	OWNER_EMAIL?: string;
 	OWNER_PASSWORD?: string;
+	ORGANIZATION_NAME?: string;
 }
 
 export interface Owner {
@@ -108,7 +131,7 @@ export async function bootstrapOwner(
 		const userId = randomUUID();
 		const now = new Date();
 
-		// Better Auth's own hashing, so sign in can verify the stored hash.
+		// The same hashing Better Auth is configured with, so sign in can verify the stored hash.
 		const passwordHash = await hashPassword(password);
 
 		await tx.insert(user).values({
@@ -145,8 +168,34 @@ export async function findOwner(db: Database): Promise<Owner | null> {
 	return row ?? null;
 }
 
+/**
+ * Replaces the owner's password hash with one of today's parameters, after the password was
+ * verified at sign in. Old hashes from earlier versions are upgraded this way.
+ */
+export async function upgradeOwnerPasswordHash(db: Database, password: string): Promise<void> {
+	const owner = await findOwner(db);
+	if (owner === null) {
+		return;
+	}
+	const [credential] = await db
+		.select({ id: account.id, password: account.password })
+		.from(account)
+		.where(and(eq(account.userId, owner.id), eq(account.providerId, CREDENTIAL_PROVIDER)))
+		.limit(1);
+	if (credential?.password && passwordHashNeedsUpgrade(credential.password)) {
+		await db
+			.update(account)
+			.set({ password: await hashPassword(password), updatedAt: new Date() })
+			.where(eq(account.id, credential.id));
+	}
+}
+
 /** Sets a new password for the owner and signs every session out. */
-export async function resetOwnerPassword(db: Database, password: string): Promise<Owner> {
+export async function resetOwnerPassword(
+	db: Database,
+	password: string,
+	organizationName?: string
+): Promise<Owner> {
 	const parsedPassword = ownerPasswordRule.safeParse(password);
 	if (!parsedPassword.success) {
 		throw new OwnerError(`The password ${parsedPassword.error.issues[0].message}.`);
@@ -155,6 +204,14 @@ export async function resetOwnerPassword(db: Database, password: string): Promis
 	const owner = await findOwner(db);
 	if (owner === null) {
 		throw new OwnerError('No owner account exists yet. Start the app once to create it.');
+	}
+	const problem = passwordProblem(parsedPassword.data, {
+		username: owner.username,
+		email: owner.email,
+		organizationName
+	});
+	if (problem !== null) {
+		throw new OwnerError(`The password ${PASSWORD_PROBLEMS[problem]}.`);
 	}
 
 	const passwordHash = await hashPassword(parsedPassword.data);

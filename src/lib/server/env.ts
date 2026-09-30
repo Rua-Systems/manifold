@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 
 // Plain module on purpose: the CLI parses process.env with it, the app parses $env/dynamic/private.
@@ -123,13 +124,64 @@ export class EnvError extends Error {
 	}
 }
 
+/** Secrets that may also come from a file, such as a Docker secret: `DATABASE_URL_FILE` and so on. */
+const FILE_VARIABLES = [
+	'DATABASE_URL',
+	'BETTER_AUTH_SECRET',
+	'ENCRYPTION_KEY',
+	'OWNER_PASSWORD',
+	'SMTP_PASSWORD'
+] as const;
+
+/** The password `.env.example` ships with; a public instance must not keep it. */
+const PLACEHOLDER_DATABASE_PASSWORD = 'change-me';
+
+/** Replaces each `<NAME>_FILE` with the content of that file as `<NAME>`. */
+function resolveFileVariables(source: EnvSource): { resolved: EnvSource; issues: string[] } {
+	const resolved: EnvSource = { ...source };
+	const issues: string[] = [];
+	for (const name of FILE_VARIABLES) {
+		const file = source[`${name}_FILE`]?.trim();
+		if (file === undefined || file.length === 0) {
+			continue;
+		}
+		if ((source[name] ?? '').trim().length > 0) {
+			issues.push(`${name}: Set either ${name} or ${name}_FILE, not both.`);
+			continue;
+		}
+		try {
+			resolved[name] = readFileSync(file, 'utf8').replace(/\r?\n$/, '');
+		} catch {
+			issues.push(`${name}_FILE: The file cannot be read.`);
+		}
+	}
+	return { resolved, issues };
+}
+
+function databasePassword(url: string): string {
+	try {
+		return decodeURIComponent(new URL(url).password);
+	} catch {
+		return '';
+	}
+}
+
 /** Validates the environment. Messages name the variable and the rule, never the value. */
 export function parseEnv(source: EnvSource, options: LoadEnvOptions): Env {
-	const result = buildSchema(options.dev).safeParse(source);
+	const { resolved, issues } = resolveFileVariables(source);
+	const result = buildSchema(options.dev).safeParse(resolved);
 	if (!result.success) {
-		throw new EnvError(
-			result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+		issues.push(
+			...result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`)
 		);
+	} else if (
+		result.data.ORIGIN.startsWith('https://') &&
+		databasePassword(result.data.DATABASE_URL) === PLACEHOLDER_DATABASE_PASSWORD
+	) {
+		issues.push('DATABASE_URL: Replace the example database password with a new one.');
+	}
+	if (issues.length > 0 || !result.success) {
+		throw new EnvError(issues);
 	}
 	return result.data;
 }

@@ -29,23 +29,23 @@ npm run dev
 
 ## Commands
 
-| Command             | Purpose                                                                                    |
-| ------------------- | ------------------------------------------------------------------------------------------ |
-| `npm run dev`       | Development server with hot reload at `http://localhost:5173`.                             |
-| `npm run build`     | Production build into `build/`, and the command line into `build-cli/cli.js`.              |
-| `npm run check`     | Type-checks the project with `svelte-check`, failing on warnings too.                      |
-| `npm run lint`      | Prettier, ESLint and markdownlint, without changing files.                                 |
-| `npm run format`    | Formats every file with Prettier.                                                          |
-| `npm run test:unit` | Unit tests in watch mode. Add `-- --run` for a single run.                                 |
-| `npm run test:int`  | Integration tests against `manifold_test`.                                                 |
-| `npm run test:e2e`  | Builds the app and runs the Playwright tests against it, on a desktop and a phone profile. |
-| `npm test`          | Unit, integration and end-to-end tests once.                                               |
-| `npm run cli`       | Runs the built command line with `.env`, for example `npm run cli -- owner:show`.          |
-| `npm run db:up`     | Starts the development database.                                                           |
-| `npm run db:down`   | Stops it and keeps its data.                                                               |
-| `npm run db:reset`  | Deletes the development database and starts a fresh one, after asking.                     |
-| `npm run db:studio` | Opens Drizzle Studio on the development database.                                          |
-| `npm run sbom`      | Prints the CycloneDX software bill of materials of the production dependencies.            |
+| Command             | Purpose                                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`       | Development server with hot reload at `http://localhost:5173`.                                                 |
+| `npm run build`     | Production build into `build/` with its entry `build/server.js`, and the command line into `build-cli/cli.js`. |
+| `npm run check`     | Type-checks the project with `svelte-check`, failing on warnings too.                                          |
+| `npm run lint`      | Prettier, ESLint and markdownlint, without changing files.                                                     |
+| `npm run format`    | Formats every file with Prettier.                                                                              |
+| `npm run test:unit` | Unit tests in watch mode. Add `-- --run` for a single run.                                                     |
+| `npm run test:int`  | Integration tests against `manifold_test`.                                                                     |
+| `npm run test:e2e`  | Builds the app and runs the Playwright tests against it, on a desktop and a phone profile.                     |
+| `npm test`          | Unit, integration and end-to-end tests once.                                                                   |
+| `npm run cli`       | Runs the built command line with `.env`, for example `npm run cli -- owner:show`.                              |
+| `npm run db:up`     | Starts the development database.                                                                               |
+| `npm run db:down`   | Stops it and keeps its data.                                                                                   |
+| `npm run db:reset`  | Deletes the development database and starts a fresh one, after asking.                                         |
+| `npm run db:studio` | Opens Drizzle Studio on the development database.                                                              |
+| `npm run sbom`      | Prints the CycloneDX software bill of materials of the production dependencies.                                |
 
 `npm run check` needs the compiled messages in `src/lib/paraglide`, which `npm run dev` and `npm run build` generate. Run one of them first in a fresh checkout.
 
@@ -85,6 +85,12 @@ docs/                      this documentation
 The app's own pages talk to the server through `load` functions and form actions. `+server.ts` endpoints exist only for outside callers: `/api/v1`, `/mcp`, `/healthz`, `/files/<id>` and the export download. Widgets that save or read on their own, such as the note editor, the map and the command palette, call form actions with `fetch` and `deserialize`.
 
 Better Auth runs only on the server. Its HTTP handler is not mounted; pages call `auth.api.*` from form actions and hooks.
+
+## Server entry and logging
+
+`src/server.ts` is the production entry, built into `build/server.js` by `vite.server.config.ts`. It sets the baseline security headers from `src/lib/server/security-headers.ts` on every response and passes the request to adapter-node's handler; the SvelteKit hook completes the headers of the responses the app renders.
+
+Server code logs through `src/lib/server/log.ts`: `log(level, message, fields, error)` writes one JSON line, and `logSecurityEvent(event, fields)` records refusals. Pass identifiers and outcomes, never secrets or content, and keep the message constant so the log can be searched.
 
 ## Startup
 
@@ -151,7 +157,7 @@ npm run test:unit -- --run
 npm run test:int
 ```
 
-End-to-end tests use Playwright and live in `tests/e2e`. The configuration builds the app, resets `manifold_test` and starts the production server (`node build`) on `http://localhost:4173`, then runs every test on a desktop and a phone profile. Every test sends its own `X-Forwarded-For` address, so the sign-in rate limit counts each test separately. Map tiles are answered locally.
+End-to-end tests use Playwright and live in `tests/e2e`. The configuration builds the app, resets `manifold_test` and starts the production server (`node build/server.js`) on `http://localhost:4173`, then runs every test on a desktop and a phone profile. Every test sends its own `X-Forwarded-For` address, so the sign-in rate limit counts each test separately. Map tiles are answered locally.
 
 ```bash
 npm run test:e2e

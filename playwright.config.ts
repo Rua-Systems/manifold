@@ -22,7 +22,7 @@ export default defineConfig({
 	webServer: {
 		// The production server (adapter-node) against a freshly reset manifold_test. It migrates and
 		// creates the test owner on start, like a real first start.
-		command: 'npm run build && node tests/e2e/reset-database.ts && node build',
+		command: 'npm run build && node tests/e2e/reset-database.ts && node build/server.js',
 		port: PORT,
 		timeout: 240_000,
 		env: {

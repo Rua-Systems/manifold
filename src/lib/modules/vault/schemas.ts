@@ -1,4 +1,5 @@
 import { m } from '$lib/paraglide/messages.js';
+import { URL_MAX_LENGTH } from '$lib/schemas/rules';
 import { z } from 'zod';
 
 export const SECRET_NAME_MAX_LENGTH = 100;
@@ -9,6 +10,7 @@ export const SECRET_VALUE_MAX_LENGTH = 10_000;
 const optionalUrl = z
 	.string()
 	.trim()
+	.max(URL_MAX_LENGTH, { error: () => m.validation_max_length({ max: URL_MAX_LENGTH }) })
 	.refine((value) => value === '' || z.url({ protocol: /^https?$/ }).safeParse(value).success, {
 		error: () => m.validation_service_url()
 	})

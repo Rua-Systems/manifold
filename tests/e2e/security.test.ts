@@ -26,6 +26,26 @@ test('pages carry the security headers', async ({ request }) => {
 	expect(csp).toContain("object-src 'none'");
 });
 
+test('static files, API answers and pages carry the baseline headers', async ({ request }) => {
+	for (const path of ['/favicon.svg', '/robots.txt', '/healthz', '/api/v1/me']) {
+		const headers = (await request.get(path)).headers();
+		expect(headers['x-content-type-options'], path).toBe('nosniff');
+		expect(headers['x-frame-options'], path).toBe('DENY');
+		expect(headers['cross-origin-opener-policy'], path).toBe('same-origin');
+		expect(headers['content-security-policy'], path).toContain("default-src 'none'");
+	}
+
+	const page = (await request.get('/login')).headers();
+	expect(page['content-security-policy']).toContain("base-uri 'none'");
+	expect(page['cache-control']).toBe('no-store');
+	expect(page['content-type']).toBe('text/html; charset=utf-8');
+});
+
+test('unusual methods are refused before they reach the app', async ({ request }) => {
+	const response = await request.fetch('/login', { method: 'TRACE' });
+	expect(response.status()).toBe(405);
+});
+
 test('every response asks search engines to stay away', async ({ request }) => {
 	const health = await request.get('/healthz');
 	expect(health.headers()['x-robots-tag']).toBe('noindex, nofollow');

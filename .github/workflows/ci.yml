@@ -61,7 +61,7 @@ jobs:
           sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
           sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -base64 32)|" .env
           sed -i "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env
-          sed -i "s|^OWNER_PASSWORD=.*|OWNER_PASSWORD=ci-Owner-Passphrase-2026|" .env
+          sed -i "s|^OWNER_PASSWORD=.*|OWNER_PASSWORD=ci-violet-ferry-at-dawn-2026|" .env
           printf 'ADDRESS_HEADER=\nXFF_DEPTH=\n' >> .env
       - name: Build and start from empty volumes
         run: docker compose up --detach --build --wait --wait-timeout 240

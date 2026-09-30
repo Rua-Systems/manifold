@@ -22,7 +22,7 @@ An icon may be a PNG, JPEG, WebP, GIF or SVG image of up to `UPLOAD_MAX_BYTES`, 
 
 To change an icon, edit the service and pick a new file; **Remove the icon** takes it away. An icon file that no service uses any more is deleted by the daily housekeeping, at the earliest a day after it was uploaded.
 
-Icons are served only to you while you are signed in, and to API keys with the `files:read` scope. SVG icons are only ever shown as images, so scripts inside them never run.
+Icons are served only to you while you are signed in, and to API keys with the `files:read` scope. SVG icons must be UTF-8 and may not contain scripts, embedded documents such as `foreignObject`, event handlers like `onload`, entity declarations or references to other addresses; such a file is refused like any unsupported one. Icons are only ever shown as images.
 
 ## Editing and deleting
 

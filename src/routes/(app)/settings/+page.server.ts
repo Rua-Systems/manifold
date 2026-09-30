@@ -5,16 +5,20 @@ import { changeEmail } from '$lib/server/account';
 import { ownerActor } from '$lib/server/actor';
 import { originOf, recordAudit } from '$lib/server/audit';
 import { getAuth } from '$lib/server/auth';
+import { getEnv } from '$lib/server/env';
 import { requireUser } from '$lib/server/guard';
 import { notePasswordChanged } from '$lib/server/notices';
+import { passwordProblemMessage } from '$lib/server/passwords/messages';
+import { passwordProblem } from '$lib/server/passwords/policy';
+import { countFailedCredentialCheck, isCredentialCheckBlocked } from '$lib/server/rate-limit';
 import { isSteppedUp } from '$lib/server/step-up';
 import { getUserSettings, saveUserSettings } from '$lib/server/user-settings';
 import type { SettingsForm, SettingsFormState } from '$lib/types/settings';
 import type { FieldErrors } from '$lib/types/validation';
 import { fieldErrors, textValue } from '$lib/utils/validation';
+import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
-import type { Actions, PageServerLoad } from './$types';
 
 function formState(
 	form: SettingsForm,
@@ -124,6 +128,9 @@ export const actions: Actions = {
 			return fail(403, stepUpState('password'));
 		}
 		const data = await request.formData();
+		if (isCredentialCheckBlocked(user.id)) {
+			return fail(429, formState('password', false, m.error_rate_limited()));
+		}
 		const parsed = passwordChangeSchema.safeParse({
 			currentPassword: textValue(data, 'currentPassword'),
 			password: textValue(data, 'password'),
@@ -131,6 +138,17 @@ export const actions: Actions = {
 		});
 		if (!parsed.success) {
 			return fail(400, formState('password', false, '', fieldErrors(parsed.error)));
+		}
+		const problem = passwordProblem(parsed.data.password, {
+			username: user.username,
+			email: user.email,
+			organizationName: getEnv().ORGANIZATION_NAME
+		});
+		if (problem !== null) {
+			return fail(
+				400,
+				formState('password', false, '', { password: passwordProblemMessage(problem) })
+			);
 		}
 
 		try {
@@ -144,6 +162,7 @@ export const actions: Actions = {
 			});
 		} catch (cause) {
 			if (errorCode(cause) === 'INVALID_PASSWORD') {
+				countFailedCredentialCheck(user.id);
 				return fail(
 					400,
 					formState('password', false, '', {

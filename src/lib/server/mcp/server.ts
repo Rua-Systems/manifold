@@ -11,6 +11,7 @@ import { getEnv } from '../env';
 import { consumeApiRequest } from '../rate-limit';
 import { search, SEARCH_LIMIT_MAX } from '../search';
 import { defineTool, type McpContext, type McpTool } from './types';
+import { log, logSecurityEvent } from '../log';
 
 // /mcp: the Model Context Protocol over streamable HTTP, stateless. Every request authenticates
 // with an API key, counts against the key's rate limit, and gets a server holding only the tools
@@ -86,7 +87,7 @@ function buildServer(context: McpContext): McpServer {
 				} catch (cause) {
 					const known = apiErrorFrom(cause);
 					if (known === null) {
-						console.error(`MCP tool ${tool.name} failed.`, cause);
+						log('error', 'MCP tool failed', { tool: tool.name }, cause);
 						return {
 							isError: true,
 							content: [
@@ -118,6 +119,10 @@ export async function handleMcpRequest(
 	const token = bearerToken(request);
 	const key = token === null ? null : await authenticateApiKey(token, { ip: options.origin.ip });
 	if (key === null) {
+		logSecurityEvent(token === null ? 'missing_key' : 'invalid_key', {
+			path: '/mcp',
+			ip: options.origin.ip
+		});
 		return errorResponse(
 			new ApiError(
 				401,
@@ -137,6 +142,7 @@ export async function handleMcpRequest(
 		'RateLimit-Reset': String(Math.max(0, Math.ceil((rate.resetAt - now) / 1000)))
 	};
 	if (rate.limited) {
+		logSecurityEvent('rate_limited', { bucket: 'api', keyId: key.id, path: '/mcp' });
 		return errorResponse(new ApiError(429, 'rate_limited', 'Too many requests for this key.'), {
 			...headers,
 			'Retry-After': headers['RateLimit-Reset']

@@ -15,6 +15,9 @@ test('other sessions are listed and can all be signed out', async ({ page, brows
 	expect(await sessions.count()).toBeGreaterThan(1);
 
 	await page.getByRole('button', { name: 'Sign Out All Other Sessions' }).click();
+	const stepUp = page.getByRole('dialog', { name: 'Confirm Your Identity' });
+	await stepUp.getByLabel('Password', { exact: true }).fill(TEST_OWNER.password);
+	await stepUp.getByRole('button', { name: 'Confirm' }).click();
 	await expect(page.getByText(/Other sessions signed out: \d+\./)).toBeVisible();
 	await expect(sessions).toHaveCount(1);
 

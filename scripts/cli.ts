@@ -132,14 +132,14 @@ async function showOwner(connection: Connection): Promise<void> {
 	console.log(`Email:    ${owner.email}`);
 }
 
-async function resetPassword(connection: Connection): Promise<void> {
+async function resetPassword(connection: Connection, env: Env): Promise<void> {
 	const password = await promptHidden('New password: ');
 	const repeated = await promptHidden('Repeat the new password: ');
 	if (password !== repeated) {
 		throw new OwnerError('The passwords do not match. Nothing was changed.');
 	}
 
-	const owner = await resetOwnerPassword(connection.db, password);
+	const owner = await resetOwnerPassword(connection.db, password, env.ORGANIZATION_NAME);
 	await recordAudit(
 		{ actor: CLI_ACTOR, action: 'auth.password_reset', target: { type: 'user', id: owner.id } },
 		connection.db
@@ -262,7 +262,7 @@ async function restore(env: Env, source: string | undefined, force: boolean): Pr
 	if (source === undefined) {
 		throw new BackupError('Name the archive to restore: restore <path> [--force].');
 	}
-	const { manifest, applied } = await restoreBackup(path.resolve(source), {
+	const { manifest, applied, skipped } = await restoreBackup(path.resolve(source), {
 		databaseUrl: env.DATABASE_URL,
 		uploadDir: path.resolve(env.UPLOAD_DIR),
 		migrationsDir: defaultMigrationsDirectory(),
@@ -285,6 +285,11 @@ async function restore(env: Env, source: string | undefined, force: boolean): Pr
 	if (applied.length > 0) {
 		console.log(`Applied newer migrations: ${applied.join(', ')}`);
 	}
+	if (skipped.length > 0) {
+		console.log(
+			`Left out ${skipped.length} uploaded file(s) that are not images Manifold accepts.`
+		);
+	}
 	console.log(
 		'Restart the app. The vault opens only with the ENCRYPTION_KEY it was written with.'
 	);
@@ -303,7 +308,7 @@ async function run(command: string, args: string[]): Promise<void> {
 				await showOwner(connection);
 				break;
 			case 'owner:reset-password':
-				await resetPassword(connection);
+				await resetPassword(connection, env);
 				break;
 			case 'owner:disable-2fa':
 				await disableTwoFactor(connection);

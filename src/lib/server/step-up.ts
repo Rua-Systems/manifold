@@ -8,6 +8,7 @@ import { getAuth } from './auth';
 import { getDb } from './db';
 import { sessionStepUp } from './db/schema';
 import type { SignedIn } from './guard';
+import { rememberTotp, wasTotpUsed } from './totp-replay';
 
 // Step-up: sensitive actions need the owner to have re-entered their password, and a TOTP code
 // when two factor authentication is on, in the current session within the last ten minutes.
@@ -64,13 +65,18 @@ export async function confirmIdentity(
 		result = 'wrong_password';
 	}
 	if (result === 'confirmed' && signedIn.user.twoFactorEnabled === true) {
-		try {
-			await auth.api.verifyTOTP({ body: { code: credentials.code }, headers });
-		} catch (cause) {
-			if (!isAPIError(cause)) {
-				throw cause;
-			}
+		if (wasTotpUsed(credentials.code)) {
 			result = 'wrong_code';
+		} else {
+			try {
+				await auth.api.verifyTOTP({ body: { code: credentials.code }, headers });
+				rememberTotp(credentials.code);
+			} catch (cause) {
+				if (!isAPIError(cause)) {
+					throw cause;
+				}
+				result = 'wrong_code';
+			}
 		}
 	}
 

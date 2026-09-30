@@ -4,7 +4,9 @@ import { auditFilterSchema, twoFactorCredentialsSchema } from '$lib/schemas/secu
 import { ownerActor } from '$lib/server/actor';
 import { AUDIT_PAGE_SIZE, listAuditEvents, originOf, recordAudit } from '$lib/server/audit';
 import { requireUser } from '$lib/server/guard';
+import { countFailedCredentialCheck, isCredentialCheckBlocked } from '$lib/server/rate-limit';
 import { listSessions, revokeOtherSessions, revokeSession } from '$lib/server/sessions';
+import { isSteppedUp } from '$lib/server/step-up';
 import {
 	confirmSetup,
 	disable,
@@ -61,9 +63,27 @@ function problemErrors(problem: TwoFactorProblem): FieldErrors {
 	return { code: m.security_error_code() };
 }
 
+/** A form refused because the account entered too many wrong passwords or codes lately. */
+function blocked(form: 'twoFactorStart' | 'twoFactorDisable' | 'backupCodesRegenerate') {
+	return fail(429, {
+		form,
+		errors: {},
+		message: m.error_rate_limited()
+	} satisfies SecurityFormState);
+}
+
+/** Ending sessions needs a recent step-up; the page asks for it and sends the form again. */
+function sessionsStepUp() {
+	return fail(403, {
+		form: 'sessions',
+		stepUp: true,
+		message: m.step_up_required()
+	} satisfies SecurityFormState);
+}
+
 /** A setup the page sent back, shown again after a wrong code. Only its QR image is rebuilt. */
 async function setupFrom(totpUri: string): Promise<TwoFactorSetup | null> {
-	if (!totpUri.startsWith('otpauth://totp/')) {
+	if (!totpUri.startsWith('otpauth://totp/') || totpUri.length > 1024) {
 		return null;
 	}
 	return { totpUri, secret: totpSecret(totpUri), qr: await qrCodeImage(totpUri) };
@@ -71,7 +91,10 @@ async function setupFrom(totpUri: string): Promise<TwoFactorSetup | null> {
 
 export const actions = {
 	startTwoFactor: async (event) => {
-		requireUser(event.locals);
+		const { user } = requireUser(event.locals);
+		if (isCredentialCheckBlocked(user.id)) {
+			return blocked('twoFactorStart');
+		}
 		const data = await event.request.formData();
 		const password = passwordSchema.safeParse(textValue(data, 'password'));
 		if (!password.success) {
@@ -84,6 +107,7 @@ export const actions = {
 
 		const started = await startSetup(event, password.data);
 		if (typeof started === 'string') {
+			countFailedCredentialCheck(user.id);
 			return fail(400, {
 				form: 'twoFactorStart',
 				errors: problemErrors(started),
@@ -104,6 +128,9 @@ export const actions = {
 
 	confirmTwoFactor: async (event) => {
 		const signedIn = requireUser(event.locals);
+		if (isCredentialCheckBlocked(signedIn.user.id)) {
+			return blocked('twoFactorStart');
+		}
 		const data = await event.request.formData();
 		const setup = await setupFrom(textValue(data, 'totpUri'));
 		const code = codeSchema.safeParse(textValue(data, 'code'));
@@ -125,6 +152,7 @@ export const actions = {
 
 		const confirmed = await confirmSetup(event, signedIn, code.data);
 		if (typeof confirmed === 'string') {
+			countFailedCredentialCheck(signedIn.user.id);
 			return fail(400, {
 				form: 'twoFactorSetup',
 				errors: problemErrors(confirmed),
@@ -141,6 +169,9 @@ export const actions = {
 
 	disableTwoFactor: async (event) => {
 		const signedIn = requireUser(event.locals);
+		if (isCredentialCheckBlocked(signedIn.user.id)) {
+			return blocked('twoFactorDisable');
+		}
 		const data = await event.request.formData();
 		const parsed = twoFactorCredentialsSchema.safeParse({
 			password: textValue(data, 'password'),
@@ -156,6 +187,7 @@ export const actions = {
 
 		const result = await disable(event, signedIn, parsed.data);
 		if (result !== 'disabled') {
+			countFailedCredentialCheck(signedIn.user.id);
 			return fail(400, {
 				form: 'twoFactorDisable',
 				errors: problemErrors(result),
@@ -171,6 +203,9 @@ export const actions = {
 
 	regenerateBackupCodes: async (event) => {
 		const signedIn = requireUser(event.locals);
+		if (isCredentialCheckBlocked(signedIn.user.id)) {
+			return blocked('backupCodesRegenerate');
+		}
 		const data = await event.request.formData();
 		const parsed = twoFactorCredentialsSchema.safeParse({
 			password: textValue(data, 'password'),
@@ -186,6 +221,7 @@ export const actions = {
 
 		const result = await regenerateBackupCodes(event, signedIn, parsed.data);
 		if (typeof result === 'string') {
+			countFailedCredentialCheck(signedIn.user.id);
 			return fail(400, {
 				form: 'backupCodesRegenerate',
 				errors: problemErrors(result),
@@ -201,6 +237,9 @@ export const actions = {
 
 	revokeSession: async (event) => {
 		const { user, session } = requireUser(event.locals);
+		if (!(await isSteppedUp(session.id))) {
+			return sessionsStepUp();
+		}
 		const data = await event.request.formData();
 		const id = textValue(data, 'id');
 		if (id === session.id || !(await revokeSession(user.id, id))) {
@@ -223,6 +262,9 @@ export const actions = {
 
 	revokeOtherSessions: async (event) => {
 		const { user, session } = requireUser(event.locals);
+		if (!(await isSteppedUp(session.id))) {
+			return sessionsStepUp();
+		}
 		const count = await revokeOtherSessions(user.id, session.id);
 		await recordAudit({
 			actor: ownerActor(user.id),

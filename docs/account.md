@@ -26,7 +26,7 @@ When mail is set up ([Email](email.md)), the sign in page offers **Password** an
 
 When two factor authentication is on, a second step follows the password or the emailed code and asks for the code from your authenticator app or one of your backup codes. Choose **Authenticator** or **Backup code**, enter the code and choose **Verify**.
 
-- Every backup code works only once.
+- Every backup code works only once, and so does every code from the authenticator app: a code that was just used is refused for two minutes, so wait for the next one.
 - After too many wrong codes the second step is locked for 15 minutes.
 - If you wait too long, the page asks you to start again.
 
@@ -53,7 +53,7 @@ Two factor authentication adds a one-time code from an authenticator app to ever
 1. Enter your **Password** and choose **Set Up**.
 2. Scan the QR code with your authenticator app, or type the key shown below it into the app.
 3. Enter the 6-digit code from the app in **Authenticator code** and choose **Turn On**.
-4. Save the 10 backup codes that appear. They are shown only this once; **Download** saves them as `manifold-backup-codes.txt`. Keep them somewhere safe, for example in a password manager outside Manifold.
+4. Save the 10 backup codes that appear, 24 letters and digits each in four groups. They are shown only this once; **Download** saves them as `manifold-backup-codes.txt`. Keep them somewhere safe, for example in a password manager outside Manifold.
 
 A backup code replaces the app's code once, when the app is not at hand. While two factor authentication is on, the section offers two forms, each asking for your **Password** and a current **Authenticator code**:
 
@@ -70,6 +70,7 @@ Some actions ask for your password again, even though you are signed in. This pr
 | Creating an API key                          | **Settings → API Keys** |
 | Downloading the export                       | **Settings → Data**     |
 | Revealing, copying or changing a vault value | **Vault**               |
+| Ending one or all other sessions             | **Settings → Security** |
 
 The dialog **Confirm Your Identity** asks for your **Password**, and for an **Authenticator code** when two factor authentication is on; a backup code is not accepted here. Choose **Confirm**, and the action you started continues by itself. Closing the dialog cancels the action.
 
@@ -77,6 +78,8 @@ The dialog **Confirm Your Identity** asks for your **Password**, and for an **Au
 - It belongs to the session it was given in. Another browser asks for its own, and so does the same browser after you sign in again. Changing the password or turning two factor authentication on or off starts a new session on the device you use, so the next sensitive action asks again.
 - Without JavaScript, the page shows a **Confirm your identity** link to a page of its own that returns to where you were.
 - Each client address may try 5 times per minute. Every confirmation, and every failed one, is recorded in the audit log.
+- After 5 wrong passwords or codes within a minute in any form of a signed-in session, these forms refuse further attempts until the minute is over, from any address.
+- A code from your authenticator app works only once; for the next confirmation, wait for the next code.
 
 Turning off two factor authentication and creating new backup codes ask for the password and a code in their own forms instead, and turning it on asks for the password to start.
 
@@ -84,10 +87,10 @@ Turning off two factor authentication and creating new backup codes ask for the 
 
 **Settings → Security → Sessions** lists every browser that is signed in, most recently active first. Each entry shows the browser and operating system, the **IP** address, when it **Signed in** and when it was **Last active**; **This session** marks the browser you are using.
 
-- **Sign Out** next to another session ends it. That browser is sent to the sign in page with its next request.
-- **Sign Out All Other Sessions** ends every session but yours. It appears when there are others.
+- **Sign Out** next to another session ends it, after you confirm your identity. That browser is sent to the sign in page with its next request.
+- **Sign Out All Other Sessions** ends every session but yours, after you confirm your identity. It appears when there are others.
 
-Changing your password signs out every other session, and resetting it signs out all of them. To end the session you are using, choose **Logout** in the account menu.
+A session ends after seven days without use, and 30 days after its sign in at the latest, even when you use it every day. Changing your password signs out every other session, and resetting it signs out all of them. To end the session you are using, choose **Logout** in the account menu; the browser then also drops cached pages and stored data such as the last map view.
 
 ## Profile, email and password
 
@@ -95,7 +98,7 @@ Changing your password signs out every other session, and resetting it signs out
 
 - **Display Name** and **Username**, saved with **Save**. The display name has up to 100 characters and appears in the account menu. The username is what you sign in with: 3 to 32 lowercase letters, digits, dots, underscores or hyphens.
 - **Email**, saved with **Change Email**. The address is used for signing in, for codes and for notices. The change applies at once, without a confirmation mail, and asks you to confirm your identity first.
-- **Current Password**, **New Password** and **Confirm Password**, saved with **Change Password**. A password has 8 to 128 characters. The change asks you to confirm your identity, checks the current password, signs out your other sessions and, when mail is set up, mails you a notice.
+- **Current Password**, **New Password** and **Confirm Password**, saved with **Change Password**. A password has 8 to 128 characters; common passwords, and passwords that contain `manifold`, the organization name, your username or your email address, are refused. The change asks you to confirm your identity, checks the current password, signs out your other sessions and, when mail is set up, mails you a notice.
 
 ## Preferences
 

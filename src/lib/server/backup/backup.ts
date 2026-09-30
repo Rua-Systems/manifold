@@ -1,12 +1,13 @@
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, copyFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, stat, statfs } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Writable } from 'node:stream';
 import postgres from 'postgres';
-import { extract } from 'tar';
+import { extract, list } from 'tar';
 import { readMigrations, runMigrations } from '../db/migrate';
 import { BackupError, dumpDatabase, restoreDatabase } from './pg-tools';
 import { writeTarGz, type TarEntry } from './tar';
+import { detectImageType } from '../files/detect';
 
 // Backups: one .tar.gz with a pg_dump custom format dump, the uploaded files and a manifest.
 // Environment values, ENCRYPTION_KEY above all, are never part of it.
@@ -14,6 +15,7 @@ import { writeTarGz, type TarEntry } from './tar';
 const MANIFEST = 'manifest.json';
 const DUMP = 'database.dump';
 const UPLOADS = 'uploads';
+const UPLOAD_ENTRY = /^uploads\/[A-Za-z0-9._-]+$/;
 
 export interface BackupManifest {
 	app: 'Manifold';
@@ -157,17 +159,81 @@ async function emptyDatabase(sql: postgres.Sql): Promise<void> {
  * then the uploaded files, then the migrations newer than the backup. Answers the manifest and
  * the migrations it applied.
  */
+/** Only what a Manifold backup holds, as regular files; anything else stops the restore. */
+function isBackupEntry(entryPath: string, type: string): boolean {
+	if (type !== 'File' && type !== 'OldFile') {
+		return false;
+	}
+	return entryPath === MANIFEST || entryPath === DUMP || UPLOAD_ENTRY.test(entryPath);
+}
+
+/** Far more than an installation holds; a larger archive was not written by Manifold. */
+const MAX_ENTRIES = 1_000_000;
+
+/**
+ * Counts the entries of an archive and adds up their sizes before anything is unpacked, and
+ * refuses an archive that could not fit into the free space of the work folder.
+ */
+async function checkArchiveSize(archive: string, work: string): Promise<void> {
+	let entries = 0;
+	let bytes = 0;
+	try {
+		await list({
+			file: archive,
+			strict: true,
+			onReadEntry: (entry) => {
+				entries += 1;
+				bytes += entry.size ?? 0;
+			}
+		});
+	} catch {
+		throw new BackupError('The archive cannot be read.');
+	}
+	if (entries > MAX_ENTRIES) {
+		throw new BackupError('The archive holds more entries than a Manifold backup can have.');
+	}
+	const space = await statfs(work);
+	if (bytes > space.bavail * space.bsize) {
+		throw new BackupError('The archive does not fit into the free space of the volume.');
+	}
+}
+
+export interface RestoreResult {
+	manifest: BackupManifest;
+	applied: string[];
+	/** Files in the archive's uploads that are not images Manifold accepts; left out. */
+	skipped: string[];
+}
+
 export async function restoreBackup(
 	archive: string,
 	options: RestoreOptions
-): Promise<{ manifest: BackupManifest; applied: string[] }> {
+): Promise<RestoreResult> {
 	const work = await workFolder('manifold-restore-');
 	const sql = postgres(options.databaseUrl, { max: 1, onnotice: () => {} });
 	try {
+		await checkArchiveSize(archive, work);
+		let foreign = 0;
 		try {
-			await extract({ file: archive, cwd: work, strict: true });
+			await extract({
+				file: archive,
+				cwd: work,
+				strict: true,
+				filter: (entryPath, entry) => {
+					const accepted = isBackupEntry(entryPath, 'type' in entry ? entry.type : '');
+					if (!accepted) {
+						foreign += 1;
+					}
+					return accepted;
+				}
+			});
 		} catch {
 			throw new BackupError('The archive cannot be read.');
+		}
+		if (foreign > 0) {
+			throw new BackupError(
+				'The archive holds entries that are not part of a Manifold backup.'
+			);
 		}
 		const manifest = parseManifest(await readFile(path.join(work, MANIFEST), 'utf8'));
 
@@ -201,12 +267,19 @@ export async function restoreBackup(
 		} catch {
 			// A backup without uploads.
 		}
+		const skipped: string[] = [];
 		for (const name of names) {
-			await copyFile(path.join(restoredUploads, name), path.join(options.uploadDir, name));
+			const source = path.join(restoredUploads, name);
+			// Checked like a fresh upload, so an edited archive cannot place other files there.
+			if (detectImageType(await readFile(source), { allowSvg: true }) === null) {
+				skipped.push(name);
+				continue;
+			}
+			await copyFile(source, path.join(options.uploadDir, name));
 		}
 
 		const applied = await runMigrations(sql, options.migrationsDir);
-		return { manifest, applied };
+		return { manifest, applied, skipped };
 	} finally {
 		await sql.end();
 		await rm(work, { recursive: true, force: true });

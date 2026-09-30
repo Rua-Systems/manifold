@@ -40,4 +40,4 @@ export type SecurityFormState =
 	| { form: 'twoFactorDisable'; errors: FieldErrors; message: string }
 	| { form: 'backupCodesRegenerate'; errors: FieldErrors; message: string }
 	| { form: 'backupCodes'; backupCodes: string[]; message: string }
-	| { form: 'sessions'; message: string };
+	| { form: 'sessions'; message: string; stepUp?: boolean };

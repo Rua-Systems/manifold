@@ -27,6 +27,37 @@ describe('detectImageType', () => {
 		expect(detectImageType(SVG, { allowSvg: false })).toBeNull();
 	});
 
+	it('accepts plain drawings and refuses SVG that runs, embeds or reaches out', () => {
+		const options = { allowSvg: true };
+		const svg = (body: string) =>
+			text(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">${body}</svg>`);
+
+		expect(
+			detectImageType(
+				svg('<defs><linearGradient id="g"/></defs><rect fill="url(#g)"/>'),
+				options
+			)
+		).toBe('image/svg+xml');
+		expect(detectImageType(svg('<use href="#g"/>'), options)).toBe('image/svg+xml');
+
+		expect(detectImageType(svg('<script>alert(1)</script>'), options)).toBeNull();
+		expect(detectImageType(svg('<foreignObject><div/></foreignObject>'), options)).toBeNull();
+		expect(detectImageType(svg('<rect onload="alert(1)"/>'), options)).toBeNull();
+		expect(
+			detectImageType(svg('<image href="https://evil.example/x.png"/>'), options)
+		).toBeNull();
+		expect(detectImageType(svg('<a xlink:href="javascript:alert(1)"/>'), options)).toBeNull();
+		expect(
+			detectImageType(svg('<rect style="fill:url(https://evil.example/f)"/>'), options)
+		).toBeNull();
+		expect(
+			detectImageType(text('<!DOCTYPE svg [<!ENTITY x "y">]><svg></svg>'), options)
+		).toBeNull();
+		expect(
+			detectImageType(bytes(0x3c, 0x73, 0x76, 0x67, 0x3e, 0xff, 0xfe), options)
+		).toBeNull();
+	});
+
 	it('rejects files that only claim to be images', () => {
 		const options = { allowSvg: true };
 

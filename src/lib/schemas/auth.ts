@@ -3,11 +3,13 @@ import { z } from 'zod';
 import {
 	CODE_LENGTH,
 	DISPLAY_NAME_MAX_LENGTH,
-	isValidUsername,
+	EMAIL_MAX_LENGTH,
+	PASSWORD_INPUT_MAX_LENGTH,
 	PASSWORD_MAX_LENGTH,
 	PASSWORD_MIN_LENGTH,
 	USERNAME_MAX_LENGTH,
-	USERNAME_MIN_LENGTH
+	USERNAME_MIN_LENGTH,
+	isValidUsername
 } from './rules';
 
 export { CODE_LENGTH, PASSWORD_MIN_LENGTH };
@@ -22,6 +24,7 @@ export const emailSchema = z
 	.string()
 	.trim()
 	.min(1, required())
+	.max(EMAIL_MAX_LENGTH, { error: () => m.validation_max_length({ max: EMAIL_MAX_LENGTH }) })
 	.pipe(z.email({ error: () => m.validation_email() }));
 
 export const usernameSchema = z
@@ -44,7 +47,12 @@ export const identifierSchema = z
 		error: () => m.validation_identifier()
 	});
 
-export const passwordSchema = z.string().min(1, required());
+export const passwordSchema = z
+	.string()
+	.min(1, required())
+	.max(PASSWORD_INPUT_MAX_LENGTH, {
+		error: () => m.validation_max_length({ max: PASSWORD_INPUT_MAX_LENGTH })
+	});
 
 export const newPasswordSchema = z
 	.string()

@@ -6,6 +6,7 @@ import { file } from '../db/schema';
 import { getEnv } from '../env';
 import { detectImageType } from './detect';
 import { readStoredFile, removeStoredFile, writeStoredFile } from './storage';
+import { logSecurityEvent } from '../log';
 
 const ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_NAME_LENGTH = 200;
@@ -35,6 +36,7 @@ export class FileRejectedError extends Error {
 		super(`The upload was rejected: ${reason}.`);
 		this.name = 'FileRejectedError';
 		this.reason = reason;
+		logSecurityEvent('upload_rejected', { reason });
 	}
 }
 
@@ -129,7 +131,8 @@ export function fileResponse(stored: StoredFile, bytes: Uint8Array): Response {
 			'Content-Type': stored.mimeType,
 			'Content-Length': String(bytes.byteLength),
 			'X-Content-Type-Options': 'nosniff',
-			'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+			'Content-Security-Policy':
+				"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; sandbox",
 			'Cache-Control': 'private, max-age=31536000, immutable',
 			'Content-Disposition': contentDisposition(stored.originalName)
 		}

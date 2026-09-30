@@ -30,6 +30,8 @@ On Coolify, set the same variables in the environment settings of the service an
 
 To make sure your messages arrive, publish SPF, DKIM and DMARC records for the sender's domain as your provider describes. [Configuration](configuration.md) lists every variable.
 
+The connection to the SMTP server must use TLS 1.2 or newer with a valid certificate: implicit TLS with `SMTP_SECURE=true`, or STARTTLS on port 587, which Manifold then requires. Only a relay on the same machine (`localhost`, `127.0.0.1` or `::1`) may be reached without TLS. A server without TLS, or with a certificate that does not match its name, makes every mail fail, and the log says why.
+
 ## What Manifold sends
 
 Every mail goes to the owner's email address:

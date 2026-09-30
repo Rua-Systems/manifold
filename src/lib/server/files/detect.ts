@@ -23,11 +23,38 @@ function startsWith(bytes: Uint8Array, signature: number[], offset = 0): boolean
 	return signature.every((value, index) => bytes[offset + index] === value);
 }
 
+// Icons are drawings: nothing that runs, embeds other documents, declares entities or reaches
+// another address. Images show SVG without scripts anyway, and /files/<id> answers with a sandbox
+// policy; this keeps such content from being stored at all.
+const SVG_ACTIVE_ELEMENT = /<\s*(script|foreignObject|iframe|embed|object|handler|audio|video)\b/i;
+const SVG_EVENT_ATTRIBUTE = /\son[a-z]+\s*=/i;
+const SVG_ENTITY = /<!ENTITY/i;
+const SVG_REFERENCE = /(?:href\s*=\s*["']?|url\(\s*["']?)\s*([^"')\s>]*)/gi;
+
+function isLocalReference(target: string): boolean {
+	return target.startsWith('#') || /^data:image\/(png|jpeg|gif|webp);/i.test(target);
+}
+
+function isSafeSvg(text: string): boolean {
+	if (SVG_ACTIVE_ELEMENT.test(text) || SVG_EVENT_ATTRIBUTE.test(text) || SVG_ENTITY.test(text)) {
+		return false;
+	}
+	for (const match of text.matchAll(SVG_REFERENCE)) {
+		if (!isLocalReference(match[1])) {
+			return false;
+		}
+	}
+	return true;
+}
+
 function looksLikeSvg(bytes: Uint8Array): boolean {
-	const head = new TextDecoder('utf-8', { fatal: false }).decode(
-		bytes.subarray(0, SVG_SNIFF_BYTES)
-	);
-	return SVG_ROOT.test(head);
+	let text: string;
+	try {
+		text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+	} catch {
+		return false;
+	}
+	return SVG_ROOT.test(text.slice(0, SVG_SNIFF_BYTES)) && isSafeSvg(text);
 }
 
 /**

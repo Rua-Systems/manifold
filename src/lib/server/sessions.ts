@@ -7,6 +7,22 @@ import type { SessionView } from '$lib/types/security';
 // The owner's sessions as Settings shows them. Tokens never leave the server: sessions are named
 // by their id, and revoking deletes the row, which ends the session on its next request.
 
+/**
+ * The longest a session lives after its sign in. Better Auth ends a session after seven days
+ * without use and extends it while it is used; this caps the extension.
+ */
+export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Whether a session was signed in longer ago than SESSION_MAX_AGE_MS. */
+export function isPastMaximumAge(createdAt: Date, now = new Date()): boolean {
+	return now.getTime() - createdAt.getTime() > SESSION_MAX_AGE_MS;
+}
+
+/** Ends one session, whoever it belongs to; for sessions past their maximum age. */
+export async function endSession(sessionId: string): Promise<void> {
+	await getDb().delete(session).where(eq(session.id, sessionId));
+}
+
 export async function listSessions(
 	userId: string,
 	currentSessionId: string,

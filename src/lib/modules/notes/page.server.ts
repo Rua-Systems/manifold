@@ -26,6 +26,7 @@ import { listNoteFeatures, mapConfig } from './map/features.server';
 import { NEW_NOTE_ID } from './paths';
 import { noteVersionSchema } from './schemas';
 import type { NotePreview, NoteSummary } from './types';
+import { isUploadLimited } from '$lib/server/rate-limit';
 
 /** The notes page shows at most this many search hits. */
 const SEARCH_PAGE_LIMIT = 100;
@@ -129,7 +130,10 @@ export async function loadNotePage(id: string, url: URL) {
 
 /** Stores an image pasted or picked in the editor and answers with its address. */
 export async function uploadImage({ request, locals }: RequestEvent) {
-	requireUser(locals);
+	const { user } = requireUser(locals);
+	if (isUploadLimited(user.id)) {
+		return fail(429, { src: null, message: m.files_error_upload_rate() });
+	}
 	const data = await request.formData();
 	const upload = data.get('image');
 	if (!(upload instanceof File)) {

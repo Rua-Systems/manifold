@@ -5,15 +5,20 @@ import { findUserIdByEmail } from '$lib/server/account';
 import { ownerActor, SYSTEM_ACTOR } from '$lib/server/actor';
 import { originOf, recordAudit } from '$lib/server/audit';
 import { getAuth } from '$lib/server/auth';
+import { getDb } from '$lib/server/db';
+import { getEnv } from '$lib/server/env';
 import { emailEnabled } from '$lib/server/features';
 import { notePasswordChanged } from '$lib/server/notices';
+import { findOwner } from '$lib/server/owner';
+import { passwordProblemMessage } from '$lib/server/passwords/messages';
+import { passwordProblem } from '$lib/server/passwords/policy';
 import { isRateLimited } from '$lib/server/rate-limit';
 import type { ResetFormState, ResetStage } from '$lib/types/auth';
 import type { FieldErrors } from '$lib/types/validation';
 import { fieldErrors, textValue } from '$lib/utils/validation';
+import type { Actions, PageServerLoad } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
-import type { Actions, PageServerLoad } from './$types';
 
 function resetState(
 	stage: ResetStage,
@@ -89,6 +94,18 @@ export const actions: Actions = {
 		if (!parsed.success) {
 			return fail(400, resetState('verify', email, '', fieldErrors(parsed.error)));
 		}
+		const owner = await findOwner(getDb());
+		const problem = passwordProblem(parsed.data.password, {
+			username: owner?.username,
+			email: owner?.email,
+			organizationName: getEnv().ORGANIZATION_NAME
+		});
+		if (problem !== null) {
+			return fail(
+				400,
+				resetState('verify', email, '', { password: passwordProblemMessage(problem) })
+			);
+		}
 
 		try {
 			await getAuth().api.resetPasswordEmailOTP({
@@ -100,6 +117,11 @@ export const actions: Actions = {
 			});
 		} catch (cause) {
 			if (isAPIError(cause)) {
+				await recordAudit({
+					actor: SYSTEM_ACTOR,
+					action: 'auth.password_reset_failed',
+					origin: originOf(event)
+				});
 				return fail(400, resetState('verify', email, m.reset_error_code()));
 			}
 			throw cause;

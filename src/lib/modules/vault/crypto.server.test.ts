@@ -32,6 +32,9 @@ describe('vault encryption', () => {
 		expect(() => unseal({ ...sealed, ciphertext: flip(sealed.ciphertext) }, ID, KEY)).toThrow();
 		expect(() => unseal({ ...sealed, authTag: flip(sealed.authTag) }, ID, KEY)).toThrow();
 		expect(() => unseal({ ...sealed, iv: flip(sealed.iv) }, ID, KEY)).toThrow();
+		expect(() =>
+			unseal({ ...sealed, authTag: sealed.authTag.subarray(0, 4) }, ID, KEY)
+		).toThrow();
 	});
 
 	it('refuses a wrong key and another secret id', () => {

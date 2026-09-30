@@ -1,3 +1,4 @@
+import { m } from '$lib/paraglide/messages.js';
 import { version } from '$app/environment';
 import { localizeHref } from '$lib/paraglide/runtime.js';
 import { ownerActor } from '$lib/server/actor';
@@ -11,9 +12,13 @@ import { isSteppedUp } from '$lib/server/step-up';
 import { error, redirect } from '@sveltejs/kit';
 import { PassThrough, Readable } from 'node:stream';
 import type { RequestHandler } from './$types';
+import { log, logSecurityEvent } from '$lib/server/log';
 
 // "Download export": the same archive as the CLI's backup, streamed. It needs a step-up; without
 // one the owner is sent to confirm and comes back here.
+// One export at a time: each one dumps the database and reads every uploaded file.
+let exportRunning = false;
+
 export const GET: RequestHandler = async (event) => {
 	const { user, session } = requireUser(event.locals);
 	if (!(await isSteppedUp(session.id))) {
@@ -22,11 +27,15 @@ export const GET: RequestHandler = async (event) => {
 			`${localizeHref('/step-up')}?redirectTo=${encodeURIComponent(event.url.pathname)}`
 		);
 	}
+	if (exportRunning) {
+		logSecurityEvent('rate_limited', { bucket: 'export', userId: user.id });
+		error(429, { message: m.data_export_running() });
+	}
 	try {
 		// Fails early, before the download starts, when pg_dump is missing.
 		pgCommand('pg_dump');
 	} catch (cause) {
-		console.error('The export cannot run.', cause);
+		log('error', 'The export cannot run', {}, cause);
 		error(500);
 	}
 
@@ -36,14 +45,19 @@ export const GET: RequestHandler = async (event) => {
 		origin: originOf(event)
 	});
 	const stream = new PassThrough();
+	exportRunning = true;
 	writeBackup(stream, {
 		databaseUrl: getEnv().DATABASE_URL,
 		uploadDir: uploadDirectory(),
 		version
-	}).catch((cause: unknown) => {
-		console.error('The export failed.', cause);
-		stream.destroy(cause instanceof Error ? cause : new Error('The export failed.'));
-	});
+	})
+		.catch((cause: unknown) => {
+			log('error', 'The export failed', {}, cause);
+			stream.destroy(cause instanceof Error ? cause : new Error('The export failed.'));
+		})
+		.finally(() => {
+			exportRunning = false;
+		});
 
 	const date = new Date().toISOString().slice(0, 10);
 	return new Response(Readable.toWeb(stream) as ReadableStream, {

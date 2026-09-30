@@ -8,6 +8,7 @@ import { emailEnabled } from './features';
 import { sendMailInBackground } from './services/mail';
 import { newSignInMail, passwordChangedMail, type ActivityMail } from './services/mail/templates';
 import { chosenLocale } from './user-settings';
+import { log } from './log';
 
 interface NoticeRecipient {
 	id: string;
@@ -77,7 +78,7 @@ export async function noteSignIn(event: RequestEvent, recipient: NoticeRecipient
 			);
 		}
 	} catch (error) {
-		console.error('Recording the sign in failed.', error);
+		log('error', 'Recording the sign in failed', {}, error);
 	}
 }
 
@@ -94,6 +95,6 @@ export async function notePasswordChanged(event: RequestEvent, email: string): P
 		const locale = await noticeLocale(getLocale());
 		sendMailInBackground(email, locale, (context) => passwordChangedMail(activity, context));
 	} catch (error) {
-		console.error('Sending the password notice failed.', error);
+		log('error', 'Sending the password notice failed', {}, error);
 	}
 }

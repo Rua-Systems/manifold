@@ -18,4 +18,17 @@ The first release.
 - **MCP server** at `/mcp` on the same keys and scopes, with tools for search, notes, services, map features and vault names.
 - **Backups:** `backup` and `restore` on the command line and an export download in **Settings → Data**; archives never contain `ENCRYPTION_KEY` or `BETTER_AUTH_SECRET`.
 - English and Turkish, light and dark themes, and layouts for phones and desktops.
-- A container image for amd64 and arm64 on the GitHub Container Registry, with a read-only root filesystem, an unprivileged user, a health check and a software bill of materials.
+- A container image for amd64 and arm64 on the GitHub Container Registry, with a read-only root filesystem, an unprivileged user, a health check and a software bill of materials. Releases can deploy themselves to Coolify through its deploy webhook.
+
+### Security
+
+Manifold was reviewed against OWASP ASVS 5.0 levels 1 and 2 before this release; [docs/SECURITY-REVIEW.md](docs/SECURITY-REVIEW.md) lists every requirement. The review brought:
+
+- Security headers on every response, static files included, through the app's own server entry, `Cache-Control: no-store` for pages and data, and `Clear-Site-Data` when signing out.
+- A limit of five wrong passwords or codes per minute per account in signed-in sessions, single-use authenticator codes, backup codes of 120 bits, emailed codes stored as hashes, and a confirmation of your identity before ending sessions.
+- Sessions that end 30 days after their sign in at the latest.
+- New passwords are checked against common passwords and the names of the product, the organization and the account, and hashed with stronger scrypt parameters; older hashes are upgraded at the next sign in.
+- Redirects after sign in stay on the site even for crafted addresses.
+- SMTP requires TLS, the audit log is append-only in the database, and the application log is structured JSON with security events and error ids.
+- Secrets can come from files, and the example database password is refused on a public address.
+- Limits for editor uploads and exports, bounds for every input, checks for SVG icons, and a restore that accepts only the files of a Manifold backup.

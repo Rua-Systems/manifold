@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import postgres from 'postgres';
-import { create } from 'tar';
+import { create, extract } from 'tar';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { ownerActor } from '../actor';
 import { getDb, getSql } from '../db';
@@ -186,6 +186,49 @@ describe('backup and restore', () => {
 				migrationsDir: defaultMigrationsDirectory()
 			})
 		).rejects.toBeInstanceOf(BackupError);
+	});
+
+	it('refuses archives with foreign entries and leaves out uploads that are not images', async () => {
+		const staged = path.join(work.dir, 'foreign');
+		await rm(staged, { recursive: true, force: true });
+		await mkdir(path.join(staged, 'uploads'), { recursive: true });
+		await writeFile(
+			path.join(staged, 'manifest.json'),
+			JSON.stringify({ app: 'Manifold', version: '9.9.9', migration: '0001', createdAt: '' })
+		);
+		await writeFile(path.join(staged, 'run.sh'), 'echo hi');
+		const foreign = path.join(work.dir, 'foreign.tar.gz');
+		await create({ gzip: true, file: foreign, cwd: staged }, ['manifest.json', 'run.sh']);
+		await expect(
+			restoreBackup(foreign, {
+				databaseUrl: work.url,
+				uploadDir: path.join(work.dir, 'uploads'),
+				migrationsDir: defaultMigrationsDirectory(),
+				force: true
+			})
+		).rejects.toThrow('The archive holds entries that are not part of a Manifold backup.');
+
+		const unpacked = path.join(work.dir, 'unpacked');
+		await rm(unpacked, { recursive: true, force: true });
+		await mkdir(unpacked);
+		await extract({ file: work.archive, cwd: unpacked });
+		await mkdir(path.join(unpacked, 'uploads'), { recursive: true });
+		await writeFile(path.join(unpacked, 'uploads', 'not-an-image'), '#!/bin/sh');
+		const edited = path.join(work.dir, 'edited.tar.gz');
+		await create({ gzip: true, file: edited, cwd: unpacked }, [
+			'manifest.json',
+			'database.dump',
+			...(await readdir(path.join(unpacked, 'uploads'))).map((name) => `uploads/${name}`)
+		]);
+		const uploadDir = path.join(work.dir, 'edited-uploads');
+		const { skipped } = await restoreBackup(edited, {
+			databaseUrl: work.url,
+			uploadDir,
+			migrationsDir: defaultMigrationsDirectory(),
+			force: true
+		});
+		expect(skipped).toEqual(['not-an-image']);
+		expect(await readdir(uploadDir)).not.toContain('not-an-image');
 	});
 
 	it('never puts environment values into the archive', async () => {
