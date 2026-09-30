@@ -1,5 +1,5 @@
 # Development database only. The app runs on the host with `npm run dev`.
-# Start and stop it from `app/` with `npm run db:up`, `npm run db:down` and `npm run db:reset`.
+# Start and stop it with `npm run db:up`, `npm run db:down` and `npm run db:reset`.
 name: manifold-dev
 
 services:

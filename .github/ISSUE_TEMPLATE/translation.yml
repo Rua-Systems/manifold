@@ -1,0 +1,21 @@
+name: Interface translation
+description: An interface text is wrong or awkward, or you want to add a language.
+labels: [translations, triage]
+body:
+  - type: dropdown
+    id: language
+    attributes:
+      label: Interface language
+      options:
+        - English
+        - Turkish
+        - A new language
+    validations:
+      required: true
+  - type: textarea
+    id: texts
+    attributes:
+      label: Texts
+      description: Where the text appears, what it says now and what it should say. For a new language, name it and say whether you can help translate.
+    validations:
+      required: true

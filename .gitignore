@@ -1,13 +1,45 @@
-agents/
-CLAUDE.md
-node_modules/
+node_modules
 
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+/build-cli
+/sbom.cdx.json
+
+# Local uploads in development and tests
+/.data
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
 .env
 .env.*
 !.env.example
+!.env.test
 
-# Local copy of docker-compose.override.example.yml for plain Docker hosts
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Paraglide
+src/lib/paraglide
+project.inlang/cache/
+
+# Playwright
+test-results
+playwright-report
+
+# Local Compose overrides
 docker-compose.override.yml
 
-# Local Claude Code settings
+# Project instructions
+agents/
+AGENTS.md
+CLAUDE.md
 .claude/

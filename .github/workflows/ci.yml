@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: npm
+      # The runner ships older PostgreSQL tools; backups of the PostgreSQL 17 database need 17.
+      - name: Install the PostgreSQL 17 client tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install --yes postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run lint
+      - run: npm run build
+      - run: npm run check
+      - run: npm run test:unit -- --run
+      - name: Start the test database
+        run: |
+          cp .env.example .env
+          npm run db:up
+      - run: npm run test:int
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Configure a fresh installation
+        run: |
+          cp .env.example .env
+          sed -i "s|^ORIGIN=.*|ORIGIN=http://localhost:3000|" .env
+          sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+          sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -base64 32)|" .env
+          sed -i "s|^ENCRYPTION_KEY=.*|ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env
+          sed -i "s|^OWNER_PASSWORD=.*|OWNER_PASSWORD=ci-Owner-Passphrase-2026|" .env
+          printf 'ADDRESS_HEADER=\nXFF_DEPTH=\n' >> .env
+      - name: Build and start from empty volumes
+        run: docker compose up --detach --build --wait --wait-timeout 240
+      - name: Check the running container
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:3000/healthz
+          curl --fail --silent --show-error --output /dev/null http://127.0.0.1:3000/login
+          docker compose exec -T app node cli.js owner:show
+          docker compose exec -T app node cli.js backup
+          docker compose exec -T app sh -c 'ls /data/backups/manifold-backup-*.tar.gz'
+          docker compose exec -T app sh -c 'test "$(id -u)" != "0"'
+          docker compose exec -T app sh -c '! touch /app/read-only-check 2>/dev/null'
+          docker compose exec -T app node -e "JSON.parse(require('fs').readFileSync('sbom.cdx.json', 'utf8'))"
+      - name: Show logs
+        if: failure()
+        run: docker compose logs
+      - name: Stop
+        if: always()
+        run: docker compose down --volumes

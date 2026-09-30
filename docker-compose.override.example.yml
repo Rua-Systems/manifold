@@ -1,7 +1,0 @@
-# For plain Docker hosts without a reverse proxy in front: copy this file to
-# docker-compose.override.yml next to docker-compose.yml. `docker compose up` merges it automatically
-# and publishes the app on port 3000 of the host. Coolify does not need it.
-services:
-  app:
-    ports:
-      - '3000:3000'

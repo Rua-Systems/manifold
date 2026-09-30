@@ -5,3 +5,7 @@ This product is developed by Rua Systems (https://rua.systems)
 and by Hasan (https://github.com/justhasanuknow).
 
 Licensed under the Apache License, Version 2.0. See the LICENSE file.
+
+This product includes code adapted from Edra (https://github.com/Tsuzat/Edra),
+Copyright (c) 2026 Alok 'Tsuzat' Singh, licensed under the MIT License.
+See src/lib/components/edra/LICENSE.

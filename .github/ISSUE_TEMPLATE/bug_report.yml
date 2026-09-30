@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for reporting a problem. Please report security problems privately as described in SECURITY.md, never in a public issue.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a note
+        2. Paste an image and ...
+        3. See the error
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The release or commit you run.
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      options:
+        - Docker Compose from this repository
+        - Coolify
+        - Another container platform
+        - Local development
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: For problems in the interface.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log lines
+      description: Relevant lines from `docker compose logs app`. Remove anything private first.
+      render: text
