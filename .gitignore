@@ -8,3 +8,6 @@ node_modules/
 
 # Local copy of docker-compose.override.example.yml for plain Docker hosts
 docker-compose.override.yml
+
+# Local Claude Code settings
+.claude/

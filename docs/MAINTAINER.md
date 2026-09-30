@@ -6,7 +6,7 @@ For the person who installs, runs and changes Manifold. The README is the short 
 
 Manifold is a private, single user workspace: services, notes on a map, a vault, search, a REST API and an MCP server, behind one owner account.
 
-- **One SvelteKit application** (`frontend-manifold/`) serves pages and the backend: Svelte 5, SvelteKit 2 with adapter-node, TypeScript, SCSS. Pages talk to the server through `load` functions and form actions; `+server.ts` endpoints exist only for outside callers (`/api/v1`, `/mcp`, `/healthz`, `/files/<id>`, the export download).
+- **One SvelteKit application** (`app/`) serves pages and the backend: Svelte 5, SvelteKit 2 with adapter-node, TypeScript, SCSS. Pages talk to the server through `load` functions and form actions; `+server.ts` endpoints exist only for outside callers (`/api/v1`, `/mcp`, `/healthz`, `/files/<id>`, the export download).
 - **PostgreSQL 17 with PostGIS** stores everything but uploaded files, through Drizzle ORM on postgres.js. Hand written SQL migrations run on start.
 - **Uploaded files** live in `UPLOAD_DIR`, named by random ids; the `file` table describes them.
 - **Better Auth** handles the owner's credentials, sessions and two factor authentication, called only from the server (`auth.api.*`).
@@ -71,7 +71,7 @@ Every variable is read once at start and checked by `src/lib/server/env.ts`; a m
 git clone <repository> manifold
 cd manifold
 cp .env.example .env    # then fill in secrets and OWNER_PASSWORD
-cd frontend-manifold
+cd app
 npm install
 npm run db:up           # PostGIS on 127.0.0.1:5432, with a manifold_test database for the tests
 npm run dev             # http://localhost:5173
@@ -81,7 +81,7 @@ The first start migrates the database and creates the owner. `npm run db:studio`
 
 ## 6. Docker
 
-- `frontend-manifold/Dockerfile` builds the app and the CLI in a Node 24 Alpine image, installs the PostgreSQL 17 client tools for backups, and runs as the `node` user. The app serves on port 3000; `cli.js` sits next to it.
+- `app/Dockerfile` builds the app and the CLI in a Node 24 Alpine image, installs the PostgreSQL 17 client tools for backups, and runs as the `node` user. The app serves on port 3000; `cli.js` sits next to it.
 - `docker-compose.yml` (production): `db` (PostGIS 17, volume `db-data`) and `app` (volume `uploads` at `/data/uploads`). Neither publishes a port; the app waits for the database's health check.
 - `docker-compose.override.example.yml`: copy it to `docker-compose.override.yml` to publish port 3000 on a plain Docker host.
 - `docker-compose.dev.yml`: the development database only, started by `npm run db:up`.
@@ -101,7 +101,7 @@ On a plain Docker host: fill `.env` next to `docker-compose.yml`, copy the overr
 
 ### Migrations
 
-Migrations are hand written SQL in `frontend-manifold/migrations/`, applied in order on start and by `node cli.js migrate`, each in its own transaction under an advisory lock, and recorded with a checksum in `schema_migrations`.
+Migrations are hand written SQL in `app/migrations/`, applied in order on start and by `node cli.js migrate`, each in its own transaction under an advisory lock, and recorded with a checksum in `schema_migrations`.
 
 To write one:
 
@@ -116,7 +116,7 @@ To write one:
 
 ## 9. Testing
 
-From `frontend-manifold/`, with the development database running:
+From `app/`, with the development database running:
 
 ```bash
 npm run check                 # svelte-check and TypeScript
@@ -171,7 +171,7 @@ Integration tests reset and migrate `manifold_test` before each run and seed the
 
 ## Decisions
 
-Choices the Batch 01 specification left open, with the reason for each, by phase.
+Choices the original specification left open, with the reason for each, by phase.
 
 ### Phase 1: Foundation
 
@@ -338,3 +338,7 @@ Choices the Batch 01 specification left open, with the reason for each, by phase
 - **When `pg_dump` is missing, the dev compose database container's tools are used** through `docker compose exec`. The production image always has them; the fallback lets development machines and the tests run backups without installing PostgreSQL.
 - **The export is a download link, not a form:** `/settings/data/export` streams the archive, and sends the owner through `/step-up` and back when the step-up is due, which also works without JavaScript.
 - **Backups and restores from the CLI are audited** (`data.backup`, `data.restore`), as is the export (`data.export`).
+
+### After the first build
+
+- **The application folder is `app/`** (it was `frontend-manifold/`). It holds the backend as much as the interface, and `app` matches the Compose service that runs it.

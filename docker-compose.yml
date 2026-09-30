@@ -19,7 +19,7 @@ services:
 
   app:
     build:
-      context: ./frontend-manifold
+      context: ./app
       dockerfile: Dockerfile
     depends_on:
       db:

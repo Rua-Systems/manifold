@@ -24,7 +24,7 @@ Requirements: Node.js 24 and Docker.
 2. Install the dependencies and start the development database (PostGIS in Docker, from `docker-compose.dev.yml`):
 
 	```bash
-	cd frontend-manifold
+	cd app
 	npm install
 	npm run db:up
 	```

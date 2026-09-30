@@ -1,4 +1,4 @@
-# frontend-manifold
+# Manifold app
 
 The Manifold application: one SvelteKit app that serves both the interface and the backend.
 
