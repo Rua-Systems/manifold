@@ -4,8 +4,8 @@ import { eq } from 'drizzle-orm';
 import { getDb, type Database } from './db';
 import { user, userSetting } from './db/schema';
 
-// The owner's preferences: the locale for mails sent outside a request, and the theme a browser
-// without its own choice starts with. Null means "not chosen".
+// The owner's preferences: the locale for security notices and mails sent outside a request, and
+// the theme a browser without its own choice starts with. Null means "not chosen".
 
 export interface UserSettings {
 	locale: Locale | null;
@@ -44,16 +44,23 @@ export async function saveUserSettings(userId: string, settings: UserSettings): 
 	cache.set(userId, settings);
 }
 
-/**
- * The locale for a mail sent without a request, such as from a CLI command or a background job:
- * the owner's preferred one, else the default. Mails sent while handling a request use the
- * request's locale instead.
- */
-export async function preferredLocale(db: Database = getDb()): Promise<Locale> {
+/** The locale the owner chose for mails, or null when none was chosen. */
+export async function chosenLocale(db: Database = getDb()): Promise<Locale | null> {
 	const [owner] = await db.select({ id: user.id }).from(user).limit(1);
 	if (owner === undefined) {
-		return baseLocale;
+		return null;
 	}
 	const { locale } = await getUserSettings(owner.id, db);
-	return locale !== null && isLocale(locale) ? locale : baseLocale;
+	if (locale !== null && isLocale(locale)) {
+		return locale;
+	}
+	return null;
+}
+
+/**
+ * The locale for a mail sent without a request, such as from a CLI command or a background job:
+ * the owner's chosen one, else the default.
+ */
+export async function preferredLocale(db: Database = getDb()): Promise<Locale> {
+	return (await chosenLocale(db)) ?? baseLocale;
 }

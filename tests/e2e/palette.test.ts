@@ -155,3 +155,28 @@ test('the sidebar and the notes page filters find text inside notes', async ({
 		page.getByRole('list', { name: 'Search results' }).getByRole('link', { name: title })
 	).toBeVisible();
 });
+
+test('the palette leads to the data settings', async ({ page, isMobile }) => {
+	await openPalette(page, isMobile);
+	await input(page).fill('data');
+	await palette(page)
+		.getByRole('option', { name: /Go to Data/ })
+		.click();
+	await expect(page).toHaveURL(/\/settings\/data$/);
+});
+
+test('every result of a palette search opens on the search page', async ({ page, isMobile }) => {
+	const word = `every${randomUUID().slice(0, 6)}`;
+	const title = `All ${word}`;
+	await writeNote(page, title, `Written for ${word}.`);
+
+	await openPalette(page, isMobile);
+	await input(page).fill(word);
+	await palette(page)
+		.getByRole('option', { name: `All results for “${word}”` })
+		.click();
+	await expect(page).toHaveURL(new RegExp(`/search\\?q=${word}$`));
+	await expect(
+		page.getByRole('list', { name: 'Search results' }).getByRole('link', { name: title })
+	).toBeVisible();
+});

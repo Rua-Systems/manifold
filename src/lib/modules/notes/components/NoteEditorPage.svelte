@@ -112,14 +112,19 @@
 		return { kind: 'failed', message: actionMessage(result, m.notes_save_failed()) };
 	}
 
+	// What follows a save runs one after another: an invalidation that starts while the move to a
+	// new note's address is still loading would cancel that move and keep the page at /notes/new.
+	let afterSave: Promise<void> = Promise.resolve();
+
 	function onsaved(request: SaveRequest, saved: { id: string }): void {
-		void (async () => {
+		const next = async (): Promise<void> => {
 			if (request.id === null) {
 				await oncreated?.(saved.id);
 			}
 			// The sidebar lists notes by title and last change.
 			await invalidate(SIDEBAR_DEPENDENCY);
-		})();
+		};
+		afterSave = afterSave.then(next, next);
 	}
 
 	async function upload(file: File): Promise<string | null> {

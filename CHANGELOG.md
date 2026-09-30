@@ -16,6 +16,6 @@ The first release.
 - **Account security:** a single owner account, two-factor authentication with TOTP and backup codes, sign-in codes by email, identity confirmation for sensitive actions, session management and an audit log.
 - **REST API** under `/api/v1` with scoped API keys, cursor paging, per-key rate limits and an OpenAPI 3.1 description.
 - **MCP server** at `/mcp` on the same keys and scopes, with tools for search, notes, services, map features and vault names.
-- **Backups:** `backup` and `restore` on the command line and an export download in **Settings → Data**; archives never contain `ENCRYPTION_KEY`.
+- **Backups:** `backup` and `restore` on the command line and an export download in **Settings → Data**; archives never contain `ENCRYPTION_KEY` or `BETTER_AUTH_SECRET`.
 - English and Turkish, light and dark themes, and layouts for phones and desktops.
 - A container image for amd64 and arm64 on the GitHub Container Registry, with a read-only root filesystem, an unprivileged user, a health check and a software bill of materials.

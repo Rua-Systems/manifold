@@ -11,7 +11,9 @@ export default defineConfig({
 	workers: 1,
 	fullyParallel: false,
 	use: {
-		baseURL: ORIGIN
+		baseURL: ORIGIN,
+		// A failed test on CI keeps its trace: console, network and DOM of every step.
+		trace: process.env.CI ? 'retain-on-failure' : 'off'
 	},
 	projects: [
 		{ name: 'desktop', use: { ...devices['Desktop Chrome'] } },

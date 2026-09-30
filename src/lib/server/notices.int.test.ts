@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { getDb } from './db';
 import { knownUserAgent } from './db/schema';
-import { rememberUserAgent } from './notices';
+import { noticeLocale, rememberUserAgent } from './notices';
 import { findOwner } from './owner';
+import { saveUserSettings } from './user-settings';
 
 async function ownerId(): Promise<string> {
 	const owner = await findOwner(getDb());
@@ -40,5 +41,24 @@ describe('rememberUserAgent', () => {
 
 		await rememberUserAgent(userId, null);
 		expect(await rememberUserAgent(userId, null)).toBe(false);
+	});
+});
+
+describe('noticeLocale', () => {
+	afterEach(async () => {
+		await saveUserSettings(await ownerId(), { locale: null, theme: null });
+	});
+
+	it('follows the request without a chosen mail language', async () => {
+		expect(await noticeLocale('en')).toBe('en');
+		expect(await noticeLocale('tr')).toBe('tr');
+	});
+
+	it('uses the chosen mail language whatever the request', async () => {
+		await saveUserSettings(await ownerId(), { locale: 'tr', theme: null });
+		expect(await noticeLocale('en')).toBe('tr');
+
+		await saveUserSettings(await ownerId(), { locale: 'en', theme: null });
+		expect(await noticeLocale('tr')).toBe('en');
 	});
 });

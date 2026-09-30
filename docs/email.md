@@ -41,7 +41,7 @@ Every mail goes to the owner's email address:
 | Password changed    | `Your Manifold password was changed` | The password was changed under **Settings**, or reset with a code.                                    |
 | New sign in         | `New sign in to Manifold`            | A sign in succeeded from a browser that the account has not signed in with before.                    |
 
-The subjects use `ORGANIZATION_NAME` in place of `Manifold`. The command line sends no mail, so `owner:reset-password` changes the password without a notice. Each mail has an HTML part and a plain text part, and is written in the language of the page from which the action came. The **Language for mails** preference under **Settings** does not change these mails; it applies to mails sent while you are not using the app.
+The subjects use `ORGANIZATION_NAME` in place of `Manifold`. The command line sends no mail, so `owner:reset-password` changes the password without a notice. Each mail has an HTML part and a plain text part. Codes are written in the language of the page on which you asked for them. The two notices use the **Language for mails** preference under **Settings** when one is chosen, because someone else may have caused them from a page in another language, and the language of the page from which the action came otherwise.
 
 ### Codes
 

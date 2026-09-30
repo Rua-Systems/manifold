@@ -161,7 +161,7 @@ export const actions: Actions = {
 			action: 'auth.password_change',
 			origin: originOf(event)
 		});
-		notePasswordChanged(event, user.email);
+		await notePasswordChanged(event, user.email);
 		return formState('password', true, m.settings_password_saved());
 	}
 };

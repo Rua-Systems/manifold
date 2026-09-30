@@ -38,7 +38,7 @@ No environment variable is ever part of an archive. Two of them decide whether a
 | `ENCRYPTION_KEY`     | The values in the vault.                | The vault lists its entries, but no value can be revealed or copied. Nothing can recover them.                                                                           |
 | `BETTER_AUTH_SECRET` | Sessions and two factor authentication. | Every browser is signed out, and the authenticator codes and backup codes of the backup do not work. Run `owner:disable-2fa` and set two factor authentication up again. |
 
-Keep a copy of `ENCRYPTION_KEY` somewhere safe on its own, for example in a password manager, and not next to the archives. The rest of your configuration, such as `ORIGIN` and the SMTP settings, is not in the archive either: keep a copy of `.env`.
+Keep copies of `ENCRYPTION_KEY` and `BETTER_AUTH_SECRET` somewhere safe on their own, for example in a password manager, and not next to the archives. The rest of your configuration, such as `ORIGIN` and the SMTP settings, is not in the archive either: keep a copy of `.env`.
 
 ## Creating a backup
 
@@ -50,7 +50,7 @@ The command prints where it wrote the archive:
 
 ```text
 Wrote /data/backups/manifold-backup-2026-09-30T03-00-00.tar.gz (migration 0011).
-The archive does not hold ENCRYPTION_KEY: without that key the vault cannot be read.
+The archive holds neither ENCRYPTION_KEY nor BETTER_AUTH_SECRET: keep both, or the vault and two factor sign in stop working after a restore.
 ```
 
 The name holds the time of the backup in UTC. You can create a backup while the app is running: `pg_dump` reads a consistent snapshot of the database.

@@ -1,4 +1,4 @@
-import { getLocale } from '$lib/paraglide/runtime.js';
+import { getLocale, type Locale } from '$lib/paraglide/runtime.js';
 import type { RequestEvent } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
@@ -7,6 +7,7 @@ import { knownUserAgent } from './db/schema';
 import { emailEnabled } from './features';
 import { sendMailInBackground } from './services/mail';
 import { newSignInMail, passwordChangedMail, type ActivityMail } from './services/mail/templates';
+import { chosenLocale } from './user-settings';
 
 interface NoticeRecipient {
 	id: string;
@@ -54,6 +55,14 @@ function activityOf(event: RequestEvent): ActivityMail {
 }
 
 /**
+ * The locale of a security notice. Someone else may have caused it, from a page in another
+ * language, so the owner's chosen mail language wins over the language of the request.
+ */
+export async function noticeLocale(requestLocale: Locale): Promise<Locale> {
+	return (await chosenLocale()) ?? requestLocale;
+}
+
+/**
  * Called after every successful sign in. Mails a notice when the browser is new and mail is
  * available. A failure here never blocks the sign in.
  */
@@ -62,7 +71,8 @@ export async function noteSignIn(event: RequestEvent, recipient: NoticeRecipient
 		const activity = activityOf(event);
 		const isNew = await rememberUserAgent(recipient.id, activity.userAgent);
 		if (isNew && emailEnabled()) {
-			sendMailInBackground(recipient.email, getLocale(), (context) =>
+			const locale = await noticeLocale(getLocale());
+			sendMailInBackground(recipient.email, locale, (context) =>
 				newSignInMail(activity, context)
 			);
 		}
@@ -71,11 +81,19 @@ export async function noteSignIn(event: RequestEvent, recipient: NoticeRecipient
 	}
 }
 
-/** Mails the owner that the password changed, when mail is available. */
-export function notePasswordChanged(event: RequestEvent, email: string): void {
+/**
+ * Mails the owner that the password changed, when mail is available. A failure here never blocks
+ * the change.
+ */
+export async function notePasswordChanged(event: RequestEvent, email: string): Promise<void> {
 	if (!emailEnabled()) {
 		return;
 	}
-	const activity = activityOf(event);
-	sendMailInBackground(email, getLocale(), (context) => passwordChangedMail(activity, context));
+	try {
+		const activity = activityOf(event);
+		const locale = await noticeLocale(getLocale());
+		sendMailInBackground(email, locale, (context) => passwordChangedMail(activity, context));
+	} catch (error) {
+		console.error('Sending the password notice failed.', error);
+	}
 }

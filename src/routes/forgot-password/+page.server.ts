@@ -110,7 +110,7 @@ export const actions: Actions = {
 			action: 'auth.password_reset',
 			origin: originOf(event)
 		});
-		notePasswordChanged(event, parsed.data.email);
+		await notePasswordChanged(event, parsed.data.email);
 		redirect(303, localizeHref('/login'));
 	}
 };

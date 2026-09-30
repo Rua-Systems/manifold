@@ -50,7 +50,10 @@ test('the navigation drawer opens and closes on phones', async ({ page, isMobile
 
 	await page.getByRole('button', { name: 'Open navigation' }).click();
 	await expect(sidebar).toBeVisible();
-	await page.getByRole('button', { name: 'Close navigation' }).first().click();
+	// The drawer covers the middle of the backdrop behind it; tap the uncovered right edge.
+	const backdrop = page.getByRole('button', { name: 'Close navigation' }).first();
+	const box = await backdrop.boundingBox();
+	await backdrop.click({ position: { x: (box?.width ?? 1) - 8, y: (box?.height ?? 1) / 2 } });
 	await expect(sidebar).toBeHidden();
 
 	await page.getByRole('button', { name: 'Open navigation' }).click();

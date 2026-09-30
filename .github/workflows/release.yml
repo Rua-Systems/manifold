@@ -152,3 +152,21 @@ jobs:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.manifest.outputs.digest }}
           push-to-registry: true
+
+  # Redeploys the Coolify service when COOLIFY_WEBHOOK and COOLIFY_TOKEN are set as repository
+  # secrets; without them the job only notes that it skipped. docs/deployment.md explains the setup.
+  deploy:
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Ask Coolify to deploy the new image
+        env:
+          WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
+          TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          if [ -z "$WEBHOOK" ] || [ -z "$TOKEN" ]; then
+            echo "::notice::COOLIFY_WEBHOOK or COOLIFY_TOKEN is not set, so no deployment was started."
+            exit 0
+          fi
+          curl --fail --silent --show-error --max-time 60 --header "Authorization: Bearer $TOKEN" "$WEBHOOK"

@@ -6,7 +6,9 @@ import { expect, signIn, test } from './fixtures';
 test('the export needs a step-up, then downloads the backup archive', async ({ page }) => {
 	await signIn(page);
 	await page.goto('/settings/data', { waitUntil: 'networkidle' });
-	await expect(page.getByText(/does not hold ENCRYPTION_KEY/)).toBeVisible();
+	await expect(
+		page.getByText(/holds neither ENCRYPTION_KEY nor BETTER_AUTH_SECRET/)
+	).toBeVisible();
 
 	await page.getByRole('link', { name: 'Download Export' }).click();
 	await expect(page).toHaveURL(/\/step-up\?redirectTo=/);

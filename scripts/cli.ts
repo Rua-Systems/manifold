@@ -254,7 +254,7 @@ async function backup(connection: Connection, env: Env, target: string | undefin
 	);
 	console.log(`Wrote ${file} (migration ${manifest.migration}).`);
 	console.log(
-		'The archive does not hold ENCRYPTION_KEY: without that key the vault cannot be read.'
+		'The archive holds neither ENCRYPTION_KEY nor BETTER_AUTH_SECRET: keep both, or the vault and two factor sign in stop working after a restore.'
 	);
 }
 

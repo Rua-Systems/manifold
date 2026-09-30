@@ -33,14 +33,14 @@ Hits of all modules are sorted together, best first. A title, alias or name that
 
 Press `Ctrl+K`, or `Cmd+K` on a Mac, on any page while you are signed in, or choose **Search** at the top of the sidebar. The palette starts empty each time and lists everything it offers, in sections:
 
-| Section            | Entries                                                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| **Go to**          | **Go to** each module and to **Settings**, **Security** and **API Keys**; **New Service**, **Map Notes** and **New Note** |
-| **Actions**        | **Toggle light and dark theme**, switching to the other language, and **Logout**                                          |
-| **Services**       | Every service, with its address; choosing one opens it in a new tab                                                       |
-| **Search results** | Hits of the search, from the second character you type on                                                                 |
+| Section            | Entries                                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Go to**          | **Go to** each module and to **Settings**, **Security**, **API Keys** and **Data**; **New Service**, **Map Notes** and **New Note** |
+| **Actions**        | **Toggle light and dark theme**, switching to the other language, and **Logout**                                                    |
+| **Services**       | Every service, with its address; choosing one opens it in a new tab                                                                 |
+| **Search results** | Hits of the search, from the second character you type on, and **All results for** what you typed                                   |
 
-Typing narrows the first three sections to entries whose text contains what you typed. From the second character on, the palette also asks the search, shortly after you stop typing, and lists up to ten hits under **Search results**, each with a short passage, an address or its kind (**Note**, **Service** or **Vault**). **Nothing matches.** means neither found anything.
+Typing narrows the first three sections to entries whose text contains what you typed. From the second character on, the palette also asks the search, shortly after you stop typing, and lists up to ten hits under **Search results**, each with a short passage, an address or its kind (**Note**, **Service** or **Vault**). The last entry, **All results for** what you typed, opens the [search page](#the-search-page) with every hit. **Nothing matches.** means neither found anything.
 
 **New Service** opens the Services page with its dialog open, and **New Note** starts a new note.
 
@@ -59,7 +59,7 @@ Typing highlights the first entry again. With a mouse, point at an entry to high
 
 ## The search page
 
-The page at `/search` runs the same search without the palette, and works without JavaScript. Enter your words and choose **Search**; the page lists up to 50 hits, each with its kind and its passage. The address keeps the query as `?q=`, and `types` limits the hits to some modules, for example `/search?q=ferry&types=note`. The types are `note`, `service` and `secret`.
+The page at `/search` runs the same search without the palette, and works without JavaScript. The palette's **All results for** entry opens it with what you typed. Enter your words and choose **Search**; the page lists up to 50 hits, each with its kind and its passage. The address keeps the query as `?q=`, and `types` limits the hits to some modules, for example `/search?q=ferry&types=note`. The types are `note`, `service` and `secret`.
 
 ## Filtering notes
 

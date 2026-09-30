@@ -101,7 +101,7 @@ Changing your password signs out every other session, and resetting it signs out
 
 Two preferences are stored with your account under **Settings → Profile** and saved with **Save**:
 
-- **Language for mails**: the language of mails Manifold sends while you are not using the app. **As in the address**, the default, sets none. Mails that answer something you do, such as a sign in code, always use the language of the page you are on.
+- **Language for mails**: the language of security notices, such as the new sign in notice, and of mails Manifold sends while you are not using the app. **As in the address**, the default, sets none, and notices then use the language of the page the action came from. Mails that answer something you do, such as a sign in code, always use the language of the page you are on.
 - **Default theme**: the theme of a browser that has no theme of its own, once you are signed in on it. **As the device prefers** follows the light or dark setting of the device.
 
 Other choices belong to the address or to the browser:

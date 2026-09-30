@@ -116,7 +116,8 @@
 		const settings: [string, () => string, PathnameWithSearchOrHash][] = [
 			['settings', m.nav_settings, '/settings'],
 			['security', m.settings_section_security, '/settings/security'],
-			['apiKeys', m.settings_section_api_keys, '/settings/api-keys']
+			['apiKeys', m.settings_section_api_keys, '/settings/api-keys'],
+			['data', m.settings_section_data, '/settings/data']
 		];
 		for (const [id, label, href] of settings) {
 			entries.push({
@@ -183,6 +184,19 @@
 					? openExternal(hit.href)
 					: navigate(hit.href as PathnameWithSearchOrHash)
 		}));
+		const searched = query.trim();
+		if (searched.length >= SEARCH_MIN_LENGTH) {
+			results.push({
+				id: 'results.all',
+				section: 'results',
+				label: m.palette_all_results({ query: searched }),
+				hint: '',
+				run: () =>
+					navigate(
+						`/search?q=${encodeURIComponent(searched)}` as PathnameWithSearchOrHash
+					)
+			});
+		}
 		return [...matching, ...results];
 	});
 

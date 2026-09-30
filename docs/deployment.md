@@ -187,7 +187,7 @@ Coolify runs Manifold behind its own proxy, which obtains the certificate for yo
 4. Fill in the variables that Coolify lists under **Environment Variables**. It does not deploy until the required ones have values.
    - `ORIGIN` is the domain without the port: `https://manifold.example.com`.
    - `POSTGRES_USER` and `POSTGRES_DB` can both be `manifold`. `POSTGRES_PASSWORD` is a new value from `openssl rand -hex 32`.
-   - `BETTER_AUTH_SECRET` and `ENCRYPTION_KEY` are two new values from `openssl rand -base64 32`. Keep copies outside Coolify, especially of `ENCRYPTION_KEY`: backups never contain it, and without it the vault cannot be read after a restore.
+   - `BETTER_AUTH_SECRET` and `ENCRYPTION_KEY` are two new values from `openssl rand -base64 32`. Keep copies of both outside Coolify: backups contain neither, without `ENCRYPTION_KEY` the vault cannot be read after a restore, and with another `BETTER_AUTH_SECRET` two factor sign in stops working.
    - The `OWNER_*` variables are read on the first start only. Clear `OWNER_PASSWORD` once you have signed in.
    - Leave `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` and `MAIL_FROM` empty until you set up [email](email.md), and the other optional variables empty for their defaults, see [Configuration](configuration.md).
 5. Deploy. The `app` service turns healthy once `/healthz` answers, and you can sign in at `https://manifold.example.com/login`.
@@ -197,6 +197,26 @@ The file keeps the protections of the shipped Compose file and leaves out `ports
 To run a command of the command line, open a terminal in the `app` container from Coolify and run `node cli.js <command>`, for example `node cli.js backup`; [Operations](operations.md) lists the commands.
 
 To update, take a backup, read the release notes, compare the new release's `docker-compose.yml` and `.env.example` with your pasted file, change the image tag to the new version and deploy again. Coolify keeps the `db-data` and `app-data` volumes across deployments; if you delete the resource, keep its volumes unless you want to delete all data. Backups are written to the `app-data` volume, so copy them off the server as described in [Backups and restores](backups.md).
+
+#### A private image
+
+While the image is private, for example from a private fork, Coolify pulls it with the Docker credentials of the server. Create a GitHub personal access token (classic) with only the `read:packages` scope, and log in once as the user Coolify deploys with, usually `root`:
+
+```bash
+docker login ghcr.io --username <github-user>
+```
+
+Paste the token as the password. The login stays in the server's Docker configuration, and every later deployment can pull the image.
+
+#### Automatic deployments
+
+A release can deploy itself: after the release workflow has published the image, its `deploy` job calls the deploy webhook of your Coolify service, and Coolify pulls the image again and restarts the service.
+
+1. In the pasted Compose file, use a tag that follows new releases: a minor line such as `ghcr.io/justhasanuknow/manifold:0.1`, which picks up every patch release of 0.1, or `latest`. A minor line is the safer choice, because a new minor version may need configuration changes before 1.0.0.
+2. In Coolify, copy the deploy webhook of the service from its **Webhooks** page, and create an API token with the permission to deploy under **Keys & Tokens → API Tokens**.
+3. In the GitHub repository, add both as repository secrets under **Settings → Secrets and variables → Actions**: `COOLIFY_WEBHOOK` with the webhook address and `COOLIFY_TOKEN` with the token.
+
+The next release then deploys itself, and the **Release image** run shows the deployment as its last job. Without the two secrets the job skips and says so. Take backups on a schedule, see [Operations](operations.md), because an automatic deployment applies the migrations of the new version without asking.
 
 ## TLS and plain HTTP
 
