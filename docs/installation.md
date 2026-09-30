@@ -99,7 +99,7 @@ docker compose up -d
 
 Compose pulls the image in the version set by `MANIFOLD_VERSION` in `.env`: `latest`, a release such as `0.1.0`, or a minor line such as `0.1` for the newest 0.1.x release. To build the image from the checkout instead, for example after changing the code, add `--build`. Compose refuses to start while `ORIGIN`, a `POSTGRES_*` variable, `BETTER_AUTH_SECRET` or `ENCRYPTION_KEY` is empty, and names the variable.
 
-Every published image carries a signed attestation of the workflow and commit it was built from. With the GitHub CLI you can check it before you run it:
+Images released from the public repository carry a signed attestation of the workflow and commit they were built from. With the GitHub CLI you can check it before you run it:
 
 ```bash
 gh attestation verify oci://ghcr.io/justhasanuknow/manifold:0.1.0 --owner justhasanuknow
