@@ -19,7 +19,7 @@ services:
       retries: 20
 
   app:
-    image: ghcr.io/justhasanuknow/manifold:${MANIFOLD_VERSION:-latest}
+    image: ghcr.io/rua-systems/manifold:${MANIFOLD_VERSION:-latest}
     build: .
     depends_on:
       db:

@@ -6,10 +6,10 @@
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/justhasanuknow/manifold.git"
+		"url": "git+https://github.com/Rua-Systems/manifold.git"
 	},
 	"bugs": {
-		"url": "https://github.com/justhasanuknow/manifold/issues"
+		"url": "https://github.com/Rua-Systems/manifold/issues"
 	},
 	"type": "module",
 	"scripts": {

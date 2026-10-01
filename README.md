@@ -5,7 +5,7 @@
   <img src=".github/assets/manifold-logo-dark.svg" alt="The Manifold mark" width="96">
 </picture>
 
-[![CI](https://github.com/justhasanuknow/manifold/actions/workflows/ci.yml/badge.svg)](https://github.com/justhasanuknow/manifold/actions/workflows/ci.yml)
+[![CI](https://github.com/Rua-Systems/manifold/actions/workflows/ci.yml/badge.svg)](https://github.com/Rua-Systems/manifold/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 Manifold is an open-source, self-hosted workspace for one person. It keeps the links to the services you run, your notes, notes pinned to places on a map and your passwords and keys behind a single owner account, and it lets your scripts and AI agents work with them through a REST API and an MCP server. It runs as one container next to a PostgreSQL database with PostGIS.
@@ -38,7 +38,7 @@ Manifold is developed by [Rua Systems](https://rua.systems) and [Hasan](https://
 Requirements: Docker with Docker Compose.
 
 ```bash
-git clone https://github.com/justhasanuknow/manifold.git
+git clone https://github.com/Rua-Systems/manifold.git
 cd manifold
 cp .env.example .env
 ```
@@ -49,7 +49,7 @@ Edit `.env`: set `BETTER_AUTH_SECRET` and `ENCRYPTION_KEY` to two different outp
 docker compose up -d
 ```
 
-Compose pulls the prebuilt image `ghcr.io/justhasanuknow/manifold` for amd64 or arm64 in the version set by `MANIFOLD_VERSION`; add `--build` to build it from the source instead.
+Compose pulls the prebuilt image `ghcr.io/rua-systems/manifold` for amd64 or arm64 in the version set by `MANIFOLD_VERSION`; add `--build` to build it from the source instead.
 
 Open `http://localhost:3000/login` and sign in as the owner. For a production setup with TLS, follow [Installation](docs/installation.md) and [Deployment](docs/deployment.md).
 

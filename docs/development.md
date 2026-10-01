@@ -7,7 +7,7 @@ This page is for people who work on the code of Manifold: setting up a checkout,
 Requirements: Node.js 24 with npm, Docker with Compose for the development database, and Git.
 
 ```bash
-git clone https://github.com/justhasanuknow/manifold.git
+git clone https://github.com/Rua-Systems/manifold.git
 cd manifold
 npm ci
 cp .env.example .env
@@ -200,7 +200,7 @@ Dependabot proposes updates for npm packages, GitHub Actions and the Docker base
 2. Merge it once continuous integration passes.
 3. Publish a GitHub release with the tag `v<version>` on the merge commit and the notes from the changelog.
 
-Publishing the release starts `.github/workflows/release.yml`. It builds the image from the tagged commit for `linux/amd64` and `linux/arm64`, each on a native runner of its architecture, combines both into one multi-platform image, pushes it to `ghcr.io/<owner>/manifold` as `<version>`, `<major>.<minor>` and `latest`, and attaches a signed build provenance attestation when the repository is public; GitHub keeps no attestations for private repositories of user accounts. Its last job calls the Coolify deploy webhook when the repository secrets `COOLIFY_WEBHOOK` and `COOLIFY_TOKEN` are set, see [Deployment](deployment.md). To build the image of an existing tag again, run the workflow by hand under **Actions → Release image** with that tag.
+Publishing the release starts `.github/workflows/release.yml`. It builds the image from the tagged commit for `linux/amd64` and `linux/arm64`, each on a native runner of its architecture, combines both into one multi-platform image, pushes it to `ghcr.io/<owner>/manifold` as `<version>`, `<major>.<minor>` and `latest`, with the owner in lower case (`ghcr.io/rua-systems/manifold`), and attaches a signed build provenance attestation when the repository is public; outside GitHub Enterprise Cloud, GitHub keeps no attestations for private repositories. Its last job calls the Coolify deploy webhook when the repository secrets `COOLIFY_WEBHOOK` and `COOLIFY_TOKEN` are set, see [Deployment](deployment.md). To build the image of an existing tag again, run the workflow by hand under **Actions → Release image** with that tag.
 
 ## Branch rules
 
