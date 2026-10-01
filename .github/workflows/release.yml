@@ -17,7 +17,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE: ghcr.io/${{ github.repository }}
   TAG: ${{ github.event.release.tag_name || inputs.tag }}
 
 jobs:
@@ -26,6 +25,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       commit: ${{ steps.commit.outputs.sha }}
+      image: ${{ steps.image.outputs.name }}
       labels: ${{ steps.meta.outputs.labels }}
       tags: ${{ steps.meta.outputs.tags }}
       version: ${{ steps.meta.outputs.version }}
@@ -43,11 +43,17 @@ jobs:
       - name: Read the commit
         id: commit
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      # Image names must be lower case, while an owner such as Rua-Systems may not be.
+      - name: Name the image
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
       - name: Describe the image
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302
         with:
-          images: ${{ env.IMAGE }}
+          images: ${{ steps.image.outputs.name }}
           tags: |
             type=semver,pattern={{version}},value=${{ env.TAG }}
             type=semver,pattern={{major}}.{{minor}},value=${{ env.TAG }}
@@ -67,6 +73,8 @@ jobs:
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
+    env:
+      IMAGE: ${{ needs.prepare.outputs.image }}
     permissions:
       contents: read
       packages: write
@@ -110,6 +118,8 @@ jobs:
     needs: [prepare, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      IMAGE: ${{ needs.prepare.outputs.image }}
     permissions:
       contents: read
       packages: write
@@ -147,7 +157,7 @@ jobs:
           docker buildx imagetools create "${tags[@]}" "${sources[@]}"
           digest=$(docker buildx imagetools inspect "$IMAGE:$VERSION" --format '{{.Manifest.Digest}}')
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
-      # GitHub stores build attestations only for public repositories of user accounts.
+      # GitHub stores build attestations for private repositories only on GitHub Enterprise Cloud.
       - if: ${{ !github.event.repository.private }}
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
         with:

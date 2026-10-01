@@ -11,14 +11,14 @@ This guide installs Manifold with Docker Compose, the recommended way to run it.
 
 ## 1. Get the Compose file
 
-Manifold is published as a prebuilt image for amd64 and arm64 servers at `ghcr.io/justhasanuknow/manifold`. The repository provides the `docker-compose.yml` that runs it next to a PostgreSQL database with PostGIS, and the `.env.example` template. Clone the repository and change into it:
+Manifold is published as a prebuilt image for amd64 and arm64 servers at `ghcr.io/rua-systems/manifold`. The repository provides the `docker-compose.yml` that runs it next to a PostgreSQL database with PostGIS, and the `.env.example` template. Clone the repository and change into it:
 
 ```bash
-git clone https://github.com/justhasanuknow/manifold.git
+git clone https://github.com/Rua-Systems/manifold.git
 cd manifold
 ```
 
-For production, check out the latest release instead of the development state of `main`. The [releases page](https://github.com/justhasanuknow/manifold/releases) lists the versions, for example:
+For production, check out the latest release instead of the development state of `main`. The [releases page](https://github.com/Rua-Systems/manifold/releases) lists the versions, for example:
 
 ```bash
 git checkout v0.1.0
@@ -102,7 +102,7 @@ Compose pulls the image in the version set by `MANIFOLD_VERSION` in `.env`: `lat
 Images released from the public repository carry a signed attestation of the workflow and commit they were built from. With the GitHub CLI you can check it before you run it:
 
 ```bash
-gh attestation verify oci://ghcr.io/justhasanuknow/manifold:0.1.0 --owner justhasanuknow
+gh attestation verify oci://ghcr.io/rua-systems/manifold:0.1.0 --owner Rua-Systems
 ```
 
 The image also contains a CycloneDX software bill of materials at `/app/sbom.cdx.json`.

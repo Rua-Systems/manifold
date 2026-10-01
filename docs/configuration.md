@@ -160,7 +160,7 @@ The image sets these variables, and `UPLOAD_DIR` as described above. `docker-com
 
 ## Image version
 
-`MANIFOLD_VERSION` is read only by Compose. It chooses the tag of `ghcr.io/justhasanuknow/manifold` that `docker-compose.yml` runs:
+`MANIFOLD_VERSION` is read only by Compose. It chooses the tag of `ghcr.io/rua-systems/manifold` that `docker-compose.yml` runs:
 
 - `latest`, the default, is the newest release.
 - A release such as `0.1.0` stays on exactly that version.

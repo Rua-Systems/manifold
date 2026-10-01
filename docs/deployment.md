@@ -146,7 +146,7 @@ Coolify runs Manifold behind its own proxy, which obtains the certificate for yo
          retries: 20
 
      app:
-       image: ghcr.io/justhasanuknow/manifold:0.1.0
+       image: ghcr.io/rua-systems/manifold:0.1.0
        depends_on:
          db:
            condition: service_healthy
@@ -226,7 +226,7 @@ Paste the token as the password. The login stays in the server's Docker configur
 
 A release can deploy itself: after the release workflow has published the image, its `deploy` job calls the deploy webhook of your Coolify service, and Coolify pulls the image again and restarts the service.
 
-1. In the pasted Compose file, use a tag that follows new releases: a minor line such as `ghcr.io/justhasanuknow/manifold:0.1`, which picks up every patch release of 0.1, or `latest`. A minor line is the safer choice, because a new minor version may need configuration changes before 1.0.0.
+1. In the pasted Compose file, use a tag that follows new releases: a minor line such as `ghcr.io/rua-systems/manifold:0.1`, which picks up every patch release of 0.1, or `latest`. A minor line is the safer choice, because a new minor version may need configuration changes before 1.0.0.
 2. In Coolify, copy the deploy webhook of the service from its **Webhooks** page, and create an API token with the permission to deploy under **Keys & Tokens → API Tokens**.
 3. In the GitHub repository, add both as repository secrets under **Settings → Secrets and variables → Actions**: `COOLIFY_WEBHOOK` with the webhook address and `COOLIFY_TOKEN` with the token.
 
