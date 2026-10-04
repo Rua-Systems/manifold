@@ -105,7 +105,7 @@ test('a dropped pin becomes a new note, edited in the panel', async ({ page, isM
 
 	await panel(page, 'Location').getByRole('link', { name: 'Open as Page' }).click();
 	await expect(page).toHaveURL(NOTE_URL);
-	await expect(page.getByLabel('Title', { exact: true })).toHaveValue(title);
+	await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
 	await expect(page.getByRole('textbox', { name: 'Note content' })).toHaveText(
 		'Written on the map'
 	);
@@ -130,7 +130,7 @@ test('a polygon can be linked to an existing note', async ({ page, isMobile }) =
 	await pending.getByRole('button', { name: title }).click();
 
 	const location = panel(page, 'Location');
-	await expect(location.getByLabel('Title', { exact: true })).toHaveValue(title);
+	await expect(location.getByRole('heading', { level: 1, name: title })).toBeVisible();
 	await expect(location).toContainText('Polygon');
 
 	await page.goto(address, { waitUntil: 'networkidle' });
@@ -150,7 +150,7 @@ test('selecting a geometry opens its note; unlinking it keeps the note', async (
 	await tool(page, 'Select');
 	await tap(page, isMobile, 160, 160);
 	const location = panel(page, 'Location');
-	await expect(location.getByLabel('Title', { exact: true })).toHaveValue(title);
+	await expect(location.getByRole('heading', { level: 1, name: title })).toBeVisible();
 
 	const before = await featureCount(page);
 	await location.getByRole('button', { name: 'Unlink and Delete This Geometry' }).click();
@@ -200,14 +200,16 @@ test('Add Location on the note page links the next geometry to that note', async
 	await tool(page, 'Drop a pin');
 	await tap(page, isMobile, 180, 180);
 	const location = panel(page, 'Location');
-	await expect(location.getByLabel('Title', { exact: true })).toHaveValue(title);
+	await expect(location.getByRole('heading', { level: 1, name: title })).toBeVisible();
 	await expect(page.getByText(`Draw a location for ${title}.`)).toBeHidden();
 	await expect(page).toHaveURL(/\/notes\/map$/);
 
 	await page.goto(address, { waitUntil: 'networkidle' });
 	await page.getByRole('link', { name: 'Show on Map' }).click();
 	await expect(page).toHaveURL(/\/notes\/map\?note=/);
-	await expect(panel(page, 'Location').getByLabel('Title', { exact: true })).toHaveValue(title);
+	await expect(
+		panel(page, 'Location').getByRole('heading', { level: 1, name: title })
+	).toBeVisible();
 });
 
 test('undo removes the last point and Escape cancels the drawing', async ({ page, isMobile }) => {

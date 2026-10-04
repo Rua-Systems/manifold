@@ -16,6 +16,14 @@ Choose **New Note**. Type a title in the field at the top, which says **Untitled
 
 A title has up to 200 characters. Notes without a title appear as **Untitled** in lists. Editing a note needs JavaScript; the Notes page, its filter and the trash work without it.
 
+## Reading and writing
+
+A saved note opens for reading: the title and the text without the toolbar, and links open with a click. **Edit**, the pencil at the top, switches to writing: the title becomes a field, the toolbar appears and the text can be changed. **Edit** again goes back to reading and saves what is still pending. A new note opens for writing, and so does a note without a title or text, such as one just created on the map.
+
+## Focus mode
+
+While you write, **Focus mode** at the top shows the note alone over the whole screen, with the rest of the app blurred behind it: the title, the toolbar, the text and the save status. **Focus mode** again, or `Escape`, leaves it. The note panel of the map has no focus mode.
+
 ## The editor
 
 The toolbar above the text holds every kind of content a note can have. Hover over a button to see its name and, where there is one, its keyboard shortcut. `Ctrl` in the shortcuts is `Cmd` on a Mac.
@@ -49,15 +57,15 @@ A whole note, with its structure, may be up to 2 MB.
 
 ## Saving
 
-There is no save button. The note is saved 1.5 seconds after your last change, when you leave the title or the text, before you move to another page and when you switch to another tab. Only one save runs at a time. The status next to the buttons at the top shows what happened:
+The note saves itself: 1.5 seconds after your last change, when you leave the title or the text, when you go back to reading, before you move to another page and when you switch to another tab. `Ctrl+S`, or `Cmd+S` on a Mac, saves at once. Only one save runs at a time. The status next to the buttons at the top shows what happened:
 
-| Status              | Meaning                                                                                                                           |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Saved**           | Everything you wrote is stored.                                                                                                   |
-| **Unsaved changes** | A save follows shortly.                                                                                                           |
-| **Saving**          | A save is running.                                                                                                                |
-| **Not saved**       | The last save failed. The message says why; your text stays in the editor, and the next change or leaving the editor tries again. |
-| **Conflict**        | The note was changed somewhere else; see below.                                                                                   |
+| Status              | Meaning                                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Saved**           | Everything you wrote is stored.                                                                                                             |
+| **Unsaved changes** | A save follows shortly.                                                                                                                     |
+| **Saving**          | A save is running.                                                                                                                          |
+| **Not saved**       | The last save failed. The message says why; your text stays in the editor, and the next change, leaving the editor or `Ctrl+S` tries again. |
+| **Conflict**        | The note was changed somewhere else; see below.                                                                                             |
 
 ### Changes in another tab or on another device
 

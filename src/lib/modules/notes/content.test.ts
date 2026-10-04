@@ -1,6 +1,11 @@
 import { ValidationError } from '$lib/server/errors';
 import { describe, expect, it } from 'vitest';
-import { emptyNoteContent, fileIdsInContent, type NoteContent } from './content';
+import {
+	emptyNoteContent,
+	fileIdsInContent,
+	isEmptyNoteContent,
+	type NoteContent
+} from './content';
 import { contentToText, NOTE_CONTENT_MAX_BYTES, validateNoteContent } from './content.server';
 import { markdownToNote, noteToMarkdown } from './markdown.server';
 
@@ -99,6 +104,18 @@ describe('content helpers', () => {
 		);
 
 		expect(fileIdsInContent(content)).toEqual([FILE_ID]);
+	});
+
+	it('tells an empty note from one with any content', () => {
+		expect(isEmptyNoteContent(emptyNoteContent())).toBe(true);
+		expect(isEmptyNoteContent(doc())).toBe(true);
+		expect(isEmptyNoteContent(doc(paragraph(), paragraph()))).toBe(true);
+
+		expect(isEmptyNoteContent(doc(paragraph(text('x'))))).toBe(false);
+		expect(isEmptyNoteContent(doc({ type: 'horizontalRule' }))).toBe(false);
+		expect(
+			isEmptyNoteContent(doc({ type: 'image', attrs: { src: `/files/${FILE_ID}` } }))
+		).toBe(false);
 	});
 });
 
