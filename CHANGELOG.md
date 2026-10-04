@@ -2,6 +2,21 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.1.1 - 2026-10-04
+
+The project moved to the Rua Systems organization, and this release fixes the editor toolbar and typing mistakes in the search.
+
+### Changed
+
+- The repository is at [github.com/Rua-Systems/manifold](https://github.com/Rua-Systems/manifold) and the image at `ghcr.io/rua-systems/manifold`. The former image address `ghcr.io/justhasanuknow/manifold` no longer exists: when you update from 0.1.0, check out `v0.1.1`, or change the `image` line of a Compose file pasted into Coolify, see [Updating](docs/deployment.md#updating).
+- The credit in the app, the mails, the README and `NOTICE` names Rua Systems alone.
+- Svelte, Vite and the other build tools are updated.
+
+### Fixed
+
+- The editor toolbar no longer wraps onto a second row and pushes the text down. It is one row everywhere and scrolls sideways where it does not fit, such as in the note panel of the map; with a mouse its buttons are smaller, so the whole row fits on the note page.
+- The search, the note filters and the MCP tools forgive a typing mistake in one word of a long title, alias, address or vault entry name: `gardn` now finds "Weekly planning for the garden project".
+
 ## 0.1.0 - 2026-09-30
 
 The first release.

@@ -1,7 +1,7 @@
 {
 	"name": "manifold",
 	"private": true,
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "A private, self-hosted workspace for one person: services, notes, map notes and a vault, with a REST API and an MCP server.",
 	"license": "Apache-2.0",
 	"repository": {

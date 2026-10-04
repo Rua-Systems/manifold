@@ -146,7 +146,7 @@ Coolify runs Manifold behind its own proxy, which obtains the certificate for yo
          retries: 20
 
      app:
-       image: ghcr.io/rua-systems/manifold:0.1.0
+       image: ghcr.io/rua-systems/manifold:0.1.1
        depends_on:
          db:
            condition: service_healthy
@@ -296,6 +296,8 @@ docker compose up -d
 ```
 
 If you set a minor line such as `0.1`, these two commands alone pick up its newest patch release. Check `/healthz` and sign in afterwards. If a migration fails, the app does not start, and its log names the failing migration.
+
+Version 0.1.0 named the image `ghcr.io/justhasanuknow/manifold`, which no longer exists since the project moved to the Rua Systems organization. When you update from 0.1.0, check out the new tag as above, or, with a Compose file pasted into Coolify, change its `image` line to `ghcr.io/rua-systems/manifold`; a pull from the former address fails.
 
 To go back to the previous version, check out its tag, set `MANIFOLD_VERSION` back and restore the backup you took. The older version cannot start while the database holds the newer migrations, so stop the app and run the restore in a one-off container:
 
