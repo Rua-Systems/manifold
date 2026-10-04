@@ -61,6 +61,32 @@ describe('search', () => {
 		]);
 	});
 
+	it('forgives a typo in one word of a long title or name', async () => {
+		await createNote(
+			{ title: 'Weekly planning for the garden project', content: doc('Seeds') },
+			OWNER
+		);
+		await createService({
+			alias: 'Metrics of the production cluster',
+			url: 'https://metrics.example.com'
+		});
+		await createSecret({
+			name: 'Database of the production cluster',
+			serviceUrl: 'https://db.example.com',
+			description: '',
+			value: 'cluster-secret-value'
+		});
+
+		expect((await search('gardn', { types: ['note'] })).map((hit) => hit.title)).toEqual([
+			'Weekly planning for the garden project'
+		]);
+		const hits = await search('clustr', { types: ['service', 'secret'] });
+		expect(hits.map((hit) => hit.title).sort()).toEqual([
+			'Database of the production cluster',
+			'Metrics of the production cluster'
+		]);
+	});
+
 	it('finds services by address and opens them outside', async () => {
 		const [hit] = await search('webmail', { types: ['service'] });
 		expect(hit).toMatchObject({
