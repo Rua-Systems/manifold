@@ -101,11 +101,13 @@
 	@use '../../../../styles/forms' as forms;
 	@use '../../../../styles/variables' as vars;
 
+	// One scrolling row everywhere: wrapped rows push the text down, most of all in the map panel.
 	.toolbar {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem 0.6rem;
+		gap: 0.6rem;
 		padding: 0.35rem;
+		overflow-x: auto;
+		scrollbar-width: none;
 		background-color: clr.$surfaceColor;
 		border: 1px solid clr.$borderSubtleColor;
 		border-radius: vars.$radius;
@@ -129,12 +131,16 @@
 		}
 	}
 
-	// One scrolling row on phones instead of several rows of buttons above the text.
-	@media (max-width: vars.$mobileMax) {
+	// A mouse needs neither touch sized buttons nor a hidden scrollbar: smaller buttons fit
+	// the note page in one row, and a thin scrollbar shows that narrower panels hold more.
+	@media (pointer: fine) {
 		.toolbar {
-			flex-wrap: nowrap;
-			overflow-x: auto;
-			scrollbar-width: none;
+			scrollbar-width: thin;
+		}
+
+		.tool {
+			width: 2rem;
+			height: 2rem;
 		}
 	}
 </style>

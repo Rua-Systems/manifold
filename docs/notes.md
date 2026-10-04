@@ -34,7 +34,7 @@ The toolbar above the text holds every kind of content a note can have. Hover ov
 - **Tables** start with three columns and three rows, the first of them a header row. While the cursor is in a table, a small menu offers **Add row**, **Delete row**, **Add column**, **Delete column**, **Toggle header row** and **Delete table**.
 - **Links**: select the text, choose **Link**, enter the **Link address** and choose **Apply**. Links must start with `http://`, `https://` or `mailto:`. Addresses you type become links by themselves, and pasting an address over selected text links it. While the cursor is in a link, a small menu offers **Open link**, which opens it in a new tab, **Copy link** and **Remove link**.
 
-On phones the toolbar is a single row that scrolls sideways.
+The toolbar is a single row. Where it does not fit, as in the note panel of the map or on phones, it scrolls sideways.
 
 ## Images
 

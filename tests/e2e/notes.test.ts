@@ -223,6 +223,23 @@ test('an uploaded image is stored and shown in the note', async ({ page }) => {
 	await expect(editor(page).locator('img')).toHaveAttribute('src', source);
 });
 
+test('the editor toolbar keeps its buttons in one row', async ({ page, isMobile }) => {
+	await page.goto('/notes/new', { waitUntil: 'networkidle' });
+
+	const toolbar = page.getByRole('toolbar', { name: 'Formatting' });
+	const first = (await toolbar.getByRole('button', { name: 'Undo' }).boundingBox())!;
+	const last = (await toolbar.getByRole('button', { name: 'Insert image' }).boundingBox())!;
+	expect(last.y).toBeCloseTo(first.y, 0);
+
+	// With a mouse the whole row fits the note page; phones scroll it sideways.
+	if (!isMobile) {
+		const overflow = await toolbar.evaluate(
+			(element) => element.scrollWidth - element.clientWidth
+		);
+		expect(overflow).toBeLessThanOrEqual(0);
+	}
+});
+
 test('links only accept http, https and mailto', async ({ page }) => {
 	await page.goto('/notes/new', { waitUntil: 'networkidle' });
 	await editor(page).click();
