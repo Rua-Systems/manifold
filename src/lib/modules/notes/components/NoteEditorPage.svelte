@@ -212,8 +212,10 @@
 			void draft.flush();
 			return;
 		}
-		// The link form handles Escape first and marks it as handled.
-		if (event.key === 'Escape' && focused && !event.defaultPrevented) {
+		// ProseMirror marks every Escape in the text as handled, so `defaultPrevented` cannot tell
+		// whether something else used it; the link form stops its own Escape instead. An Escape
+		// that ends an input method composition stays with the composition.
+		if (event.key === 'Escape' && focused && !event.isComposing) {
 			focused = false;
 		}
 	}

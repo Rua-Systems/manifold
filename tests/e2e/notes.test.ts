@@ -172,6 +172,15 @@ test('focus mode shows the editor alone and Escape leaves it', async ({ page }) 
 	expect(box.height).toBeCloseTo(page.viewportSize()!.height, 0);
 
 	await appendText(page, ' room');
+
+	// Escape in the link form closes only the form.
+	await page.getByRole('button', { name: 'Link', exact: true }).click();
+	const address = page.getByLabel('Link address');
+	await address.click();
+	await page.keyboard.press('Escape');
+	await expect(address).toBeHidden();
+	await expect(focus).toHaveAttribute('aria-pressed', 'true');
+
 	await page.keyboard.press('Escape');
 	await expect(focus).toHaveAttribute('aria-pressed', 'false');
 	await expect(page.getByRole('link', { name: 'All notes' })).toBeVisible();
