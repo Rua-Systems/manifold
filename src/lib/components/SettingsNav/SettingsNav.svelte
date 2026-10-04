@@ -7,6 +7,7 @@
 		{ path: '/settings', label: m.settings_section_profile },
 		{ path: '/settings/security', label: m.settings_section_security },
 		{ path: '/settings/api-keys', label: m.settings_section_api_keys },
+		{ path: '/settings/map', label: m.settings_section_map },
 		{ path: '/settings/data', label: m.settings_section_data }
 	] as const;
 </script>

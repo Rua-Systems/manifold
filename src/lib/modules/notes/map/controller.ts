@@ -8,15 +8,18 @@ import type { Geometry } from 'ol/geom.js';
 import Draw from 'ol/interaction/Draw.js';
 import Modify from 'ol/interaction/Modify.js';
 import Snap from 'ol/interaction/Snap.js';
+import type TileLayer from 'ol/layer/Tile.js';
 import VectorLayer from 'ol/layer/Vector.js';
 import { unByKey } from 'ol/Observable.js';
 import { fromLonLat, toLonLat } from 'ol/proj.js';
 import VectorSource from 'ol/source/Vector.js';
+import type XYZ from 'ol/source/XYZ.js';
 import type Style from 'ol/style/Style.js';
-import type { MapConfig } from './config';
+import { activeBasemap, type MapBasemap, type MapConfig } from './config';
 import type { MapFeatureView, MapGeometry } from './geometry';
 import {
 	baseLayer,
+	basemapSource,
 	featureId,
 	fromMapGeometry,
 	themeStyles,
@@ -69,6 +72,7 @@ const FIT_MAX_ZOOM = 17;
  */
 export class MapController {
 	readonly map: OlMap;
+	private readonly tileLayer: TileLayer<XYZ>;
 	private readonly features = new VectorSource<Feature<Geometry>>();
 	private readonly sketch = new VectorSource<Feature<Geometry>>();
 	private readonly featureLayer: VectorLayer<VectorSource<Feature<Geometry>>>;
@@ -100,13 +104,16 @@ export class MapController {
 			style: () => this.styles.sketch
 		});
 
+		const basemap = activeBasemap(options.config);
+		this.tileLayer = baseLayer(basemap);
+
 		this.map = new OlMap({
 			target,
-			layers: [baseLayer(options.config), this.featureLayer, sketchLayer],
+			layers: [this.tileLayer, this.featureLayer, sketchLayer],
 			view: new View({
 				center: fromLonLat(options.view.center),
 				zoom: options.view.zoom,
-				maxZoom: 19
+				maxZoom: basemap.maxZoom
 			}),
 			controls: defaultControls({
 				zoom: options.interactive,
@@ -272,6 +279,12 @@ export class MapController {
 
 	centerOn(center: [number, number], zoom: number): void {
 		this.map.getView().animate({ center: fromLonLat(center), zoom, duration: 400 });
+	}
+
+	/** Shows another basemap; the view keeps its place but cannot zoom past the basemap's tiles. */
+	setBasemap(basemap: MapBasemap): void {
+		this.tileLayer.setSource(basemapSource(basemap));
+		this.map.getView().setMaxZoom(basemap.maxZoom);
 	}
 
 	/** Recalculates the map size after its container changed without a resize the map could see. */

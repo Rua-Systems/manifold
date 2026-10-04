@@ -31,6 +31,10 @@ export const test = base.extend<{ clientAddress: string }>({
 		await context.route('https://tile.openstreetmap.org/**', (route) =>
 			route.fulfill({ contentType: 'image/png', body: TILE })
 		);
+		// The tile host of basemaps that tests add.
+		await context.route('https://tiles.example.test/**', (route) =>
+			route.fulfill({ contentType: 'image/png', body: TILE })
+		);
 		await use(context);
 	}
 });

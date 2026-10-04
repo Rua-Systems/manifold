@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto, invalidate } from '$app/navigation';
 	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '$lib/components/Dialog/Dialog.svelte';
 	import PageShell from '$lib/components/PageShell/PageShell.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getNotifications } from '$lib/state/notifications.svelte';
@@ -8,7 +9,7 @@
 	import { localizedHref } from '$lib/utils/navigation';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { untrack } from 'svelte';
-	import type { MapConfig } from '../map/config';
+	import { activeBasemap, type MapConfig } from '../map/config';
 	import { MapController, type MapMode, type MapViewState } from '../map/controller';
 	import type { MapFeatureView, MapGeometry } from '../map/geometry';
 	import { loadMapView, saveMapView } from '../map/view';
@@ -45,6 +46,8 @@
 	let attach = $state(untrack(() => attachNote));
 	let deleteOpen = $state(false);
 	let deleteId = $state('');
+	let basemapsOpen = $state(false);
+	let basemapId = $state(untrack(() => config.basemapId));
 
 	const selected = $derived.by(() => {
 		if (panel?.kind !== 'feature') {
@@ -227,6 +230,25 @@
 		);
 	}
 
+	/** Shows the basemap at once and keeps it for every map; a refused choice is undone. */
+	async function chooseBasemap(id: string | null): Promise<void> {
+		const previous = basemapId;
+		basemapId = id;
+		basemapsOpen = false;
+		controller?.setBasemap(activeBasemap(config, id));
+		try {
+			const result = await postAction('?/basemap', { id: id ?? '' });
+			if (result.type === 'success') {
+				return;
+			}
+			notifications.fault(actionMessage(result, m.map_basemap_failed()));
+		} catch {
+			notifications.fault(m.map_basemap_failed());
+		}
+		basemapId = previous;
+		controller?.setBasemap(activeBasemap(config, previous));
+	}
+
 	async function cancelAttach(): Promise<void> {
 		attach = null;
 		await goto(localizedHref('/notes/map'), {
@@ -263,6 +285,7 @@
 					onundo={() => controller?.undoVertex()}
 					oncancel={() => controller?.cancelDrawing()}
 					onlocate={locate}
+					onbasemaps={() => (basemapsOpen = true)}
 				/>
 			</div>
 			{#if attach !== null}
@@ -338,6 +361,23 @@
 	confirmLabel={m.common_delete()}
 	onresult={deleteResult}
 />
+<Dialog bind:open={basemapsOpen} id="mapBasemaps" title={m.map_basemaps_title()}>
+	<fieldset class="basemaps">
+		<legend class="visually-hidden">{m.map_basemaps_title()}</legend>
+		{#each config.basemaps as basemap (basemap.id ?? 'instance')}
+			<label class="basemap">
+				<input
+					type="radio"
+					name="basemap"
+					checked={basemap.id === basemapId}
+					onchange={() => chooseBasemap(basemap.id)}
+				/>
+				<span>{basemap.name || m.map_basemap_standard()}</span>
+			</label>
+		{/each}
+	</fieldset>
+	<a class="quiet manage" href={localizedHref('/settings/map')}>{m.map_basemaps_manage()}</a>
+</Dialog>
 
 <style lang="scss">
 	@use '../../../../styles/colors' as clr;
@@ -424,6 +464,43 @@
 	.secondary {
 		@include forms.primaryButton;
 		border-color: clr.$borderSubtleColor;
+	}
+
+	.basemaps {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		margin: 0 0 1rem;
+		padding: 0;
+		border: 0;
+
+		> .basemap {
+			display: flex;
+			align-items: center;
+			gap: 0.7rem;
+			min-height: vars.$touchTarget;
+			padding: 0 0.7rem;
+			font-size: 0.86rem;
+			color: clr.$textPrimaryColor;
+			border: 1px solid clr.$borderSubtleColor;
+			border-radius: vars.$radius;
+			cursor: pointer;
+
+			&:has(input:checked) {
+				border-color: clr.$accentColor;
+				background-color: clr.$accentWashColor;
+			}
+
+			> input {
+				width: 1.1rem;
+				height: 1.1rem;
+				accent-color: clr.$accentColor;
+			}
+		}
+	}
+
+	.manage {
+		text-decoration: none;
 	}
 
 	.quiet {

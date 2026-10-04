@@ -1,5 +1,5 @@
 import { allScopeIds } from '$lib/modules/scopes';
-import { note } from '$lib/modules/notes/schema.server';
+import { mapBasemap, note } from '$lib/modules/notes/schema.server';
 import { service } from '$lib/modules/services/schema.server';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -318,6 +318,79 @@ describe('map', () => {
 			note: {}
 		});
 		expect(multi.status).toBe(400);
+	});
+});
+
+describe('basemaps', () => {
+	beforeEach(async () => {
+		await getDb().delete(mapBasemap);
+	});
+
+	it('adds, changes, puts in use and deletes basemaps', async () => {
+		const created = await call('POST', '/map/basemaps', everything, {
+			name: 'Topo',
+			url: 'https://{s}.tile.example.com/{z}/{x}/{y}.png'
+		});
+		expect(created.status).toBe(201);
+		const topo = await json(created);
+		expect(topo).toMatchObject({
+			name: 'Topo',
+			url: 'https://{a-c}.tile.example.com/{z}/{x}/{y}.png',
+			attribution: '',
+			max_zoom: 19,
+			in_use: false
+		});
+
+		const used = await call('PATCH', `/map/basemaps/${topo.id}`, everything, {
+			in_use: true,
+			max_zoom: 17
+		});
+		expect(await json(used)).toMatchObject({ name: 'Topo', in_use: true, max_zoom: 17 });
+
+		const aerial = await json(
+			await call('POST', '/map/basemaps', everything, {
+				name: 'Aerial',
+				url: 'https://aerial.example.com/{z}/{-y}/{x}.jpg',
+				attribution: 'Imagery <provider>',
+				max_zoom: 21
+			})
+		);
+		await call('PATCH', `/map/basemaps/${aerial.id}`, everything, { in_use: true });
+		const list = await json(await call('GET', '/map/basemaps', everything));
+		const rows = list.data as { name: string; in_use: boolean; attribution: string }[];
+		expect(rows.map((row) => [row.name, row.in_use])).toEqual([
+			['Topo', false],
+			['Aerial', true]
+		]);
+		expect(rows[1].attribution).toBe('Imagery <provider>');
+
+		expect((await call('DELETE', `/map/basemaps/${aerial.id}`, everything)).status).toBe(204);
+		const after = await json(await call('GET', '/map/basemaps', everything));
+		expect((after.data as { in_use: boolean }[]).some((row) => row.in_use)).toBe(false);
+		expect((await call('GET', `/map/basemaps/${aerial.id}`, everything)).status).toBe(404);
+	});
+
+	it('refuses addresses that are not https tile templates', async () => {
+		for (const url of [
+			'http://tile.example.com/{z}/{x}/{y}.png',
+			'https://tile.example.com/{z}/{x}.png',
+			'https://user:secret@tile.example.com/{z}/{x}/{y}.png',
+			'https://tile.example.com/{z}/{x}/{y}/{style}.png',
+			'javascript:alert(1)//{z}/{x}/{y}'
+		]) {
+			const response = await call('POST', '/map/basemaps', everything, { name: 'Bad', url });
+			expect(response.status, url).toBe(422);
+			const body = (await json(response)).error as { fields: Record<string, string> };
+			expect(body.fields, url).toHaveProperty('url');
+		}
+
+		const deep = await call('POST', '/map/basemaps', everything, {
+			name: 'Deep',
+			url: 'https://tile.example.com/{z}/{x}/{y}.png',
+			max_zoom: 30
+		});
+		expect(deep.status).toBe(400);
+		expect((await json(await call('GET', '/map/basemaps', everything))).data).toEqual([]);
 	});
 });
 

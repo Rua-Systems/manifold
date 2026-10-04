@@ -1,13 +1,11 @@
 import { m } from '$lib/paraglide/messages.js';
 import type { Actor } from '$lib/server/actor';
 import { getDb } from '$lib/server/db';
-import { getEnv } from '$lib/server/env';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
 import { isUuid } from '$lib/utils/uuid';
 import { and, asc, eq, isNull, sql, type SQL } from 'drizzle-orm';
 import { getNote, insertNote, type NoteInput } from '../notes.server';
 import { mapFeature, note } from '../schema.server';
-import type { MapConfig } from './config';
 import {
 	KIND_BY_TYPE,
 	mapGeometrySchema,
@@ -30,16 +28,6 @@ const featureColumns = {
 	kind: mapFeature.kind,
 	geometry: sql<MapGeometry>`ST_AsGeoJSON(${mapFeature.geometry}, ${sql.raw(String(GEOJSON_DECIMALS))})::json`
 };
-
-export function mapConfig(): MapConfig {
-	const env = getEnv();
-	return {
-		tileUrl: env.MAP_TILE_URL,
-		attribution: env.MAP_TILE_ATTRIBUTION,
-		center: env.MAP_DEFAULT_CENTER,
-		zoom: env.MAP_DEFAULT_ZOOM
-	};
-}
 
 function invalidGeometry(message: string): ValidationError {
 	return new ValidationError({ geometry: message });

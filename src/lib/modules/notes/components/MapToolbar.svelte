@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import Eraser from '@lucide/svelte/icons/eraser';
+	import Layers from '@lucide/svelte/icons/layers';
 	import LocateFixed from '@lucide/svelte/icons/locate-fixed';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import MousePointer2 from '@lucide/svelte/icons/mouse-pointer-2';
@@ -20,9 +21,11 @@
 		onundo: () => void;
 		oncancel: () => void;
 		onlocate: () => void;
+		/** Opens the choice of basemaps. */
+		onbasemaps: () => void;
 	}
 
-	let { mode, drawing, onmode, onundo, oncancel, onlocate }: Props = $props();
+	let { mode, drawing, onmode, onundo, oncancel, onlocate, onbasemaps }: Props = $props();
 
 	const MODES: { mode: MapMode; label: () => string; icon: Component }[] = [
 		{ mode: 'select', label: m.map_tool_select, icon: MousePointer2 },
@@ -82,6 +85,16 @@
 			onclick={onlocate}
 		>
 			<LocateFixed size={18} />
+		</button>
+		<button
+			type="button"
+			class="tool"
+			aria-label={m.map_basemaps_title()}
+			aria-haspopup="dialog"
+			title={m.map_basemaps_title()}
+			onclick={onbasemaps}
+		>
+			<Layers size={18} />
 		</button>
 	</div>
 </div>
