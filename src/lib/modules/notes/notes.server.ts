@@ -97,7 +97,8 @@ function toSummary(row: {
 
 /**
  * The search's rule for a note: a word of the text or title starts with each query word, or the
- * title contains the query or looks like it (trigram similarity).
+ * title contains the query or looks like it, as a whole or in some of its words (trigram
+ * similarity and word similarity).
  */
 function textMatch(query: string | undefined): SQL | undefined {
 	const trimmed = query?.trim() ?? '';
@@ -110,7 +111,9 @@ function textMatch(query: string | undefined): SQL | undefined {
 	return or(
 		fullText,
 		ilike(note.title, containsPattern(trimmed)),
-		sql`${note.title} % ${trimmed}`
+		sql`${note.title} % ${trimmed}`,
+		// A typo in one word of a long title stays below the whole-title threshold.
+		sql`${trimmed} <% ${note.title}`
 	);
 }
 
@@ -136,6 +139,7 @@ export async function searchNotes(query: string, limit: number): Promise<NoteSea
 	const score = sql<number>`greatest(
 		ts_rank_cd(${note.searchVector}, ${tsquery}, 32),
 		similarity(${note.title}, ${trimmed}),
+		word_similarity(${trimmed}, ${note.title}),
 		case when ${note.title} ilike ${containsPattern(trimmed)} then 0.9 else 0 end
 	)::float8`;
 	const rows = await getDb()

@@ -180,7 +180,9 @@ export async function searchServices(
 	const pattern = containsPattern(query);
 	const score = sql<number>`greatest(
 		similarity(${service.alias}, ${query}),
+		word_similarity(${query}, ${service.alias}),
 		similarity(${service.url}, ${query}) * 0.8,
+		word_similarity(${query}, ${service.url}) * 0.8,
 		case when ${service.alias} ilike ${pattern} then 0.9 else 0 end
 	)::float8`;
 	const rows = await getDb()
@@ -191,7 +193,9 @@ export async function searchServices(
 				ilike(service.alias, pattern),
 				ilike(service.url, pattern),
 				sql`${service.alias} % ${query}`,
-				sql`${service.url} % ${query}`
+				sql`${query} <% ${service.alias}`,
+				sql`${service.url} % ${query}`,
+				sql`${query} <% ${service.url}`
 			)
 		)
 		.orderBy(desc(score), asc(service.position))

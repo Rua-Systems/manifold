@@ -140,6 +140,7 @@ export async function searchSecrets(
 	const pattern = containsPattern(query);
 	const score = sql<number>`greatest(
 		similarity(${vaultSecret.name}, ${query}),
+		word_similarity(${query}, ${vaultSecret.name}),
 		case when ${vaultSecret.name} ilike ${pattern} then 0.9 else 0 end
 	)::float8`;
 	const rows = await getDb()
@@ -149,7 +150,8 @@ export async function searchSecrets(
 			or(
 				ilike(vaultSecret.name, pattern),
 				ilike(vaultSecret.serviceUrl, pattern),
-				sql`${vaultSecret.name} % ${query}`
+				sql`${vaultSecret.name} % ${query}`,
+				sql`${query} <% ${vaultSecret.name}`
 			)
 		)
 		.orderBy(desc(score), asc(vaultSecret.name))

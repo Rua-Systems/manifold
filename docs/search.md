@@ -18,9 +18,9 @@ A note matches when one of these is true:
 
 - Every word you type is the beginning of a word in its title or text. `fer` finds "ferry", and `ferry book` finds a note in which both appear, in any order.
 - Its title contains what you typed, anywhere and in any case.
-- Its title looks like what you typed, which catches small typing mistakes.
+- Its title, or one of the words in it, looks like what you typed, which catches small typing mistakes. `gardn` finds "Weekly planning for the garden project".
 
-Services match when their alias or address contains what you typed or looks like it, and vault entries when their name or service address contains it or their name looks like it.
+Services match when their alias or address contains what you typed or looks like it, and vault entries when their name or service address contains it or their name looks like it. Here too, a single word that looks like what you typed is enough.
 
 - Upper and lower case never matter.
 - For the first rule only letters and digits count; punctuation and other signs separate words, and up to eight words are used.
