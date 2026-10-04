@@ -2,9 +2,10 @@
 @use './variables' as vars;
 
 // Bubble menus of the note editor. TipTap moves them to the end of the body, away from the
-// component that declares them, so their container is styled here.
+// component that declares them, so their container is styled here. They sit above the note's
+// focus mode.
 .editor-bubble {
-	z-index: 40;
+	z-index: 135;
 	display: flex;
 	gap: 0.15rem;
 	padding: 0.25rem;

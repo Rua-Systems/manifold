@@ -37,6 +37,12 @@ async function writeNote(page: Page, title: string, text: string): Promise<strin
 	return page.url();
 }
 
+/** Saved notes open for reading; this switches the open note to writing. */
+async function startEditing(page: Page): Promise<void> {
+	await page.getByRole('button', { name: 'Edit', exact: true }).click();
+	await expect(editor(page)).toHaveAttribute('contenteditable', 'true');
+}
+
 async function appendText(page: Page, text: string): Promise<void> {
 	await editor(page).click();
 	await page.keyboard.press('ControlOrMeta+End');
@@ -69,7 +75,7 @@ test('a new note autosaves, gets its own address and joins the sidebar', async (
 	await expect(saveStatus(page)).toHaveText('Saved');
 
 	await page.reload();
-	await expect(titleField(page)).toHaveValue(title);
+	await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
 	await expect(editor(page)).toContainText('Book the ferry and the hotel');
 
 	if (isMobile) {
@@ -106,10 +112,87 @@ test('the sidebar and the notes page filter the notes', async ({ page, isMobile 
 	await expect(list.getByRole('link', { name: new RegExp(other) })).toHaveCount(0);
 });
 
+test('a saved note opens for reading and switches to writing and back', async ({ page }) => {
+	const title = uniqueTitle('Reading');
+	await writeNote(page, title, 'First line');
+	await page.reload();
+
+	const edit = page.getByRole('button', { name: 'Edit', exact: true });
+	const toolbar = page.getByRole('toolbar', { name: 'Formatting' });
+	await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+	await expect(editor(page)).toHaveAttribute('contenteditable', 'false');
+	await expect(editor(page)).toHaveAttribute('aria-readonly', 'true');
+	await expect(toolbar).toBeHidden();
+	await expect(titleField(page)).toBeHidden();
+	await expect(edit).toHaveAttribute('aria-pressed', 'false');
+
+	await edit.click();
+	await expect(edit).toHaveAttribute('aria-pressed', 'true');
+	await expect(toolbar).toBeVisible();
+	await expect(titleField(page)).toHaveValue(title);
+	await appendText(page, ' and a second');
+
+	await edit.click();
+	await expect(saveStatus(page)).toHaveText('Saved');
+	await expect(editor(page)).toHaveAttribute('contenteditable', 'false');
+	await expect(editor(page)).toHaveText('First line and a second');
+
+	await page.reload();
+	await expect(editor(page)).toHaveText('First line and a second');
+});
+
+test('Ctrl+S saves at once instead of after the pause', async ({ page }) => {
+	await writeNote(page, uniqueTitle('Shortcut'), 'Draft');
+	await editor(page).click();
+	await page.keyboard.press('ControlOrMeta+End');
+
+	// The automatic save waits 1.5 seconds after the last key, longer than this wait.
+	const saving = page.waitForRequest(
+		(request) => request.method() === 'POST' && request.url().includes('?/save'),
+		{ timeout: 1000 }
+	);
+	await page.keyboard.type('!');
+	await page.keyboard.press('ControlOrMeta+s');
+	await saving;
+	await expect(saveStatus(page)).toHaveText('Saved');
+	await expect(editor(page)).toHaveText('Draft!');
+});
+
+test('focus mode shows the editor alone and Escape leaves it', async ({ page }) => {
+	await writeNote(page, uniqueTitle('Focus'), 'Quiet');
+
+	const focus = page.getByRole('button', { name: 'Focus mode' });
+	await focus.click();
+	await expect(focus).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.getByRole('link', { name: 'All notes' })).toBeHidden();
+	await expect(page.getByRole('button', { name: 'History' })).toBeHidden();
+	const box = (await page.locator('.note-page').boundingBox())!;
+	expect(box.x).toBe(0);
+	expect(box.y).toBe(0);
+	expect(box.height).toBeCloseTo(page.viewportSize()!.height, 0);
+
+	await appendText(page, ' room');
+
+	// Escape in the link form closes only the form.
+	await page.getByRole('button', { name: 'Link', exact: true }).click();
+	const address = page.getByLabel('Link address');
+	await address.click();
+	await page.keyboard.press('Escape');
+	await expect(address).toBeHidden();
+	await expect(focus).toHaveAttribute('aria-pressed', 'true');
+
+	await page.keyboard.press('Escape');
+	await expect(focus).toHaveAttribute('aria-pressed', 'false');
+	await expect(page.getByRole('link', { name: 'All notes' })).toBeVisible();
+	await expect(saveStatus(page)).toHaveText('Saved');
+	await expect(editor(page)).toHaveText('Quiet room');
+});
+
 test('a conflicting edit can be kept on top', async ({ page, context }) => {
 	const address = await writeNote(page, uniqueTitle('Shared'), 'Original');
 	const stale = await context.newPage();
 	await stale.goto(address, { waitUntil: 'networkidle' });
+	await startEditing(stale);
 
 	await appendText(page, ' from here');
 	await expect(saveStatus(page)).toHaveText('Saved');
@@ -131,6 +214,7 @@ test('a conflicting edit can be dropped by reloading', async ({ page, context })
 	const address = await writeNote(page, uniqueTitle('Shared'), 'Original');
 	const stale = await context.newPage();
 	await stale.goto(address, { waitUntil: 'networkidle' });
+	await startEditing(stale);
 
 	await appendText(page, ' from here');
 	await expect(saveStatus(page)).toHaveText('Saved');

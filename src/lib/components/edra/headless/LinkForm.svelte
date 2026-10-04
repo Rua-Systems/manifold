@@ -34,6 +34,8 @@
 	function onKeydown(event: KeyboardEvent): void {
 		if (event.key === 'Escape') {
 			event.preventDefault();
+			// Escape closes only this form; the note's focus mode listens for it on the window.
+			event.stopPropagation();
 			editor.commands.focus();
 			onclose();
 		}

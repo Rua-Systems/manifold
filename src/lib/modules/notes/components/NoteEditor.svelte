@@ -53,10 +53,21 @@
 		content: untrack(() => content),
 		editable: untrack(() => editable),
 		editorProps: {
-			attributes: () => ({ 'aria-label': label, 'aria-multiline': 'true', role: 'textbox' })
+			attributes: () => ({
+				'aria-label': label,
+				'aria-multiline': 'true',
+				'aria-readonly': String(!editable),
+				role: 'textbox'
+			})
 		},
 		onUpdate: ({ editor: current }) => onchange?.(current.getJSON()),
 		onBlur: () => onblur?.()
+	});
+
+	// Reading and writing share one editor, so switching keeps the undo history. Without the
+	// second argument the switch would count as a change and save the note.
+	$effect(() => {
+		editor?.setEditable(editable, false);
 	});
 
 	async function pickImage(): Promise<void> {

@@ -14,9 +14,12 @@
 	import { relativeTime } from '$lib/utils/time';
 	import { pageTitle } from '$lib/utils/title';
 	import History from '@lucide/svelte/icons/history';
+	import Maximize2 from '@lucide/svelte/icons/maximize-2';
+	import Minimize2 from '@lucide/svelte/icons/minimize-2';
+	import Pencil from '@lucide/svelte/icons/pencil';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { onDestroy, untrack, type Snippet } from 'svelte';
-	import { emptyNoteContent } from '../content';
+	import { emptyNoteContent, isEmptyNoteContent } from '../content';
 	import {
 		NoteDraft,
 		type SaveRequest,
@@ -83,6 +86,16 @@
 	/** Bumped to rebuild the editor from `draft.content` after the server state replaced it. */
 	let generation = $state(0);
 	let historyOpen = $state(false);
+
+	/** Saved notes open for reading; new or empty ones for writing, as they hold nothing to read. */
+	let editing = $state(
+		untrack(
+			() => note === null || (note.title.trim() === '' && isEmptyNoteContent(note.content))
+		)
+	);
+
+	/** The editor alone over the whole screen. The map's panel does not offer it. */
+	let focused = $state(false);
 
 	const displayTitle = $derived(draft.title || m.notes_untitled());
 
@@ -180,6 +193,33 @@
 		}
 	}
 
+	async function toggleEditing(): Promise<void> {
+		if (!editing) {
+			editing = true;
+			return;
+		}
+		editing = false;
+		focused = false;
+		await draft.flush();
+	}
+
+	function onKeydown(event: KeyboardEvent): void {
+		// Ctrl+S saves at once instead of offering to save the page as a file. Ctrl+Shift+S stays
+		// the editor's strikethrough.
+		const modifier = event.ctrlKey || event.metaKey;
+		if (modifier && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 's') {
+			event.preventDefault();
+			void draft.flush();
+			return;
+		}
+		// ProseMirror marks every Escape in the text as handled, so `defaultPrevented` cannot tell
+		// whether something else used it; the link form stops its own Escape instead. An Escape
+		// that ends an input method composition stays with the composition.
+		if (event.key === 'Escape' && focused && !event.isComposing) {
+			focused = false;
+		}
+	}
+
 	/** Loads the note again through the host, or by rerunning the page's `load`. */
 	async function refresh(revision: number | null): Promise<void> {
 		if (host !== undefined) {
@@ -254,10 +294,11 @@
 </svelte:head>
 
 <svelte:document onvisibilitychange={onVisibilityChange} />
+<svelte:window onkeydown={onKeydown} />
 
-<article class="note-page" class:embedded={host !== undefined}>
+<article class="note-page" class:embedded={host !== undefined} class:focused>
 	<header class="bar">
-		{#if host === undefined}
+		{#if host === undefined && !focused}
 			<a class="back" href={localizedHref('/notes')}>{m.notes_all()}</a>
 		{/if}
 		<div class="tools">
@@ -267,31 +308,71 @@
 				{/each}
 				<span class="current {draft.status}">{STATUS_LABELS[draft.status]()}</span>
 			</p>
-			<button
-				type="button"
-				class="tool"
-				aria-label={m.notes_history()}
-				title={m.notes_history()}
-				disabled={draft.id === null}
-				onclick={openHistory}
-			>
-				<History size={18} />
-			</button>
-			<form method="POST" action={actionUrl(draft.id, 'trash')} use:enhance={trashAfterSave}>
+			{#if preview === null && editing && host === undefined}
 				<button
-					type="submit"
-					class="tool danger"
-					aria-label={m.notes_trash_action()}
-					title={m.notes_trash_action()}
-					disabled={draft.id === null}
+					type="button"
+					class="tool"
+					class:active={focused}
+					aria-label={m.notes_focus()}
+					aria-pressed={focused}
+					title={m.notes_focus()}
+					onclick={() => (focused = !focused)}
 				>
-					<TrashIcon />
+					{#if focused}
+						<Minimize2 size={18} />
+					{:else}
+						<Maximize2 size={18} />
+					{/if}
 				</button>
-			</form>
+			{/if}
+			{#if !focused}
+				{#if preview === null}
+					<button
+						type="button"
+						class="tool"
+						class:active={editing}
+						aria-label={m.notes_edit()}
+						aria-pressed={editing}
+						title={m.notes_edit()}
+						onclick={toggleEditing}
+					>
+						<Pencil size={18} />
+					</button>
+				{/if}
+				<button
+					type="button"
+					class="tool"
+					aria-label={m.notes_history()}
+					title={m.notes_history()}
+					disabled={draft.id === null}
+					onclick={openHistory}
+				>
+					<History size={18} />
+				</button>
+				<form
+					method="POST"
+					action={actionUrl(draft.id, 'trash')}
+					use:enhance={trashAfterSave}
+				>
+					<button
+						type="submit"
+						class="tool danger"
+						aria-label={m.notes_trash_action()}
+						title={m.notes_trash_action()}
+						disabled={draft.id === null}
+					>
+						<TrashIcon />
+					</button>
+				</form>
+			{/if}
 		</div>
 	</header>
 
-	<h1 class="visually-hidden">{displayTitle}</h1>
+	{#if preview === null && !editing}
+		<h1 class="title" class:untitled={draft.title === ''}>{displayTitle}</h1>
+	{:else}
+		<h1 class="visually-hidden">{displayTitle}</h1>
+	{/if}
 
 	{#if preview}
 		<div class="preview-bar">
@@ -321,21 +402,24 @@
 			/>
 		{/key}
 	{:else}
-		<label class="visually-hidden" for="noteTitle">{m.notes_title_label()}</label>
-		<input
-			id="noteTitle"
-			class="title"
-			type="text"
-			maxlength="200"
-			autocomplete="off"
-			placeholder={m.notes_untitled()}
-			value={draft.title}
-			oninput={(event) => draft.edit({ title: event.currentTarget.value })}
-			onblur={() => draft.flush()}
-		/>
+		{#if editing}
+			<label class="visually-hidden" for="noteTitle">{m.notes_title_label()}</label>
+			<input
+				id="noteTitle"
+				class="title"
+				type="text"
+				maxlength="200"
+				autocomplete="off"
+				placeholder={m.notes_untitled()}
+				value={draft.title}
+				oninput={(event) => draft.edit({ title: event.currentTarget.value })}
+				onblur={() => draft.flush()}
+			/>
+		{/if}
 		{#key generation}
 			<NoteEditor
 				content={draft.content}
+				editable={editing}
 				label={m.notes_content_label()}
 				onchange={(content) => draft.edit({ content })}
 				onblur={() => draft.flush()}
@@ -343,7 +427,9 @@
 			/>
 		{/key}
 	{/if}
-	{@render children?.()}
+	{#if !focused}
+		{@render children?.()}
+	{/if}
 </article>
 
 {#if draft.status === 'conflict'}
@@ -413,6 +499,22 @@
 			max-width: none;
 			padding: 0;
 		}
+
+		// Focus mode: the note over the whole screen, above the sidebar and the account button,
+		// with the app blurred behind it. The text keeps the width of the note page.
+		&.focused {
+			position: fixed;
+			inset: 0;
+			z-index: 130;
+			max-width: none;
+			margin: 0;
+			padding: calc(1.5rem + env(safe-area-inset-top)) max(1.1rem, calc((100% - 52rem) / 2))
+				calc(4rem + env(safe-area-inset-bottom));
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			background-color: clr.$scrimStrongColor;
+			backdrop-filter: blur(16px);
+		}
 	}
 
 	.bar {
@@ -466,6 +568,10 @@
 			color: clr.$errorColor;
 			background-color: transparent;
 		}
+
+		&.active {
+			@include forms.toolButtonActive;
+		}
 	}
 
 	.title {
@@ -489,6 +595,10 @@
 		&:focus {
 			outline: none;
 			border-bottom-color: clr.$accentMutedColor;
+		}
+
+		&.untitled {
+			color: clr.$textMutedColor;
 		}
 	}
 
@@ -530,7 +640,8 @@
 		right: max(1rem, env(safe-area-inset-right));
 		bottom: max(1rem, env(safe-area-inset-bottom));
 		left: max(1rem, env(safe-area-inset-left));
-		z-index: 50;
+		// Above focus mode, which would otherwise hide it.
+		z-index: 135;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;

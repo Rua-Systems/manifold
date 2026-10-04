@@ -8,6 +8,13 @@ export function emptyNoteContent(): NoteContent {
 	return { type: 'doc', content: [{ type: 'paragraph' }] };
 }
 
+/** Whether the content holds nothing but empty paragraphs, as a note nobody has written in. */
+export function isEmptyNoteContent(content: NoteContent): boolean {
+	return (content.content ?? []).every(
+		(node) => node.type === 'paragraph' && (node.content ?? []).length === 0
+	);
+}
+
 /** Ids of the uploaded files the content shows as images, without duplicates. */
 export function fileIdsInContent(content: NoteContent): string[] {
 	const ids = new Set<string>();

@@ -82,7 +82,7 @@ test('the search button opens the palette, which searches notes', async ({ page,
 	await expect(result).toBeVisible();
 	await result.click();
 	await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/);
-	await expect(page.getByLabel('Title', { exact: true })).toHaveValue(`Found ${word}`);
+	await expect(page.getByRole('heading', { level: 1, name: `Found ${word}` })).toBeVisible();
 });
 
 test('services open in a new tab from the palette', async ({ page, context, isMobile }) => {
