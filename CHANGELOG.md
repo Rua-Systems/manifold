@@ -2,6 +2,20 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.3.0 - 2026-10-04
+
+The map gets basemaps. This release adds a database migration, which runs on start; take a backup before you update. There are no configuration changes; a minor line such as `0.2` does not move to 0.3 by itself, so set `MANIFOLD_VERSION` to `0.3` or `0.3.0`.
+
+### Added
+
+- **Basemaps:** tile sources for the map, added under **Settings → Map** with a name, an `https` XYZ tile address, an attribution and a maximum zoom, and ordered, edited and deleted there. The one in use shows on the map page and on the small map of every note page; **Use** on the settings page or **Basemap** in the map tools switches it, and the choice is the same in every browser. The tiles of `MAP_TILE_URL` remain as **Standard**, shown while no other basemap is in use.
+- **Go to Map** in the command palette.
+- **REST API:** `/api/v1/map/basemaps` lists, adds, changes, puts in use and deletes basemaps with the `map:read` and `map:write` scopes.
+
+### Changed
+
+- The map zooms as deep as the basemap in use allows instead of always to level 19.
+
 ## 0.2.0 - 2026-10-04
 
 Notes separate reading from writing, gain a focus mode for writing and save with `Ctrl+S`. There are no database or configuration changes; a minor line such as `0.1` does not move to 0.2 by itself, so set `MANIFOLD_VERSION` to `0.2` or `0.2.0`.
