@@ -2,6 +2,20 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.2.0 - 2026-10-04
+
+Notes separate reading from writing, gain a focus mode for writing and save with `Ctrl+S`. There are no database or configuration changes; a minor line such as `0.1` does not move to 0.2 by itself, so set `MANIFOLD_VERSION` to `0.2` or `0.2.0`.
+
+### Added
+
+- **Reading mode:** a saved note opens for reading, with its title as a heading, the text without the toolbar and links that open with a click. **Edit** switches to writing and back, and going back saves what is still pending. A new note, and a note without a title or text such as one just created on the map, opens for writing.
+- **Focus mode:** while you write, **Focus mode** shows the note alone over the whole screen with the rest of the app blurred behind it. The button again, or `Escape`, leaves it. The note panel of the map has no focus mode.
+- **`Ctrl+S`**, or `Cmd+S` on a Mac, saves the note at once instead of after the pause, and the browser no longer offers to save the page.
+
+### Changed
+
+- The note editor tells screen readers when it is read-only.
+
 ## 0.1.1 - 2026-10-04
 
 The project moved to the Rua Systems organization, and this release fixes the editor toolbar, typing mistakes in the search and advisories in a package that SvelteKit runs.
