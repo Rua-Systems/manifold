@@ -189,7 +189,7 @@ The pages in `docs/` are plain Markdown for GitHub.
 
 `.github/workflows/ci.yml` runs on pushes to `main` and on pull requests:
 
-- `verify`: `npm audit` for known vulnerabilities, lint, the build, the type check, unit tests, integration tests against the development database and the Playwright tests;
+- `verify`: `scripts/audit.ts` for known vulnerabilities (`npm audit` at the level `high`, apart from the advisories the script accepts with a reason), lint, the build, the type check, unit tests, integration tests against the development database and the Playwright tests;
 - `docker`: builds the image, starts it with the database from empty volumes and checks the health endpoint, the sign-in page, a backup, the unprivileged user, the read-only root filesystem and the software bill of materials.
 
 Dependabot proposes updates for npm packages, GitHub Actions and the Docker base image every week.
