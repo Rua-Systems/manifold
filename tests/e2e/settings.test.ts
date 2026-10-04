@@ -71,7 +71,7 @@ test('the about section shows the credit and the version', async ({ page }) => {
 	await page.goto('/settings#about');
 
 	const about = page.locator('#about');
-	await expect(about).toContainText('Manifold, developed by Rua Systems and Hasan.');
+	await expect(about).toContainText('Manifold, developed by Rua Systems.');
 	await expect(about).toContainText('Version');
 	await expect(about.locator('dd')).toHaveText(/^\d+\.\d+\.\d+/);
 });

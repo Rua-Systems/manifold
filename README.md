@@ -10,7 +10,7 @@
 
 Manifold is an open-source, self-hosted workspace for one person. It keeps the links to the services you run, your notes, notes pinned to places on a map and your passwords and keys behind a single owner account, and it lets your scripts and AI agents work with them through a REST API and an MCP server. It runs as one container next to a PostgreSQL database with PostGIS.
 
-Manifold is developed by [Rua Systems](https://rua.systems) and [Hasan](https://github.com/justhasanuknow).
+Manifold is developed by [Rua Systems](https://rua.systems).
 
 ## Features
 
