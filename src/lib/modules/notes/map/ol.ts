@@ -9,7 +9,7 @@ import Fill from 'ol/style/Fill.js';
 import Stroke from 'ol/style/Stroke.js';
 import Style from 'ol/style/Style.js';
 import 'ol/ol.css';
-import type { MapConfig } from './config';
+import type { MapBasemap } from './config';
 import type { MapGeometry } from './geometry';
 
 // OpenLayers pieces shared by the map page and the small map on the note page. The view uses
@@ -28,14 +28,16 @@ export function fromMapGeometry(geometry: MapGeometry): Geometry {
 	return geoJson.readGeometry(geometry);
 }
 
-export function baseLayer(config: MapConfig): TileLayer<XYZ> {
-	return new TileLayer({
-		source: new XYZ({
-			url: config.tileUrl,
-			attributions: config.attribution,
-			maxZoom: 19
-		})
+export function basemapSource(basemap: MapBasemap): XYZ {
+	return new XYZ({
+		url: basemap.url,
+		attributions: basemap.attribution,
+		maxZoom: basemap.maxZoom
 	});
+}
+
+export function baseLayer(basemap: MapBasemap): TileLayer<XYZ> {
+	return new TileLayer({ source: basemapSource(basemap) });
 }
 
 export type FeatureLook = 'feature' | 'selected' | 'sketch';

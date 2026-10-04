@@ -22,7 +22,8 @@ import {
 	trashNote,
 	updateNote
 } from './notes.server';
-import { listNoteFeatures, mapConfig } from './map/features.server';
+import { mapConfig } from './map/basemaps.server';
+import { listNoteFeatures } from './map/features.server';
 import { NEW_NOTE_ID } from './paths';
 import { noteVersionSchema } from './schemas';
 import type { NotePreview, NoteSummary } from './types';
@@ -106,7 +107,7 @@ export async function loadNoteData(id: string, revision: number | null) {
  * turns into a saved one, so the editor is not rebuilt under the owner's cursor.
  */
 export async function loadNotePage(id: string, url: URL) {
-	const shared = { map: mapConfig(), uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES };
+	const shared = { map: await mapConfig(), uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES };
 	if (id === NEW_NOTE_ID) {
 		return {
 			note: null,

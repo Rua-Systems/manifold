@@ -15,9 +15,9 @@ import {
 	addFeatureWithNewNote,
 	deleteFeature,
 	listMapFeatures,
-	mapConfig,
 	updateFeatureGeometry
 } from './features.server';
+import { mapConfig, useBasemap } from './basemaps.server';
 
 // Load and form actions behind /notes/map. The map code calls the actions with fetch.
 
@@ -41,10 +41,11 @@ async function noteSummary(id: string | null) {
  * note; `?note=<id>` fits the map to that note's geometries.
  */
 export async function loadMapPage(url: URL) {
-	const [features, notes, attachNote] = await Promise.all([
+	const [features, notes, attachNote, map] = await Promise.all([
 		listMapFeatures(),
 		listNoteTitles(),
-		noteSummary(url.searchParams.get('attach'))
+		noteSummary(url.searchParams.get('attach')),
+		mapConfig()
 	]);
 	const focus = url.searchParams.get('note');
 	return {
@@ -52,7 +53,7 @@ export async function loadMapPage(url: URL) {
 		notes,
 		attachNote,
 		focusNoteId: focus !== null && isUuid(focus) ? focus : null,
-		map: mapConfig(),
+		map,
 		uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES
 	};
 }
@@ -79,6 +80,26 @@ function featureFailure(cause: unknown) {
 }
 
 export const mapActions = {
+	/** Puts a basemap in use on every map; an empty id stands for the instance's own. */
+	basemap: async ({ request, locals }: RequestEvent) => {
+		requireUser(locals);
+		const data = await request.formData();
+		const id = textValue(data, 'id');
+		try {
+			if (id === '') {
+				await useBasemap(null);
+			} else {
+				await useBasemap(id);
+			}
+		} catch (cause) {
+			if (cause instanceof NotFoundError) {
+				return fail(404, { message: m.basemaps_error_missing() });
+			}
+			throw cause;
+		}
+		return {};
+	},
+
 	/** The note behind a feature, for the editor in the feature panel. */
 	openNote: async ({ request, locals }: RequestEvent) => {
 		requireUser(locals);

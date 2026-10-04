@@ -76,21 +76,30 @@ Every geometry must follow these rules; a drawing that breaks one is refused wit
 
 Moving a note to the trash hides its geometries from the map. Restoring the note brings them back, and deleting the note for good deletes them too. [Notes](notes.md) explains the trash.
 
+## Basemaps
+
+The map beneath the geometries is the basemap. **Standard**, the instance's own, comes from `MAP_TILE_URL` and is always there; more can be added under **Settings → Map**.
+
+- **New Basemap** asks for a **Name**, the **Tile address**, an **Attribution** and a **Maximum zoom**. The tile address is an XYZ template over `https` with `{z}`, `{x}` and `{y}`, such as `https://tile.example.com/{z}/{x}/{y}.png`. `{-y}` counts rows from the bottom, `{a-c}` or `{1-4}` spreads the requests over subdomains, and Leaflet's `{s}` is read as `{a-c}`. The attribution is plain text shown in the corner of the map. The maximum zoom, 19 unless you change it, is the deepest level the tiles exist for; the map does not zoom further.
+- One basemap is in use at a time, on the map page and on the small map of every note page. **Use** on the settings page or **Basemap** in the map tools switches it; the choice is stored with the account, so every browser shows the same basemap.
+- The settings page orders, edits and deletes the added basemaps. Deleting the basemap in use brings back **Standard**.
+- A tile address with a key in it, such as `?access_token=`, is visible to every API key with `map:read` and in the browser, which requests the tiles itself.
+
 ## Tiles and the default view
 
 Four environment variables shape the map; [Configuration](configuration.md) lists them with every other variable.
 
-| Variable               | Default                                                    | Purpose                                                                |
-| ---------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `MAP_TILE_URL`         | `https://tile.openstreetmap.org/{z}/{x}/{y}.png`           | The address template of the raster tiles, with `{z}`, `{x}` and `{y}`. |
-| `MAP_TILE_ATTRIBUTION` | OpenStreetMap contributors, linked to their copyright page | The credits shown on the map. HTML, such as a link, is allowed.        |
-| `MAP_DEFAULT_CENTER`   | `0,20`                                                     | The centre of the default view as `longitude,latitude` in degrees.     |
-| `MAP_DEFAULT_ZOOM`     | `2`                                                        | The zoom level of the default view, from 0 to 22.                      |
+| Variable               | Default                                                    | Purpose                                                                        |
+| ---------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `MAP_TILE_URL`         | `https://tile.openstreetmap.org/{z}/{x}/{y}.png`           | The address template of the **Standard** basemap, with `{z}`, `{x}` and `{y}`. |
+| `MAP_TILE_ATTRIBUTION` | OpenStreetMap contributors, linked to their copyright page | The credits shown on the map. HTML, such as a link, is allowed.                |
+| `MAP_DEFAULT_CENTER`   | `0,20`                                                     | The centre of the default view as `longitude,latitude` in degrees.             |
+| `MAP_DEFAULT_ZOOM`     | `2`                                                        | The zoom level of the default view, from 0 to 22.                              |
 
 - Manifold's pages load images only from Manifold itself and from `https` addresses, so the tile server must use `https`.
 - The default view applies only to browsers without a saved view of their own. A browser that has used the map keeps its last view.
-- The map zooms in up to level 19.
+- With **Standard**, the map zooms in up to level 19; other basemaps set their own maximum.
 
 ## Through the API and MCP
 
-API keys with `map:read` read the geometries, and keys with `map:write` add, change and delete them. Geometries travel as GeoJSON in longitude and latitude, rounded to seven decimals, which is about a centimetre. [REST API](api.md) and [MCP server](mcp.md) describe the routes and tools.
+API keys with `map:read` read the geometries and the basemaps, and keys with `map:write` add, change and delete them and put a basemap in use. Basemaps have REST routes only, no MCP tools. Geometries travel as GeoJSON in longitude and latitude, rounded to seven decimals, which is about a centimetre. [REST API](api.md) and [MCP server](mcp.md) describe the routes and tools.

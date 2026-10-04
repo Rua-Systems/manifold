@@ -2,6 +2,7 @@ import { geometry4326 } from '$lib/server/db/geometry';
 import { sql } from 'drizzle-orm';
 import { file } from '$lib/server/db/schema';
 import {
+	boolean,
 	customType,
 	index,
 	integer,
@@ -11,13 +12,14 @@ import {
 	text,
 	timestamp,
 	unique,
+	uniqueIndex,
 	uuid
 } from 'drizzle-orm/pg-core';
 import type { NoteContent } from './content';
 import type { FeatureKind } from './map/geometry';
 
-// Mirror of migrations/0005_notes_init.sql and 0006_notes_map_feature.sql. The SQL files are the
-// source of truth.
+// Mirror of migrations/0005_notes_init.sql, 0006_notes_map_feature.sql and
+// 0013_notes_map_basemap.sql. The SQL files are the source of truth.
 
 function timestamptz(name: string) {
 	return timestamp(name, { withTimezone: true });
@@ -96,5 +98,26 @@ export const mapFeature = pgTable(
 	(table) => [
 		index('map_feature_geometry_idx').using('gist', table.geometry),
 		index('map_feature_note_id_idx').on(table.noteId)
+	]
+);
+
+export const mapBasemap = pgTable(
+	'map_basemap',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		name: text('name').notNull(),
+		url: text('url').notNull(),
+		attribution: text('attribution').notNull().default(''),
+		maxZoom: integer('max_zoom').notNull().default(19),
+		inUse: boolean('in_use').notNull().default(false),
+		position: integer('position').notNull(),
+		createdAt: timestamptz('created_at').defaultNow().notNull(),
+		updatedAt: timestamptz('updated_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('map_basemap_position_idx').on(table.position),
+		uniqueIndex('map_basemap_in_use_idx')
+			.on(table.inUse)
+			.where(sql`${table.inUse}`)
 	]
 );

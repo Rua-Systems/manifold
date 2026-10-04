@@ -83,6 +83,11 @@ Always use an `https` address: a key sent over plain HTTP crosses the network in
 | `GET`    | `/api/v1/map/features/{id}`                      | `map:read`       | One feature.                                                      |
 | `PATCH`  | `/api/v1/map/features/{id}`                      | `map:write`      | Replace a feature's geometry.                                     |
 | `DELETE` | `/api/v1/map/features/{id}`                      | `map:write`      | Delete a feature. Its note stays.                                 |
+| `GET`    | `/api/v1/map/basemaps`                           | `map:read`       | The basemaps added to the map, in their order, paged.             |
+| `POST`   | `/api/v1/map/basemaps`                           | `map:write`      | Add a basemap at the end.                                         |
+| `GET`    | `/api/v1/map/basemaps/{id}`                      | `map:read`       | One basemap.                                                      |
+| `PATCH`  | `/api/v1/map/basemaps/{id}`                      | `map:write`      | Change a basemap, or put it in use.                               |
+| `DELETE` | `/api/v1/map/basemaps/{id}`                      | `map:write`      | Delete a basemap.                                                 |
 | `GET`    | `/api/v1/vault/secrets`                          | `vault:read`     | Vault entries by name, without their values, paged.               |
 | `GET`    | `/api/v1/vault/secrets/{id}`                     | `vault:read`     | One entry's name, address and description.                        |
 | `POST`   | `/api/v1/files`                                  | `files:write`    | Upload an image.                                                  |
@@ -221,6 +226,28 @@ Map features are GeoJSON Features in EPSG:4326, with positions as `[longitude, l
 - `DELETE /api/v1/map/features/{id}` removes the feature. Its note stays.
 
 Creating a feature together with a new note needs only `map:write`. See [Map Notes](map-notes.md) for the map in the app.
+
+## Basemaps
+
+Basemaps are the tile sources added under **Settings → Map**. The **Standard** basemap from `MAP_TILE_URL` is configuration and not listed; the maps show it while no basemap is `in_use`.
+
+```json
+{
+  "id": "6f1c1f0e-2d4b-4a51-9a51-3f8f7b2a1c90",
+  "name": "Topo",
+  "url": "https://{a-c}.tile.example.com/{z}/{x}/{y}.png",
+  "attribution": "Example Topo",
+  "max_zoom": 17,
+  "in_use": true,
+  "position": 0
+}
+```
+
+- `url` is an XYZ template over `https` with `{z}`, `{x}` and `{y}` or `{-y}`; `{a-c}` and `{1-4}` pick a subdomain, and `{s}` is stored as `{a-c}`. Addresses with a user name or password are refused. A refused address answers `422 validation_failed` with the reason under `fields.url`.
+- `attribution` is plain text of up to 300 characters, `max_zoom` a whole number from 0 to 22, 19 when left out, and `name` up to 60 characters.
+- `POST /api/v1/map/basemaps` adds the basemap at the end without putting it in use.
+- `PATCH /api/v1/map/basemaps/{id}` changes the fields it is sent. `in_use: true` puts the basemap in use instead of the one before; `in_use: false` on the basemap in use returns the maps to **Standard**.
+- `DELETE /api/v1/map/basemaps/{id}` removes the basemap; when it was in use, the maps go back to **Standard**.
 
 ## Vault
 

@@ -104,12 +104,12 @@ These variables configure [Map Notes](map-notes.md).
 
 | Variable               | Default                        | Purpose                                                                        |
 | ---------------------- | ------------------------------ | ------------------------------------------------------------------------------ |
-| `MAP_TILE_URL`         | OpenStreetMap's standard tiles | XYZ template of the raster tiles, with `{z}`, `{x}` and `{y}`.                 |
-| `MAP_TILE_ATTRIBUTION` | the OpenStreetMap attribution  | Attribution shown on the map, as HTML.                                         |
+| `MAP_TILE_URL`         | OpenStreetMap's standard tiles | XYZ template of the **Standard** basemap, with `{z}`, `{x}` and `{y}`.         |
+| `MAP_TILE_ATTRIBUTION` | the OpenStreetMap attribution  | Attribution of the **Standard** basemap, as HTML.                              |
 | `MAP_DEFAULT_CENTER`   | `0,20`                         | Center of the map as `lon,lat` in degrees, when the browser has no saved view. |
 | `MAP_DEFAULT_ZOOM`     | `2`                            | Zoom level from 0 to 22, when the browser has no saved view.                   |
 
-The default template is `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Browsers load the tiles directly from the tile server, and the content security policy allows images from any `https` address, so a tile server must be reachable over `https`. Change `MAP_TILE_ATTRIBUTION` together with `MAP_TILE_URL`, so that the map credits the right source.
+The default template is `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Browsers load the tiles directly from the tile server, and the content security policy allows images from any `https` address, so a tile server must be reachable over `https`. Change `MAP_TILE_ATTRIBUTION` together with `MAP_TILE_URL`, so that the map credits the right source. More basemaps are added in the app under **Settings → Map**, not through variables; see [Map Notes](map-notes.md#basemaps).
 
 ## Uploads and retention
 
