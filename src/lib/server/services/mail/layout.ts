@@ -1,10 +1,4 @@
-import {
-	AUTHOR_NAME,
-	AUTHOR_URL,
-	DEVELOPER_NAME,
-	DEVELOPER_URL,
-	PRODUCT_NAME
-} from '$lib/constants';
+import { DEVELOPER_NAME, DEVELOPER_URL, PRODUCT_NAME } from '$lib/constants';
 import { m } from '$lib/paraglide/messages.js';
 import type { Locale } from '$lib/paraglide/runtime.js';
 import { escapeHtml } from './html';
@@ -57,11 +51,7 @@ function creditHtml(locale: Locale): string {
 		escapeHtml(m.credit_after_product({}, { locale })) +
 		' ' +
 		link(DEVELOPER_URL, DEVELOPER_NAME) +
-		' ' +
-		escapeHtml(m.credit_between({}, { locale })) +
-		' ' +
-		link(AUTHOR_URL, AUTHOR_NAME) +
-		escapeHtml(m.credit_after_author({}, { locale }))
+		escapeHtml(m.credit_after_developer({}, { locale }))
 	);
 }
 
@@ -69,10 +59,8 @@ function creditText(locale: Locale): string {
 	return (
 		PRODUCT_NAME +
 		m.credit_after_product({}, { locale }) +
-		` ${DEVELOPER_NAME} (${DEVELOPER_URL}) ` +
-		m.credit_between({}, { locale }) +
-		` ${AUTHOR_NAME} (${AUTHOR_URL})` +
-		m.credit_after_author({}, { locale })
+		` ${DEVELOPER_NAME} (${DEVELOPER_URL})` +
+		m.credit_after_developer({}, { locale })
 	);
 }
 

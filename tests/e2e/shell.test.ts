@@ -8,18 +8,15 @@ test('titles and the auth screen carry the organization name', async ({ page }) 
 	await expect(page.getByText(TEST_ORGANIZATION_NAME, { exact: true })).toBeVisible();
 });
 
-test('the credit links to the developer and the author', async ({ page }) => {
+test('the credit links to the developer', async ({ page }) => {
 	await page.goto('/login');
 
 	const credit = page.locator('.credit').first();
-	await expect(credit).toContainText('Manifold, developed by Rua Systems and Hasan.');
+	await expect(credit).toContainText('Manifold, developed by Rua Systems.');
+	await expect(credit.getByRole('link')).toHaveCount(1);
 	await expect(credit.getByRole('link', { name: 'Rua Systems' })).toHaveAttribute(
 		'href',
 		'https://rua.systems'
-	);
-	await expect(credit.getByRole('link', { name: 'Hasan' })).toHaveAttribute(
-		'href',
-		'https://github.com/justhasanuknow'
 	);
 	await expect(page.locator('meta[name="generator"]')).toHaveAttribute('content', 'Manifold');
 });

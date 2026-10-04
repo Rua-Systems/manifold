@@ -37,10 +37,8 @@ describe('mail templates', () => {
 				const mail = renderMail(MAIL_TEMPLATES[id](context), context);
 
 				expect(mail.html).toContain('href="https://rua.systems"');
-				expect(mail.html).toContain('href="https://github.com/justhasanuknow"');
 				expect(mail.html).toContain('Manifold');
 				expect(mail.text).toContain('Rua Systems (https://rua.systems)');
-				expect(mail.text).toContain('Hasan (https://github.com/justhasanuknow)');
 			});
 		}
 	}

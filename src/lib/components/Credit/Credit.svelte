@@ -1,12 +1,6 @@
 <script lang="ts">
 	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
-	import {
-		AUTHOR_NAME,
-		AUTHOR_URL,
-		DEVELOPER_NAME,
-		DEVELOPER_URL,
-		PRODUCT_NAME
-	} from '$lib/constants';
+	import { DEVELOPER_NAME, DEVELOPER_URL, PRODUCT_NAME } from '$lib/constants';
 	import { m } from '$lib/paraglide/messages.js';
 </script>
 
@@ -18,10 +12,7 @@
 		{PRODUCT_NAME}{m.credit_after_product()}
 		<a href={DEVELOPER_URL} target="_blank" rel="external noopener noreferrer"
 			>{DEVELOPER_NAME}</a
-		>
-		{m.credit_between()}
-		<a href={AUTHOR_URL} target="_blank" rel="external noopener noreferrer">{AUTHOR_NAME}</a
-		>{m.credit_after_author()}
+		>{m.credit_after_developer()}
 	</span>
 </p>
 
