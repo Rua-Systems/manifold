@@ -28,7 +28,7 @@ jobs:
           sudo apt-get install --yes postgresql-client-17
           echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
       - run: npm ci
-      - run: npm audit --audit-level=high
+      - run: node scripts/audit.ts
       - run: npm run lint
       - run: npm run build
       - run: npm run check
