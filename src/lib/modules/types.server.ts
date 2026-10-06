@@ -4,6 +4,7 @@ import type { FileReference } from '$lib/server/files/files';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
 import type { McpTool } from '$lib/server/mcp/types';
 import type { SearchProvider } from '$lib/server/search';
+import type { DashboardCard } from '$lib/types/dashboard';
 import type { UsageItem } from '$lib/types/usage';
 import type { SidebarGroup } from './types';
 
@@ -24,4 +25,6 @@ export interface ServerModuleManifest {
 	usage?: () => Promise<UsageItem[]>;
 	/** Tokens the module issues that authenticate on the API and MCP like API keys. */
 	credentials?: CredentialProvider;
+	/** The module's cards on the dashboard, in the order they are shown. */
+	dashboard?: () => Promise<DashboardCard[]>;
 }

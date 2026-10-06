@@ -63,5 +63,41 @@ export const servicesServerManifest: ServerModuleManifest = {
 	// Icons are uploaded files, which the report counts by module on its own.
 	usage: async () => [
 		{ id: 'services.services', label: m.usage_services(), ...(await measureRows(service)) }
-	]
+	],
+	dashboard: async () => {
+		const services = await listServices();
+		return [
+			{
+				id: 'services',
+				title: m.services_title(),
+				href: '/services',
+				blocks: [
+					{
+						kind: 'stats',
+						stats: [
+							{
+								id: 'services',
+								label: m.dashboard_services(),
+								value: services.length,
+								unit: 'count'
+							}
+						]
+					},
+					{
+						kind: 'links',
+						id: 'shortcuts',
+						title: m.dashboard_services_shortcuts(),
+						empty: m.dashboard_services_empty(),
+						links: services.map((item) => ({
+							id: item.id,
+							label: item.alias,
+							href: item.url,
+							external: true,
+							icon: toSidebarItem(item).icon
+						}))
+					}
+				]
+			}
+		];
+	}
 };

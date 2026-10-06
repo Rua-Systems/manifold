@@ -114,6 +114,7 @@
 			}
 		}
 		const settings: [string, () => string, PathnameWithSearchOrHash][] = [
+			['dashboard', m.dashboard_title, '/dashboard'],
 			['settings', m.nav_settings, '/settings'],
 			['security', m.settings_section_security, '/settings/security'],
 			['apiKeys', m.settings_section_api_keys, '/settings/api-keys'],

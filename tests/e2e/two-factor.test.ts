@@ -92,7 +92,7 @@ test('two factor sign in works with a TOTP code and with single use backup codes
 	const first = code();
 	await page.getByLabel('Authenticator code').fill(first);
 	await page.getByRole('button', { name: 'Verify' }).click();
-	await page.waitForURL(/\/services$/);
+	await page.waitForURL(/\/dashboard$/);
 
 	await signInToSecondStep(page);
 	await page.getByLabel('Authenticator code').fill(first);
@@ -102,7 +102,7 @@ test('two factor sign in works with a TOTP code and with single use backup codes
 	await chooseSecondFactor(page, 'Backup code');
 	await page.getByRole('textbox', { name: 'Backup code' }).fill(backupCodes[0]);
 	await page.getByRole('button', { name: 'Verify' }).click();
-	await page.waitForURL(/\/services$/);
+	await page.waitForURL(/\/dashboard$/);
 
 	await signInToSecondStep(page);
 	await chooseSecondFactor(page, 'Backup code');
@@ -113,7 +113,7 @@ test('two factor sign in works with a TOTP code and with single use backup codes
 	await chooseSecondFactor(page, 'Authenticator');
 	await page.getByLabel('Authenticator code').fill(code());
 	await page.getByRole('button', { name: 'Verify' }).click();
-	await page.waitForURL(/\/services$/);
+	await page.waitForURL(/\/dashboard$/);
 });
 
 test('a wrong code is refused and two factor can be turned off again', async ({ page }) => {
@@ -128,7 +128,7 @@ test('a wrong code is refused and two factor can be turned off again', async ({ 
 	await expect(page.locator('#loginSecondFactorError')).toHaveText('That code is not valid.');
 	await page.getByLabel('Authenticator code').fill(code());
 	await page.getByRole('button', { name: 'Verify' }).click();
-	await page.waitForURL(/\/services$/);
+	await page.waitForURL(/\/dashboard$/);
 
 	await page.goto('/settings/security', { waitUntil: 'networkidle' });
 	const disable = page.locator('form[action="?/disableTwoFactor"]');
@@ -168,5 +168,5 @@ test('new backup codes replace the old ones', async ({ page }) => {
 	await expect(page.locator('#loginSecondFactorError')).toHaveText('That code is not valid.');
 	await page.getByRole('textbox', { name: 'Backup code' }).fill(fresh[0].trim());
 	await page.getByRole('button', { name: 'Verify' }).click();
-	await page.waitForURL(/\/services$/);
+	await page.waitForURL(/\/dashboard$/);
 });

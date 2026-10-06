@@ -76,7 +76,7 @@ Every save names the version it was based on. When the note was saved somewhere 
 
 ## History
 
-**History**, the clock button at the top of a note, lists the versions of the note, newest first, each with who made it (**Owner**, **API key** or **System**) and when.
+**History**, the clock button at the top of a note, lists the versions of the note, newest first, each with who made it (**Owner**, **API key**, **Note token** or **System**) and when.
 
 Manifold does not keep every autosave. While you edit in the app, a save within five minutes of the start of the newest entry updates that entry instead of adding one, as long as you made that entry yourself; the history therefore holds about one entry per five minutes of editing. Changes through the API or MCP and restores always add an entry of their own. Version numbers count every save, so the history may skip numbers. Entries are kept as long as the note exists.
 

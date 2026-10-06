@@ -17,6 +17,7 @@ Manifold is an open-source, self-hosted workspace for one person: the services y
 
 ## Using Manifold
 
+- [Dashboard](dashboard.md): the page after signing in, with your notes, services, access and usage at a glance.
 - [Your account](account.md): signing in, two-factor authentication, identity confirmation, sessions, preferences and the audit log.
 - [Services](services.md): links to the services you run and the sidebar.
 - [Notes](notes.md): the editor, saving, conflicts, revisions, the trash and images.

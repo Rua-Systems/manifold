@@ -51,5 +51,5 @@ export async function signIn(
 	await page.getByLabel('Username or Email').fill(identifier);
 	await page.getByLabel('Password', { exact: true }).fill(password);
 	await page.getByRole('button', { name: 'Authenticate' }).click();
-	await page.waitForURL(/\/services$/);
+	await page.waitForURL(/\/dashboard$/);
 }
