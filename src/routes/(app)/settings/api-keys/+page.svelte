@@ -2,6 +2,7 @@
 	import ApiKeyForm from '$lib/components/ApiKeys/ApiKeyForm.svelte';
 	import ApiKeyList from '$lib/components/ApiKeys/ApiKeyList.svelte';
 	import NewApiKey from '$lib/components/ApiKeys/NewApiKey.svelte';
+	import NoteTokenList from '$lib/modules/notes/components/NoteTokenList.svelte';
 	import PageShell from '$lib/components/PageShell/PageShell.svelte';
 	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
 	import { m } from '$lib/paraglide/messages.js';
@@ -46,6 +47,11 @@
 		<h2 id="apiKeyListHeading">{m.api_keys_title()}</h2>
 		<p class="lead">{m.api_keys_lead()}</p>
 		<ApiKeyList keys={data.keys} copies={data.copies} />
+	</section>
+	<section class="section" aria-labelledby="noteTokenListHeading">
+		<h2 id="noteTokenListHeading">{m.note_tokens_section()}</h2>
+		<p class="lead">{m.note_tokens_settings_lead()}</p>
+		<NoteTokenList tokens={data.noteTokens} />
 	</section>
 </PageShell>
 

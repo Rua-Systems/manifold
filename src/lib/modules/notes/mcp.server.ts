@@ -62,8 +62,9 @@ export const notesMcpTools: McpTool[] = [
 		name: 'get_note',
 		title: 'Read a note',
 		scope: 'notes:read',
+		noteToken: 'read',
 		description:
-			'Reads one note with its content as Markdown, its `version` and its timestamps. Remember the version: update_note needs it. Notes in the trash can be read too (`deleted_at` is set). Needs the notes:read scope.',
+			'Reads one note with its content as Markdown, its `version` and its timestamps. Remember the version: update_note needs it. Notes in the trash can be read too (`deleted_at` is set). Needs the notes:read scope; a note token reads its own note only.',
 		input: z.object({ id: noteId }),
 		handler: async (args, context) => {
 			const result = await callRoute(
@@ -94,8 +95,9 @@ export const notesMcpTools: McpTool[] = [
 		name: 'update_note',
 		title: 'Change a note',
 		scope: 'notes:write',
+		noteToken: 'edit',
 		description:
-			'Changes the title, the Markdown content, or both, of a note that is not in the trash. `version` must be the version you last read; if the note changed since, the call fails with the code "version_conflict" and the `current_version`: read the note again, merge, and retry with that version. Every change makes a new version and a revision. Needs the notes:write scope.',
+			'Changes the title, the Markdown content, or both, of a note that is not in the trash. `version` must be the version you last read; if the note changed since, the call fails with the code "version_conflict" and the `current_version`: read the note again, merge, and retry with that version. Every change makes a new version and a revision. Needs the notes:write scope; a note token with edit access changes its own note only.',
 		input: z.object({
 			id: noteId,
 			version: z.number().int().min(1).describe('The version the change is based on.'),

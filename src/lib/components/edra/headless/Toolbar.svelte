@@ -7,8 +7,11 @@
 	import LinkForm from './LinkForm.svelte';
 
 	interface Props {
-		/** Opens the file picker; the owner of the editor uploads the file and inserts it. */
-		onimage: () => void;
+		/**
+		 * Opens the file picker; the owner of the editor uploads the file and inserts it. Without
+		 * it the toolbar has no image button, for editors that cannot upload.
+		 */
+		onimage?: () => void;
 		isAllowedLink: (url: string) => boolean;
 	}
 
@@ -80,16 +83,18 @@
 		>
 			<Link2 size={17} />
 		</button>
-		<button
-			type="button"
-			class="tool"
-			aria-label={m.editor_image()}
-			title={m.editor_image()}
-			onmousedown={keepSelection}
-			onclick={onimage}
-		>
-			<ImageIcon size={17} />
-		</button>
+		{#if onimage !== undefined}
+			<button
+				type="button"
+				class="tool"
+				aria-label={m.editor_image()}
+				title={m.editor_image()}
+				onmousedown={keepSelection}
+				onclick={onimage}
+			>
+				<ImageIcon size={17} />
+			</button>
+		{/if}
 	</div>
 </div>
 {#if linkOpen}

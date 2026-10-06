@@ -97,6 +97,27 @@ Notes stay in the trash for `TRASH_RETENTION_DAYS`, 30 days by default, and are 
 
 Below the text of a saved note, **Location** shows a small map of the note's pins, lines and polygons, or **This note has no location yet.** **Show on Map** opens the map at these places, and **Add Location** opens the map ready to draw one for this note. [Map Notes](map-notes.md) explains both.
 
+## Sharing a note
+
+A note token opens one note for someone who has no account, or for a script or an agent that should see this note and nothing else. **Share**, in the bar of a saved note, opens **Share This Note**:
+
+1. Enter a **Name** that tells who or what the token is for, up to 100 characters.
+2. Choose the **Access**: **Read only**, or **Read and edit**.
+3. Choose the day under **Works until**. It starts a week from today, and every token needs one: it works until the end of that day in UTC.
+4. Choose **Create Token**. If you have not confirmed your identity in the last ten minutes, **Confirm Your Identity** asks for your password first, as for an API key.
+5. Copy the **Share link** with **Copy Link**, or the token itself with **Copy Token**. Both are shown only once.
+
+The dialog also lists the tokens of this note with their access, their last day and their status. **Settings → API Keys** lists every note token under **Note Tokens**, with its note, when and from where it was last used, **Revoke**, which stops it at once, and **Delete**, which also removes it from the list. Deleting a note for good deletes its tokens, and a note in the trash opens for none of them until you restore it.
+
+### Opening a shared note
+
+The share link has the form `https://manifold.example.com/shared#mfn_...`. Opening it shows the note on its own page, without the sidebar and without signing in:
+
+- With **Read only**, the title and the text, with images and links, and nothing to change.
+- With **Read and edit**, the title field and the editor with its toolbar, saving by itself like the note page, and with `Ctrl+S`. Images cannot be added through a link, and the history and the trash are not offered. A save that meets a newer version written elsewhere shows the same conflict notice as the note page.
+
+The token sits after the `#` of the link, a part browsers never send to a server; the page takes it out of the address at once and keeps it in a cookie of this browser until the token's last day. **Close Note** forgets it. A revoked, expired or deleted token shows **Open Note** instead, where a token can also be pasted by hand. Changes made with a token are recorded in the history and in the audit log with **Note token** as the author.
+
 ## Through the API and MCP
 
-API keys with `notes:read` read notes and their history; keys with `notes:write` create and change notes, move them to the trash and back, and restore versions. Neither can delete a note for good. Scripts and agents can send and receive notes as Markdown; [REST API](api.md) and [MCP server](mcp.md) describe how.
+API keys with `notes:read` read notes and their history; keys with `notes:write` create and change notes, move them to the trash and back, and restore versions. Neither can delete a note for good. A note token works as a key for its own note alone: it reads the note, and with **Read and edit** it changes it, see [Note tokens](api.md#note-tokens). Scripts and agents can send and receive notes as Markdown; [REST API](api.md) and [MCP server](mcp.md) describe how.

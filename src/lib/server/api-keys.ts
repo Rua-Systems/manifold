@@ -1,36 +1,27 @@
 import { and, desc, eq } from 'drizzle-orm';
-import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { getDb, type Database, type Transaction } from './db';
 import { apiKey } from './db/schema';
 import { NotFoundError } from './errors';
+import { issueToken, tokenMatches, tokenPrefix } from './secret-tokens';
 import type { ApiKeyView } from '$lib/types/api-keys';
 
-// API keys: `mfd_<8 character prefix>_<32 random bytes, base64url>`. The prefix finds the row; only
-// a SHA-256 hash of the whole key is stored, and hashes are compared in constant time. The key
-// itself is shown once, when it is created.
+// API keys: `mfd_` tokens (secret-tokens.ts) with scopes, stored as a hash. The key itself is
+// shown once, when it is created.
 
-const KEY_PATTERN = /^mfd_([a-z0-9]{8})_([A-Za-z0-9_-]{43})$/;
-const PREFIX_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
-const PREFIX_LENGTH = 8;
+/** The one note a note token reaches, and whether it may change it. */
+export interface NoteGrant {
+	id: string;
+	access: 'read' | 'edit';
+}
 
-/** What a request authenticated by a key knows about it. */
+/** What a request authenticated by an API key, or by a note token, knows about it. */
 export interface ApiKeyIdentity {
 	id: string;
 	name: string;
 	scopes: string[];
 	expiresAt: Date | null;
-}
-
-function hashKey(key: string): string {
-	return createHash('sha256').update(key).digest('hex');
-}
-
-function newPrefix(): string {
-	let prefix = '';
-	for (let index = 0; index < PREFIX_LENGTH; index += 1) {
-		prefix += PREFIX_ALPHABET[randomInt(PREFIX_ALPHABET.length)];
-	}
-	return prefix;
+	/** Set for a note token: the routes and tools marked for note tokens, on its own note only. */
+	note?: NoteGrant;
 }
 
 const viewColumns = {
@@ -57,14 +48,13 @@ export async function createApiKey(
 	},
 	db: Database | Transaction = getDb()
 ): Promise<{ key: string; view: ApiKeyView }> {
-	const prefix = newPrefix();
-	const key = `mfd_${prefix}_${randomBytes(32).toString('base64url')}`;
+	const { token: key, prefix, hash } = issueToken('mfd');
 	const [created] = await db
 		.insert(apiKey)
 		.values({
 			name: input.name,
 			prefix,
-			keyHash: hashKey(key),
+			keyHash: hash,
 			scopes: [...new Set(input.scopes)].sort(),
 			expiresAt: input.expiresAt
 		})
@@ -113,17 +103,12 @@ export async function authenticateApiKey(
 	origin: { ip: string | null },
 	now = new Date()
 ): Promise<ApiKeyIdentity | null> {
-	const match = KEY_PATTERN.exec(presented);
-	if (match === null) {
+	const prefix = tokenPrefix(presented, 'mfd');
+	if (prefix === null) {
 		return null;
 	}
-	const [row] = await getDb().select().from(apiKey).where(eq(apiKey.prefix, match[1])).limit(1);
-	if (row === undefined) {
-		return null;
-	}
-	const expected = Buffer.from(row.keyHash, 'hex');
-	const actual = Buffer.from(hashKey(presented), 'hex');
-	if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
+	const [row] = await getDb().select().from(apiKey).where(eq(apiKey.prefix, prefix)).limit(1);
+	if (row === undefined || !tokenMatches(presented, row.keyHash)) {
 		return null;
 	}
 	if (row.revokedAt !== null || (row.expiresAt !== null && row.expiresAt <= now)) {

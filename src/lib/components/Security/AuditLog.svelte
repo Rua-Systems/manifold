@@ -20,6 +20,7 @@
 	const ACTOR_LABELS: Record<ActorType, () => string> = {
 		owner: m.security_actor_owner,
 		api_key: m.security_actor_api_key,
+		note_token: m.security_actor_note_token,
 		cli: m.security_actor_cli,
 		system: m.security_actor_system
 	};

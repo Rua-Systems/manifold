@@ -68,6 +68,7 @@ Some actions ask for your password again, even though you are signed in. This pr
 | -------------------------------------------- | ----------------------- |
 | Changing your email address or your password | **Settings → Profile**  |
 | Creating an API key                          | **Settings → API Keys** |
+| Creating a note token                        | **Share** on a note     |
 | Downloading the export                       | **Settings → Data**     |
 | Revealing, copying or changing a vault value | **Vault**               |
 | Ending one or all other sessions             | **Settings → Security** |
@@ -123,6 +124,7 @@ Other choices belong to the address or to the browser:
 | Signing in  | Sign ins, failed sign ins, sign outs, confirmations of your identity and failed ones, password resets                      |
 | Account     | Email and password changes, two factor authentication turned on or off, new backup codes, sessions signed out              |
 | API keys    | Keys created, revoked and deleted                                                                                          |
+| Note tokens | Tokens created, revoked and deleted, and every change saved through a shared note's page                                   |
 | Vault       | Entries added, changed, deleted, values changed, revealed and copied, key rotations                                        |
 | API and MCP | Every write through the REST API or the MCP server, such as `note.update` or `service.create`; MCP writes carry `via: mcp` |
 | Data        | The export, and backups, restores and migrations run from the command line                                                 |
@@ -131,7 +133,7 @@ Changes you make to notes, map geometries and services in the app itself are not
 
 The table shows the **Time** in UTC, the **Actor**, the **Action**, **Details** such as the target of the action, and the **Origin**, which is the IP address and the browser. The filters above it narrow the list:
 
-- **Actor**: **Anyone**, **Owner**, **API key**, **Command line** or **System**. **System** marks events without a known person, such as failed sign ins.
+- **Actor**: **Anyone**, **Owner**, **API key**, **Note token**, **Command line** or **System**. **System** marks events without a known person, such as failed sign ins.
 - **Action**: the beginning of an action name, such as `auth.` for everything about signing in or `vault.` for the vault.
 - **From** and **To**: a range of days in UTC, both included.
 

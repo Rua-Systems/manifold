@@ -101,7 +101,7 @@ const noteListItem = z.object({
 const revisionListItem = z.object({
 	version: z.number().int(),
 	title: z.string(),
-	actor_type: z.enum(['owner', 'api_key', 'system']),
+	actor_type: z.enum(['owner', 'api_key', 'note_token', 'system']),
 	actor_id: z.string().nullable(),
 	created_at: z.string(),
 	updated_at: z.string()
@@ -211,9 +211,11 @@ export const notesApiRoutes: ApiRoute[] = [
 		method: 'GET',
 		path: '/notes/{id}',
 		scope: 'notes:read',
+		noteToken: 'read',
 		tag: TAG,
 		summary: 'Read a note',
-		description: 'Notes in the trash can be read too; `deleted_at` tells.',
+		description:
+			'Notes in the trash can be read too; `deleted_at` tells. A note token reads its own note only.',
 		params: idParams,
 		query: formatQuery,
 		response: { status: 200, description: 'The note.', schema: noteResource },
@@ -225,10 +227,11 @@ export const notesApiRoutes: ApiRoute[] = [
 		method: 'PATCH',
 		path: '/notes/{id}',
 		scope: 'notes:write',
+		noteToken: 'edit',
 		tag: TAG,
 		summary: 'Change a note',
 		description:
-			'Every change writes a new version and a new revision. A `version` other than the stored one answers 409 with `current_version`.',
+			'Every change writes a new version and a new revision. A `version` other than the stored one answers 409 with `current_version`. A note token with edit access changes its own note only.',
 		params: idParams,
 		body: updateBody,
 		response: { status: 200, description: 'The changed note.', schema: noteResource },

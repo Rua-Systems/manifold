@@ -54,6 +54,8 @@ Scripts and agents authenticate with API keys, which you create under **Settings
 
 There is no scope that writes to the vault.
 
+A note token is a narrower key: it opens a single note, to read it or to read and edit it, as a share link in a browser or as a key for the REST API and MCP, and it always expires. You create one with **Share** on the note's page; see [Sharing a note](notes.md#sharing-a-note).
+
 ## The REST API and the MCP server
 
 The REST API lives under `/api/v1` and the MCP server at `/mcp`. Both take an API key as a Bearer token, follow its scopes and share its rate limit, `API_RATE_LIMIT_PER_MINUTE`, which is 120 requests per minute by default. The API speaks JSON, pages long lists with cursors and describes itself in an OpenAPI 3.1 document at `/api/v1/openapi.json`. The MCP server offers tools that AI agents such as Claude Code call to search, read and write your notes, services and map geometries; a key sees only the tools its scopes allow. Writes through either are recorded in the audit log. [REST API](api.md) and [MCP server](mcp.md) describe both.

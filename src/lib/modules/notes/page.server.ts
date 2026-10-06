@@ -26,6 +26,8 @@ import { mapConfig } from './map/basemaps.server';
 import { listNoteFeatures } from './map/features.server';
 import { NEW_NOTE_ID } from './paths';
 import { noteVersionSchema } from './schemas';
+import { createNoteTokenAction } from './tokens.page.server';
+import { listNoteTokens } from './tokens.server';
 import type { NotePreview, NoteSummary } from './types';
 import { isUploadLimited } from '$lib/server/rate-limit';
 
@@ -34,7 +36,8 @@ const SEARCH_PAGE_LIMIT = 100;
 
 // Loads and form actions behind /notes. The route files only re-export these.
 
-function parseContent(raw: string): unknown {
+/** The editor's JSON from a form field; empty keeps the current content. */
+export function parseContent(raw: string): unknown {
 	if (raw.length === 0) {
 		return undefined;
 	}
@@ -45,7 +48,8 @@ function parseContent(raw: string): unknown {
 	}
 }
 
-function writeFailure(cause: unknown) {
+/** The answer to a failed save: a conflict, field errors or a missing note. */
+export function writeFailure(cause: unknown) {
 	if (cause instanceof ConflictError) {
 		return fail(409, { conflict: true, currentVersion: cause.currentVersion, errors: {} });
 	}
@@ -114,6 +118,7 @@ export async function loadNotePage(id: string, url: URL) {
 			revisions: [],
 			preview: null,
 			features: [],
+			tokens: [],
 			draftKey: crypto.randomUUID(),
 			...shared
 		};
@@ -123,7 +128,8 @@ export async function loadNotePage(id: string, url: URL) {
 	const revision = url.searchParams.has('revision') && requested.success ? requested.data : null;
 	try {
 		const data = await loadNoteData(id, revision);
-		return { ...data, features: await listNoteFeatures(id), draftKey: id, ...shared };
+		const [features, tokens] = await Promise.all([listNoteFeatures(id), listNoteTokens(id)]);
+		return { ...data, features, tokens, draftKey: id, ...shared };
 	} catch (cause) {
 		return notFoundAsPage(cause);
 	}
@@ -193,6 +199,8 @@ export const noteActions = {
 	},
 
 	upload: uploadImage,
+
+	createToken: createNoteTokenAction,
 
 	trash: async ({ locals, params }: RequestEvent) => {
 		requireUser(locals);

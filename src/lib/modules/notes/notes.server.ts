@@ -23,7 +23,7 @@ import { contentToText, validateNoteContent } from './content.server';
 import { note, noteFile, noteRevision } from './schema.server';
 import { containsPattern, prefixQuery } from '$lib/server/search-query';
 import { noteTitleSchema } from './schemas';
-import type { NoteDetail, NoteRevisionSummary, NoteSummary } from './types';
+import type { NoteDetail, NoteRevisionSummary, NoteSummary, RevisionActorType } from './types';
 
 export const NOTES_MODULE = 'notes';
 
@@ -289,8 +289,8 @@ async function recordRevision(
 		return;
 	}
 
-	let actorType: 'owner' | 'api_key' | 'system' = 'system';
-	if (actor.type === 'owner' || actor.type === 'api_key') {
+	let actorType: RevisionActorType = 'system';
+	if (actor.type === 'owner' || actor.type === 'api_key' || actor.type === 'note_token') {
 		actorType = actor.type;
 	}
 	await tx.insert(noteRevision).values({

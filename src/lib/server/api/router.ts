@@ -1,7 +1,6 @@
 import { fieldErrors } from '$lib/utils/validation';
 import type { z } from 'zod';
-import type { Actor } from '../actor';
-import { authenticateApiKey } from '../api-keys';
+import { assertNoteGrant, authenticateCredential, credentialActor } from './credentials';
 import { recordAudit, type AuditOrigin } from '../audit';
 import { getEnv } from '../env';
 import { consumeApiRequest, type RateLimitState } from '../rate-limit';
@@ -109,7 +108,7 @@ export async function handleApiRequest(
 			{ 'WWW-Authenticate': 'Bearer' }
 		);
 	}
-	const key = await authenticateApiKey(token, { ip: options.origin.ip });
+	const key = await authenticateCredential(token, { ip: options.origin.ip });
 	if (key === null) {
 		logSecurityEvent('invalid_key', { path, ip: options.origin.ip });
 		return errorResponse(
@@ -137,14 +136,16 @@ export async function handleApiRequest(
 		);
 	}
 
-	const actor: Actor = { type: 'api_key', id: key.id };
+	const actor = credentialActor(key);
 	try {
 		const captured = found.pattern.exec(path) ?? [];
 		const rawParams = Object.fromEntries(
 			found.names.map((name, index) => [name, decodeURIComponent(captured[index + 1] ?? '')])
 		);
+		const params = route.params === undefined ? undefined : parseWith(route.params, rawParams);
+		assertNoteGrant(key, route.noteToken, params);
 		const context = {
-			params: route.params === undefined ? undefined : parseWith(route.params, rawParams),
+			params,
 			query:
 				route.query === undefined
 					? undefined
