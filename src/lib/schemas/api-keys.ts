@@ -19,5 +19,7 @@ export const apiKeyCreateSchema = z.object({
 		.trim()
 		.refine((value) => value === '' || isCalendarDate(value), {
 			error: () => m.api_keys_error_expiry()
-		})
+		}),
+	/** Saves a copy of the key in the vault, in the same transaction. */
+	vault: z.boolean()
 });

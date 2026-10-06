@@ -5,6 +5,8 @@ export interface VaultSecretView {
 	serviceUrl: string | null;
 	description: string | null;
 	lastRevealedAt: Date | null;
+	/** The API key this entry is a copy of; revoking the key deletes the entry. */
+	apiKeyId: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 }

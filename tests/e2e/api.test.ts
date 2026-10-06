@@ -8,11 +8,19 @@ const PNG = Buffer.from(
 );
 
 /** Creates a key in Settings, answering the step-up dialog, and reads it off the page. */
-async function createKey(page: Page, name: string, scopes: string[]): Promise<string> {
+async function createKey(
+	page: Page,
+	name: string,
+	scopes: string[],
+	options: { vault?: boolean } = {}
+): Promise<string> {
 	await page.goto('/settings/api-keys', { waitUntil: 'networkidle' });
 	await page.getByLabel('Name', { exact: true }).fill(name);
 	for (const scope of scopes) {
 		await page.getByRole('checkbox', { name: new RegExp(scope) }).check();
+	}
+	if (options.vault === true) {
+		await page.getByRole('checkbox', { name: 'Save a copy in the Vault' }).check();
 	}
 	await page.getByRole('button', { name: 'Create Key' }).click();
 
@@ -65,6 +73,33 @@ test('a key is shown once, works on the API and stops working when revoked', asy
 	await expect(page.getByText('API key revoked.')).toBeVisible();
 	await expect(page.locator('.card', { hasText: name })).toContainText('Revoked');
 	expect((await page.request.get('/api/v1/me', { headers })).status()).toBe(401);
+});
+
+test('a copy of a key waits in the vault until the key is revoked', async ({ page }) => {
+	const name = `Agent ${Date.now()}`;
+	const key = await createKey(page, name, ['notes:read'], { vault: true });
+	await expect(page.locator('.new-key')).toContainText('A copy is saved in the Vault.');
+	const card = page.locator('.card', { hasText: name });
+	await expect(card).toContainText('Copy in the Vault');
+
+	// The step-up of the creation still holds, so revealing asks for nothing.
+	await page.goto('/vault', { waitUntil: 'networkidle' });
+	const copy = page.locator('.card', { hasText: `API key: ${name}` });
+	await expect(copy).toContainText('Copy of an API key.');
+	await copy.getByRole('button', { name: `Reveal the value of API key: ${name}` }).click();
+	await expect(copy.locator('code')).toHaveText(key);
+
+	await page.goto('/settings/api-keys', { waitUntil: 'networkidle' });
+	await card.getByRole('button', { name: `Revoke ${name}` }).click();
+	const dialog = page.getByRole('dialog', { name: 'Revoke API Key' });
+	await expect(dialog).toContainText('its copy in the Vault is deleted');
+	await dialog.getByRole('button', { name: 'Revoke' }).click();
+	await expect(
+		page.getByText('API key revoked and its copy in the Vault deleted.')
+	).toBeVisible();
+
+	await page.goto('/vault', { waitUntil: 'networkidle' });
+	await expect(page.locator('.card', { hasText: `API key: ${name}` })).toHaveCount(0);
 });
 
 test('the API ignores session cookies and answers errors as JSON', async ({ page }) => {

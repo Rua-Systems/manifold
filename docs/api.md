@@ -9,12 +9,24 @@ Every request needs an API key. You create keys under **Settings → API Keys**:
 1. Enter a **Name** that tells where the key is used, for example the name of a script. It may have up to 100 characters.
 2. Choose the **Scopes** the key needs, see [Scopes](#scopes). Choosing a write scope also selects the read scope that goes with it; clear that one by hand if the key should not read.
 3. Choose a date under **Expires after** if the key should stop working. It works until the end of that day in UTC. Leave the field empty for a key that does not expire.
-4. Choose **Create Key**. If you have not confirmed your identity in the last ten minutes, the **Confirm Your Identity** dialog asks for your password, and for a code from your authenticator app when two-factor authentication is on.
-5. Copy the key with **Copy Key**. It starts with `mfd_` and is shown only once.
+4. Tick **Save a copy in the Vault** if you want to read the key again later, see [Copies in the vault](#copies-in-the-vault).
+5. Choose **Create Key**. If you have not confirmed your identity in the last ten minutes, the **Confirm Your Identity** dialog asks for your password, and for a code from your authenticator app when two-factor authentication is on.
+6. Copy the key with **Copy Key**. It starts with `mfd_` and is shown only once.
 
-Manifold stores only a SHA-256 hash of the key and a short prefix to find it. The list under **API Keys** shows each key's name, prefix, scopes, expiry date, when and from which address it was last used, and its status: **Active**, **Expired** or **Revoked**. **Revoke** ends access at once, after a confirmation, and cannot be undone.
+Manifold stores only a SHA-256 hash of the key and a short prefix to find it. The list under **API Keys** shows each key's name, prefix, scopes, expiry date, when and from which address it was last used, whether it has a copy in the vault, and its status: **Active**, **Expired** or **Revoked**. **Revoke** ends access at once, after a confirmation, and cannot be undone.
 
 A key cannot be changed after it is created. To give a program other scopes, create a new key and revoke the old one. Creating and revoking keys is recorded in the audit log, see [Your account](account.md). Treat keys like passwords: keep them in the configuration of the program that uses them, never in public code.
+
+### Copies in the vault
+
+With **Save a copy in the Vault** ticked, the key is also saved in the [vault](vault.md), encrypted like every other entry, in the same step that creates it: either both exist or neither does. The page still shows the key once and adds **A copy is saved in the Vault.**
+
+- The entry is named **API key:** followed by the key's name, cut to the vault's 100 characters. Its service address is the address of your Manifold, and its notes list the scopes. You may rename it or change its notes like any entry.
+- In the vault, **Reveal** and **Copy** give you the key again, after you confirm your identity.
+- The key's card under **API Keys** says **Copy in the Vault**. **Revoke** then warns that the copy goes too, and deletes it together with the key. The audit log records `vault.create` and `vault.delete` for the copy next to `api_key.create` and `api_key.revoke`.
+- A key that expires keeps its copy; delete it in the vault when you no longer need it. Deleting the copy leaves the key working.
+
+The box is not ticked by default: a key without a copy exists nowhere but in the program you give it to.
 
 ### Scopes
 
@@ -251,7 +263,7 @@ Basemaps are the tile sources added under **Settings → Map**. The **Standard**
 
 ## Vault
 
-`GET /api/v1/vault/secrets` and `GET /api/v1/vault/secrets/{id}` answer the metadata of vault entries: `id`, `name`, `service_url`, `description`, `created_at` and `updated_at`. They never contain the value or its ciphertext, and there is no route that writes to the vault.
+`GET /api/v1/vault/secrets` and `GET /api/v1/vault/secrets/{id}` answer the metadata of vault entries: `id`, `name`, `service_url`, `description`, `api_key_id`, `created_at` and `updated_at`. `api_key_id` names the API key an entry is a copy of, and is `null` for every other entry. They never contain the value or its ciphertext, and there is no route that writes to the vault.
 
 ## Search
 

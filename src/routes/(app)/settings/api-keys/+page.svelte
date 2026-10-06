@@ -21,6 +21,9 @@
 			? form.key
 			: null
 	);
+	const savedToVault = $derived(
+		form !== null && form !== undefined && 'vault' in form && form.vault === true
+	);
 	const stepUpNeeded = $derived(
 		form !== null && form !== undefined && 'stepUp' in form && form.stepUp === true
 	);
@@ -35,14 +38,14 @@
 	<section class="section" aria-labelledby="apiKeyNewHeading">
 		<h2 id="apiKeyNewHeading">{m.api_keys_new()}</h2>
 		{#if newKey !== null}
-			<NewApiKey apiKey={newKey} />
+			<NewApiKey apiKey={newKey} {savedToVault} />
 		{/if}
 		<ApiKeyForm errors={createErrors} {stepUpNeeded} />
 	</section>
 	<section class="section" aria-labelledby="apiKeyListHeading">
 		<h2 id="apiKeyListHeading">{m.api_keys_title()}</h2>
 		<p class="lead">{m.api_keys_lead()}</p>
-		<ApiKeyList keys={data.keys} />
+		<ApiKeyList keys={data.keys} copies={data.copies} />
 	</section>
 </PageShell>
 

@@ -11,7 +11,7 @@ export const vaultMcpTools: McpTool[] = [
 		title: 'List vault entries',
 		scope: 'vault:read',
 		description:
-			'Lists what the vault holds, by name: id, name, service_url, description and timestamps. Values are never available to tools or the API; the owner reveals them in the app. Useful to tell whether a credential for a service exists. Needs the vault:read scope.',
+			'Lists what the vault holds, by name: id, name, service_url, description, api_key_id (set on the copy of an API key) and timestamps. Values are never available to tools or the API; the owner reveals them in the app. Useful to tell whether a credential for a service exists. Needs the vault:read scope.',
 		input: z.object({
 			limit: z.number().int().min(1).max(100).optional(),
 			cursor: z.string().optional()
