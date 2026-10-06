@@ -1,4 +1,4 @@
-import { createApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
+import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
 import { handleApiRequest } from '$lib/server/api/router';
 import { apiRoutes } from '$lib/server/api/routes';
 import { getDb } from '$lib/server/db';
@@ -147,6 +147,12 @@ describe('API key copies', () => {
 		await expect(getSecret(copy.id)).rejects.toBeInstanceOf(NotFoundError);
 		expect((await listSecrets()).map((secret) => secret.id)).toEqual([other.id]);
 		expect(await apiKeysWithCopy()).toEqual([]);
+	});
+
+	it('goes with its key when the key is deleted', async () => {
+		const { view, copy } = await keyWithCopy('Agent');
+		await deleteApiKey(view.id);
+		await expect(getSecret(copy.id)).rejects.toBeInstanceOf(NotFoundError);
 	});
 
 	it('is never saved without its key', async () => {

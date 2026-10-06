@@ -13,7 +13,7 @@ Every request needs an API key. You create keys under **Settings → API Keys**:
 5. Choose **Create Key**. If you have not confirmed your identity in the last ten minutes, the **Confirm Your Identity** dialog asks for your password, and for a code from your authenticator app when two-factor authentication is on.
 6. Copy the key with **Copy Key**. It starts with `mfd_` and is shown only once.
 
-Manifold stores only a SHA-256 hash of the key and a short prefix to find it. The list under **API Keys** shows each key's name, prefix, scopes, expiry date, when and from which address it was last used, whether it has a copy in the vault, and its status: **Active**, **Expired** or **Revoked**. **Revoke** ends access at once, after a confirmation, and cannot be undone.
+Manifold stores only a SHA-256 hash of the key and a short prefix to find it. The list under **API Keys** shows each key's name, prefix, scopes, expiry date, when and from which address it was last used, whether it has a copy in the vault, and its status: **Active**, **Expired** or **Revoked**. **Revoke** ends access at once, after a confirmation, and cannot be undone; the key stays in the list as **Revoked**. **Delete** removes a key from the list for good, after a confirmation, whatever its status; an active key stops working at the same moment. The audit log keeps the key's events either way.
 
 A key cannot be changed after it is created. To give a program other scopes, create a new key and revoke the old one. Creating and revoking keys is recorded in the audit log, see [Your account](account.md). Treat keys like passwords: keep them in the configuration of the program that uses them, never in public code.
 
@@ -23,7 +23,7 @@ With **Save a copy in the Vault** ticked, the key is also saved in the [vault](v
 
 - The entry is named **API key:** followed by the key's name, cut to the vault's 100 characters. Its service address is the address of your Manifold, and its notes list the scopes. You may rename it or change its notes like any entry.
 - In the vault, **Reveal** and **Copy** give you the key again, after you confirm your identity.
-- The key's card under **API Keys** says **Copy in the Vault**. **Revoke** then warns that the copy goes too, and deletes it together with the key. The audit log records `vault.create` and `vault.delete` for the copy next to `api_key.create` and `api_key.revoke`.
+- The key's card under **API Keys** says **Copy in the Vault**. **Revoke** and **Delete** then warn that the copy goes too, and delete it together with the key. The audit log records `vault.create` and `vault.delete` for the copy next to `api_key.create`, `api_key.revoke` and `api_key.delete`.
 - A key that expires keeps its copy; delete it in the vault when you no longer need it. Deleting the copy leaves the key working.
 
 The box is not ticked by default: a key without a copy exists nowhere but in the program you give it to.

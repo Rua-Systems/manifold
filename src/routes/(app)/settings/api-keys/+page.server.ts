@@ -8,7 +8,7 @@ import {
 import { m } from '$lib/paraglide/messages.js';
 import { apiKeyCreateSchema } from '$lib/schemas/api-keys';
 import { ownerActor } from '$lib/server/actor';
-import { createApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
+import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
 import { originOf, recordAudit } from '$lib/server/audit';
 import { getDb } from '$lib/server/db';
 import { NotFoundError } from '$lib/server/errors';
@@ -140,5 +140,44 @@ export const actions = {
 			throw cause;
 		}
 		return { form: 'revoke', message: m.api_keys_revoked() };
+	},
+
+	delete: async (event) => {
+		const { user } = requireUser(event.locals);
+		const data = await event.request.formData();
+		const id = textValue(data, 'id');
+		try {
+			if (!isUuid(id)) {
+				throw new NotFoundError('API key');
+			}
+			// The copy goes first, so the audit log can name it; the key's row would take it along.
+			const { deleted, copy } = await getDb().transaction(async (tx) => {
+				const removed = await deleteApiKeyCopy(tx, id);
+				return { deleted: await deleteApiKey(id, tx), copy: removed };
+			});
+			await recordAudit({
+				actor: ownerActor(user.id),
+				action: 'api_key.delete',
+				target: { type: 'api_key', id: deleted.id },
+				metadata: { name: deleted.name },
+				origin: originOf(event)
+			});
+			if (copy !== null) {
+				await recordAudit({
+					actor: ownerActor(user.id),
+					action: `${VAULT_MODULE}.delete`,
+					target: { type: 'vault_secret', id: copy.id },
+					metadata: { apiKeyId: deleted.id },
+					origin: originOf(event)
+				});
+				return { form: 'delete', message: m.api_keys_deleted_copy() };
+			}
+		} catch (cause) {
+			if (cause instanceof NotFoundError) {
+				return fail(404, { form: 'delete', message: m.api_keys_error_missing() });
+			}
+			throw cause;
+		}
+		return { form: 'delete', message: m.api_keys_deleted() };
 	}
 } satisfies Actions;

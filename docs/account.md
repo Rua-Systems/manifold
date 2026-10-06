@@ -122,7 +122,7 @@ Other choices belong to the address or to the browser:
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Signing in  | Sign ins, failed sign ins, sign outs, confirmations of your identity and failed ones, password resets                      |
 | Account     | Email and password changes, two factor authentication turned on or off, new backup codes, sessions signed out              |
-| API keys    | Keys created and revoked                                                                                                   |
+| API keys    | Keys created, revoked and deleted                                                                                          |
 | Vault       | Entries added, changed, deleted, values changed, revealed and copied, key rotations                                        |
 | API and MCP | Every write through the REST API or the MCP server, such as `note.update` or `service.create`; MCP writes carry `via: mcp` |
 | Data        | The export, and backups, restores and migrations run from the command line                                                 |

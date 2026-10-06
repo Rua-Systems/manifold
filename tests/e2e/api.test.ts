@@ -73,6 +73,14 @@ test('a key is shown once, works on the API and stops working when revoked', asy
 	await expect(page.getByText('API key revoked.')).toBeVisible();
 	await expect(page.locator('.card', { hasText: name })).toContainText('Revoked');
 	expect((await page.request.get('/api/v1/me', { headers })).status()).toBe(401);
+
+	await card.getByRole('button', { name: `Delete ${name}` }).click();
+	await page
+		.getByRole('dialog', { name: 'Delete API Key' })
+		.getByRole('button', { name: 'Delete' })
+		.click();
+	await expect(page.getByText('API key deleted.')).toBeVisible();
+	await expect(page.locator('.card', { hasText: name })).toHaveCount(0);
 });
 
 test('a copy of a key waits in the vault until the key is revoked', async ({ page }) => {
