@@ -9,6 +9,9 @@ import { readStoredFile, removeStoredFile, writeStoredFile } from './storage';
 import { logSecurityEvent } from '../log';
 
 const ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** Files uploaded through the API belong to no module until a note or service refers to them. */
+export const API_FILE_OWNER = 'api';
 const MAX_NAME_LENGTH = 200;
 
 export interface StoredFile {

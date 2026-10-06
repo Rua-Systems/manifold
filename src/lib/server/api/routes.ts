@@ -2,6 +2,7 @@ import { version } from '$app/environment';
 import { moduleApiRoutes } from '$lib/modules/registry.server';
 import { z } from 'zod';
 import { getEnv } from '../env';
+import { usageApiRoutes } from '../usage/api';
 import { CORE_ROUTES } from './core-routes';
 import { buildOpenApiDocument } from './openapi';
 import { defineRoute, type ApiRoute } from './types';
@@ -22,9 +23,12 @@ const openApiRoute = defineRoute({
 	handler: async () => ({ body: openApiDocument() })
 });
 
-/** Every route under /api/v1: the core's, the modules' from the registry, and the document. */
+/**
+ * Every route under /api/v1: the core's, the usage report, the modules' from the registry, and
+ * the document.
+ */
 export function apiRoutes(): ApiRoute[] {
-	return [...CORE_ROUTES, ...moduleApiRoutes(), openApiRoute];
+	return [...CORE_ROUTES, ...usageApiRoutes, ...moduleApiRoutes(), openApiRoute];
 }
 
 export function openApiDocument(): Record<string, unknown> {

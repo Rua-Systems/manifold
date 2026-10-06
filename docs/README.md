@@ -23,6 +23,7 @@ Manifold is an open-source, self-hosted workspace for one person: the services y
 - [Map Notes](map-notes.md): pins, lines and polygons linked to notes.
 - [Vault](vault.md): passwords and keys, revealing and copying values.
 - [Search and the command palette](search.md): finding anything and moving around with the keyboard.
+- [Usage report](usage.md): what Manifold keeps, the database, the disk and the server.
 
 ## Integrations
 

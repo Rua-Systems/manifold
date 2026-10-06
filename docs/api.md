@@ -1,6 +1,6 @@
 # REST API
 
-The REST API under `/api/v1` gives scripts and other applications access to your services, notes, map features, uploaded images and the names in your vault. It speaks JSON with snake_case field names, authenticates every request with an API key and is described in OpenAPI 3.1 at `/api/v1/openapi.json`. AI agents use the same keys through the [MCP server](mcp.md).
+The REST API under `/api/v1` gives scripts and other applications access to your services, notes, map features, uploaded images, the names in your vault and the usage report. It speaks JSON with snake_case field names, authenticates every request with an API key and is described in OpenAPI 3.1 at `/api/v1/openapi.json`. AI agents use the same keys through the [MCP server](mcp.md).
 
 ## API keys
 
@@ -30,7 +30,7 @@ The box is not ticked by default: a key without a copy exists nowhere but in the
 
 ### Scopes
 
-Each module has its own scopes, and uploaded files have theirs:
+Each module has its own scopes, and uploaded files and the usage report have theirs:
 
 | Scope            | Label in the form                   | Allows                                                                                   |
 | ---------------- | ----------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -43,6 +43,7 @@ Each module has its own scopes, and uploaded files have theirs:
 | `vault:read`     | **Read vault names (never values)** | Listing and reading the name, address and description of vault entries.                  |
 | `files:read`     | **Read files**                      | Downloading uploaded files.                                                              |
 | `files:write`    | **Upload files**                    | Uploading images.                                                                        |
+| `usage:read`     | **Read the usage report**           | Reading the usage report: counts and sizes, the database, the disk and the server.       |
 
 - A write scope does not include the read scope. A key with only `notes:write` can create and change notes, but it cannot list or read them.
 - `vault:read` never sees a value. No API route and no MCP tool returns or accepts a vault value; values are revealed only in the app, after you confirm your identity. See [Vault](vault.md).
@@ -104,6 +105,7 @@ Always use an `https` address: a key sent over plain HTTP crosses the network in
 | `GET`    | `/api/v1/vault/secrets/{id}`                     | `vault:read`     | One entry's name, address and description.                        |
 | `POST`   | `/api/v1/files`                                  | `files:write`    | Upload an image.                                                  |
 | `GET`    | `/api/v1/files/{id}`                             | `files:read`     | Download a file.                                                  |
+| `GET`    | `/api/v1/usage`                                  | `usage:read`     | The usage report, measured now.                                   |
 
 A method that a path does not accept is answered with `405 method_not_allowed` and an `Allow` header that lists the accepted methods. An unknown path is answered with `404 not_found`.
 
@@ -315,6 +317,10 @@ Hits are sorted best first, with a `score` from 0 to 1. `link` is a path in the 
 - A file may be as large as `UPLOAD_MAX_BYTES`, 10 MB unless changed, see [Configuration](configuration.md). A larger file is refused with `413 file_too_large`.
 - `GET /api/v1/files/{id}` answers the file with its image type. The address in `url` works with the same key too, as long as it has `files:read`, and for you in the browser while you are signed in.
 - A file that no note and no service refers to is deleted by the daily housekeeping once it is a day old, so use an upload in a note soon after.
+
+## Usage
+
+`GET /api/v1/usage` answers the report of **Settings → Usage**: how many records each module keeps and their size, the uploaded files by owner, the database and its tables, the upload directory with the free space of its disk, and the server process. It is measured for every request. [Usage report](usage.md#through-the-api-and-mcp) shows the answer.
 
 ## Errors
 

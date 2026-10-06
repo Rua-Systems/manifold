@@ -21,6 +21,7 @@ Create a key under **Settings → API Keys** as described in [API keys](api.md#a
 - For an agent that only looks things up, choose the read scopes: `notes:read`, `map:read`, `services:read` and, if it should know which credentials exist, `vault:read`.
 - Add `notes:write`, `map:write` or `services:write` only when the agent should change data.
 - `vault:read` shows names, addresses and descriptions of vault entries. No tool reads or writes a vault value, whatever the scopes.
+- Add `usage:read` for an agent that should keep an eye on the size of the data or the server; it adds the `get_usage` tool.
 - No tool uses the `files:read` and `files:write` scopes.
 
 An expiry date under **Expires after** limits the damage if the key leaks. Use one key per agent, so that revoking one leaves the others working.
@@ -88,6 +89,7 @@ The answer is a JSON-RPC result with the tools this key may use.
 | `update_map_feature`  | `map:write`      | Replaces the geometry of a feature, keeping its kind.                                         |
 | `delete_map_feature`  | `map:write`      | Removes a feature from the map. Its note stays.                                               |
 | `list_vault_secrets`  | `vault:read`     | Lists vault entries by name, with address and description, never their values.                |
+| `get_usage`           | `usage:read`     | Reports what the app keeps and the resources it uses, as on **Settings → Usage**.             |
 
 Each tool carries a description written for AI agents, which the client shows to the model together with the tool's arguments. Tools that only read are marked with `readOnlyHint`, so clients that support the hint can tell them from tools that change data.
 

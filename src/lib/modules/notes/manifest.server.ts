@@ -8,6 +8,7 @@ import { basemapApiRoutes } from './map/basemaps.api.server';
 import { mapMcpTools } from './map/mcp.server';
 import { notesMcpTools } from './mcp.server';
 import { listNotes, NOTES_MODULE, purgeTrashedNotes, searchNotes } from './notes.server';
+import { notesUsage } from './usage.server';
 
 const SIDEBAR_NOTE_LIMIT = 100;
 
@@ -57,5 +58,6 @@ export const notesServerManifest: ServerModuleManifest = {
 				await purgeTrashedNotes(now, getEnv().TRASH_RETENTION_DAYS);
 			}
 		}
-	]
+	],
+	usage: notesUsage
 };

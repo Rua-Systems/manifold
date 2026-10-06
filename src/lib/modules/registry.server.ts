@@ -2,6 +2,7 @@ import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
 import type { McpTool } from '$lib/server/mcp/types';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
+import type { UsageItem } from '$lib/types/usage';
 import { notesServerManifest } from './notes/manifest.server';
 import { servicesServerManifest } from './services/manifest.server';
 import { vaultServerManifest } from './vault/manifest.server';
@@ -45,4 +46,17 @@ export function moduleApiRoutes(): ApiRoute[] {
 
 export function moduleMcpTools(): McpTool[] {
 	return SERVER_MODULES.flatMap((module) => module.mcp ?? []);
+}
+
+/** The usage of every module that reports one, by module id. */
+export async function moduleUsage(): Promise<Map<string, UsageItem[]>> {
+	const entries = await Promise.all(
+		SERVER_MODULES.map(async (module) => {
+			if (module.usage === undefined) {
+				return null;
+			}
+			return [module.id, await module.usage()] as const;
+		})
+	);
+	return new Map(entries.filter((entry) => entry !== null));
 }

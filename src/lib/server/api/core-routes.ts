@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+	API_FILE_OWNER,
 	fileResponse,
 	findFile,
 	readFileBytes,
@@ -11,9 +12,6 @@ import { ApiError } from './errors';
 import { defineRoute, type ApiRoute } from './types';
 
 // Routes of the core rather than of a module: the key itself and uploaded files.
-
-/** Files uploaded through the API belong to no module until a note or service refers to them. */
-const API_FILE_OWNER = 'api';
 
 const idParams = z.object({ id: z.string().meta({ description: 'The file id.' }) });
 

@@ -10,7 +10,7 @@ export interface ScopeGroup {
 	scopes: ApiScope[];
 }
 
-/** Uploaded files belong to the core, not to a module. */
+/** Uploaded files and the usage report belong to the core, not to a module. */
 const CORE_GROUPS: ScopeGroup[] = [
 	{
 		id: 'files',
@@ -19,6 +19,11 @@ const CORE_GROUPS: ScopeGroup[] = [
 			{ id: 'files:read', access: 'read', label: m.scope_files_read },
 			{ id: 'files:write', access: 'write', label: m.scope_files_write }
 		]
+	},
+	{
+		id: 'usage',
+		label: m.scope_group_usage,
+		scopes: [{ id: 'usage:read', access: 'read', label: m.scope_usage_read }]
 	}
 ];
 
