@@ -522,11 +522,13 @@
 		}
 	}
 
+	// On narrow screens the tools move under the link back rather than widen the page.
 	.bar {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		gap: 1rem;
+		gap: 0.6rem 1rem;
 
 		> .back {
 			@include forms.mutedLink;

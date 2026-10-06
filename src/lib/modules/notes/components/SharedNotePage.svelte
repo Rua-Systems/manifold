@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { beforeNavigate, replaceState } from '$app/navigation';
+	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import AuthShell from '$lib/components/AuthShell/AuthShell.svelte';
 	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
@@ -118,12 +118,14 @@
 
 	// The link carries the token in its fragment, which never reaches the server; it is taken out
 	// of the address at once and posted, so it stays neither in the address bar nor in the history.
+	// The browser's own replaceState, keeping SvelteKit's state: the router's is not ready while the
+	// first page is still hydrating.
 	onMount(() => {
 		const fragment = window.location.hash.slice(1);
 		if (shared !== null || !fragment.startsWith('mfn_') || tokenInput === undefined) {
 			return;
 		}
-		replaceState(localizedHref('/shared'), page.state);
+		window.history.replaceState(window.history.state, '', localizedHref('/shared'));
 		tokenInput.value = fragment;
 		opening = true;
 		openForm?.requestSubmit();
