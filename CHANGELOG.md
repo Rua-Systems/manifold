@@ -2,6 +2,20 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.4.0 - 2026-10-06
+
+API keys can keep a copy in the vault, and Settings has a usage report. This release adds a database migration, which runs on start; take a backup before you update. There are no configuration changes; a minor line such as `0.3` does not move to 0.4 by itself, so set `MANIFOLD_VERSION` to `0.4` or `0.4.0`.
+
+### Added
+
+- **API key copies in the vault:** **Save a copy in the Vault** under **Settings → API Keys** saves a new key in the vault as well, in the same step and encrypted like every entry, so it can be revealed or copied again later after you confirm your identity. The copy is named **API key:** with the key's name, and its card says it is a copy. Revoking the key deletes its copy; an expired key keeps it. The box is off by default.
+- **Usage report:** **Settings → Usage** shows how many notes, notes in the trash, revisions, map features, basemaps, services, vault entries, audit log events, API keys and sessions there are and the space they take, the uploaded files by module, the database and its tables, the free space of the disk that holds the uploads, and the memory and processor time of the server. **Measure Again** measures once more, and **Go to Usage** in the command palette opens it.
+- **REST API and MCP:** `GET /api/v1/usage` and the `get_usage` tool answer the same report with the new `usage:read` scope, labelled **Read the usage report**. Vault entries gain `api_key_id`, set on the copy of an API key.
+
+### Security
+
+- `source-map-js` is updated to 1.2.2, which fixes GHSA-68fv-2mgg-jv7q, a denial of service of high severity through indexed source maps. Only build and lint tools use it.
+
 ## 0.3.0 - 2026-10-04
 
 The map gets basemaps. This release adds a database migration, which runs on start; take a backup before you update. There are no configuration changes; a minor line such as `0.2` does not move to 0.3 by itself, so set `MANIFOLD_VERSION` to `0.3` or `0.3.0`.

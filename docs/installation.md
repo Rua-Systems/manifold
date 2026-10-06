@@ -21,7 +21,7 @@ cd manifold
 For production, check out the latest release instead of the development state of `main`. The [releases page](https://github.com/Rua-Systems/manifold/releases) lists the versions, for example:
 
 ```bash
-git checkout v0.3.0
+git checkout v0.4.0
 ```
 
 ## 2. Create the configuration
@@ -36,7 +36,7 @@ Open `.env` and set at least these values:
 
 | Variable             | What to enter                                                                                        |
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
-| `MANIFOLD_VERSION`   | The release you checked out, for example `0.3.0`.                                                    |
+| `MANIFOLD_VERSION`   | The release you checked out, for example `0.4.0`.                                                    |
 | `ORIGIN`             | The public address, for example `https://manifold.example.com`, without a path or a trailing slash.  |
 | `POSTGRES_PASSWORD`  | A new password for the bundled database. Generate it with the second command below.                  |
 | `BETTER_AUTH_SECRET` | At least 32 random characters. Generate them with the first command below.                           |
@@ -64,7 +64,7 @@ Store copies of `BETTER_AUTH_SECRET` and `ENCRYPTION_KEY` outside the server, fo
 A minimal `.env` for a production server looks like this:
 
 ```dotenv
-MANIFOLD_VERSION=0.3.0
+MANIFOLD_VERSION=0.4.0
 ORIGIN=https://manifold.example.com
 ORGANIZATION_NAME=Manifold
 POSTGRES_USER=manifold
@@ -97,12 +97,12 @@ Every variable is described in [Configuration](configuration.md). Email is optio
 docker compose up -d
 ```
 
-Compose pulls the image in the version set by `MANIFOLD_VERSION` in `.env`: `latest`, a release such as `0.3.0`, or a minor line such as `0.3` for the newest 0.3.x release. To build the image from the checkout instead, for example after changing the code, add `--build`. Compose refuses to start while `ORIGIN`, a `POSTGRES_*` variable, `BETTER_AUTH_SECRET` or `ENCRYPTION_KEY` is empty, and names the variable.
+Compose pulls the image in the version set by `MANIFOLD_VERSION` in `.env`: `latest`, a release such as `0.4.0`, or a minor line such as `0.4` for the newest 0.4.x release. To build the image from the checkout instead, for example after changing the code, add `--build`. Compose refuses to start while `ORIGIN`, a `POSTGRES_*` variable, `BETTER_AUTH_SECRET` or `ENCRYPTION_KEY` is empty, and names the variable.
 
 Images released from the public repository carry a signed attestation of the workflow and commit they were built from. With the GitHub CLI you can check it before you run it:
 
 ```bash
-gh attestation verify oci://ghcr.io/rua-systems/manifold:0.3.0 --owner Rua-Systems
+gh attestation verify oci://ghcr.io/rua-systems/manifold:0.4.0 --owner Rua-Systems
 ```
 
 The image also contains a CycloneDX software bill of materials at `/app/sbom.cdx.json`.
