@@ -92,6 +92,18 @@ export async function revokeApiKey(
 	return revoked;
 }
 
+/** Deletes a key for good, revoked or not; from then on it fails like any unknown key. */
+export async function deleteApiKey(
+	id: string,
+	db: Database | Transaction = getDb()
+): Promise<ApiKeyView> {
+	const [deleted] = await db.delete(apiKey).where(eq(apiKey.id, id)).returning(viewColumns);
+	if (deleted === undefined) {
+		throw new NotFoundError('API key');
+	}
+	return deleted;
+}
+
 /**
  * Finds the key behind a presented one. A malformed, unknown, revoked or expired key answers
  * null, all alike. A valid one has its last use recorded.

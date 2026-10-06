@@ -3,10 +3,11 @@ import { mapBasemap, note } from '$lib/modules/notes/schema.server';
 import { service } from '$lib/modules/services/schema.server';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createApiKey, listApiKeys, revokeApiKey } from '../api-keys';
+import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '../api-keys';
 import { getDb } from '../db';
 import { purgeAuditEvents } from '../audit';
 import { apiKey, auditEvent } from '../db/schema';
+import { NotFoundError } from '../errors';
 import { handleApiRequest } from './router';
 import { apiRoutes, openApiDocument } from './routes';
 
@@ -89,6 +90,20 @@ describe('keys', () => {
 				}
 			});
 		}
+	});
+
+	it('deletes a key, which then works no more', async () => {
+		const doomed = await createApiKey({
+			name: 'Doomed',
+			scopes: ['notes:read'],
+			expiresAt: null
+		});
+		expect((await call('GET', '/me', doomed.key)).status).toBe(200);
+
+		expect((await deleteApiKey(doomed.view.id)).name).toBe('Doomed');
+		expect((await listApiKeys()).map((key) => key.id)).not.toContain(doomed.view.id);
+		expect((await call('GET', '/me', doomed.key)).status).toBe(401);
+		await expect(deleteApiKey(doomed.view.id)).rejects.toBeInstanceOf(NotFoundError);
 	});
 
 	it('describes itself and records its last use', async () => {

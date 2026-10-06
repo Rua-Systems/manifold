@@ -29,7 +29,7 @@ Every reveal and every copy is recorded in the audit log as `vault.reveal` or `v
 
 When you create an API key under **Settings → API Keys**, **Save a copy in the Vault** adds the key to the vault as an entry named **API key:** followed by the key's name. Its card says **Copy of an API key. Revoking the key under Settings → API Keys deletes it.** You reveal, copy, edit and delete it like any other entry.
 
-Revoking the key deletes its copy at once, and the audit log records `vault.delete` for it. A key that expires keeps its copy until you delete it. [REST API](api.md#copies-in-the-vault) describes the option.
+Revoking or deleting the key deletes its copy at once, and the audit log records `vault.delete` for it. A key that expires keeps its copy until you delete it. [REST API](api.md#copies-in-the-vault) describes the option.
 
 Without JavaScript, **Reveal** shows the value on the page that comes back, where it stays until you leave the page. **Copy** does the same, since only a script can write to the clipboard. A link to the confirmation page appears when a confirmation is due.
 

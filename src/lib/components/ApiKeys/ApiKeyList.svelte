@@ -19,6 +19,8 @@
 
 	let revokeOpen = $state(false);
 	let revoking = $state<ApiKeyView | null>(null);
+	let deleteOpen = $state(false);
+	let deleting = $state<ApiKeyView | null>(null);
 
 	const dateFormat = $derived(
 		new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium', timeZone: 'UTC' })
@@ -50,13 +52,30 @@
 		return m.api_keys_revoke_confirm({ name: key.name });
 	}
 
+	function deleteMessage(key: ApiKeyView | null): string {
+		if (key === null) {
+			return '';
+		}
+		if (copies.includes(key.id)) {
+			return m.api_keys_delete_confirm_copy({ name: key.name });
+		}
+		return m.api_keys_delete_confirm({ name: key.name });
+	}
+
 	function startRevoke(key: ApiKeyView): void {
 		revoking = key;
 		revokeOpen = true;
 	}
 
-	const revokeResult: SubmitFunction = () => {
+	function startDelete(key: ApiKeyView): void {
+		deleting = key;
+		deleteOpen = true;
+	}
+
+	/** Revoking and deleting answer alike: a notice, then the list again. */
+	const confirmResult: SubmitFunction = () => {
 		revokeOpen = false;
+		deleteOpen = false;
 		return async ({ result, update }) => {
 			if (result.type === 'success' && typeof result.data?.message === 'string') {
 				notifications.confirm(result.data.message);
@@ -103,16 +122,26 @@
 						{/if}
 					</p>
 				</div>
-				{#if keyState === 'active'}
+				<div class="actions">
+					{#if keyState === 'active'}
+						<button
+							type="button"
+							class="action"
+							aria-label={m.api_keys_revoke_named({ name: key.name })}
+							onclick={() => startRevoke(key)}
+						>
+							{m.api_keys_revoke()}
+						</button>
+					{/if}
 					<button
 						type="button"
-						class="revoke"
-						aria-label={m.api_keys_revoke_named({ name: key.name })}
-						onclick={() => startRevoke(key)}
+						class="action"
+						aria-label={m.api_keys_delete_named({ name: key.name })}
+						onclick={() => startDelete(key)}
 					>
-						{m.api_keys_revoke()}
+						{m.common_delete()}
 					</button>
-				{/if}
+				</div>
 			</li>
 		{/each}
 	</ul>
@@ -126,7 +155,17 @@
 	action="?/revoke"
 	fields={{ id: revoking?.id ?? '' }}
 	confirmLabel={m.api_keys_revoke()}
-	onresult={revokeResult}
+	onresult={confirmResult}
+/>
+<ConfirmDialog
+	bind:open={deleteOpen}
+	id="apiKeyDelete"
+	title={m.api_keys_delete_title()}
+	message={deleteMessage(deleting)}
+	action="?/delete"
+	fields={{ id: deleting?.id ?? '' }}
+	confirmLabel={m.common_delete()}
+	onresult={confirmResult}
 />
 
 <style lang="scss">
@@ -210,12 +249,18 @@
 			}
 		}
 
-		> .revoke {
-			@include forms.quietButton;
-			padding-inline: 0.5rem;
+		> .actions {
+			display: flex;
+			flex: none;
+			gap: 0.2rem;
 
-			&:hover:not(:disabled) {
-				color: clr.$errorColor;
+			> .action {
+				@include forms.quietButton;
+				padding-inline: 0.5rem;
+
+				&:hover:not(:disabled) {
+					color: clr.$errorColor;
+				}
 			}
 		}
 	}
@@ -229,7 +274,7 @@
 		.card {
 			flex-wrap: wrap;
 
-			> .revoke {
+			> .actions {
 				justify-content: flex-end;
 				width: 100%;
 				padding-top: 0.4rem;
