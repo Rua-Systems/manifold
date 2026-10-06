@@ -162,6 +162,9 @@
 						{#if secret.description}
 							<p class="description">{secret.description}</p>
 						{/if}
+						{#if secret.apiKeyId !== null}
+							<p class="copy-of">{m.vault_api_key_copy()}</p>
+						{/if}
 						<p class="value" aria-live="polite">
 							{#if value === null}
 								<span class="mask" aria-label={m.vault_hidden()}>••••••••••••</span>
@@ -325,6 +328,11 @@
 			> .description {
 				font-size: 0.78rem;
 				color: clr.$textSecondaryColor;
+			}
+
+			> .copy-of {
+				font-size: 0.72rem;
+				color: clr.$textMutedColor;
 			}
 
 			> .value {

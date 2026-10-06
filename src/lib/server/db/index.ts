@@ -5,6 +5,9 @@ import * as schema from './schema';
 
 export type Database = PostgresJsDatabase<typeof schema>;
 
+/** A transaction of `Database.transaction`, for writes that succeed or fail together. */
+export type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
+
 export interface Connection {
 	sql: Sql;
 	db: Database;

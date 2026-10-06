@@ -13,6 +13,9 @@ const secretResource = z.object({
 	name: z.string(),
 	service_url: z.string().nullable(),
 	description: z.string().nullable(),
+	api_key_id: z.string().nullable().meta({
+		description: 'The API key this entry is a copy of; revoking the key deletes the entry.'
+	}),
 	created_at: z.string(),
 	updated_at: z.string()
 });
@@ -23,6 +26,7 @@ function toResource(secret: VaultSecretView): z.output<typeof secretResource> {
 		name: secret.name,
 		service_url: secret.serviceUrl,
 		description: secret.description,
+		api_key_id: secret.apiKeyId,
 		created_at: secret.createdAt.toISOString(),
 		updated_at: secret.updatedAt.toISOString()
 	};

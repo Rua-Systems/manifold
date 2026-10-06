@@ -4,9 +4,11 @@
 
 	interface Props {
 		apiKey: string;
+		/** A copy was saved in the vault together with the key. */
+		savedToVault: boolean;
 	}
 
-	let { apiKey }: Props = $props();
+	let { apiKey, savedToVault }: Props = $props();
 
 	const notifications = getNotifications();
 
@@ -19,6 +21,9 @@
 <div class="new-key" role="status">
 	<p>{m.api_keys_new_lead()}</p>
 	<code>{apiKey}</code>
+	{#if savedToVault}
+		<p>{m.api_keys_vault_saved()}</p>
+	{/if}
 	<button type="button" onclick={copy}>{m.api_keys_copy()}</button>
 </div>
 

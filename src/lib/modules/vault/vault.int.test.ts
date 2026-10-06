@@ -1,4 +1,4 @@
-import { createApiKey } from '$lib/server/api-keys';
+import { createApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
 import { handleApiRequest } from '$lib/server/api/router';
 import { apiRoutes } from '$lib/server/api/routes';
 import { getDb } from '$lib/server/db';
@@ -9,13 +9,17 @@ import { randomBytes } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { parseVaultKey, unseal, VaultKeyError } from './crypto.server';
 import { rotateVaultKey } from './rotation.server';
+import { SECRET_NAME_MAX_LENGTH } from './schemas';
 import { vaultSecret } from './schema.server';
 import {
+	apiKeysWithCopy,
 	createSecret,
+	deleteApiKeyCopy,
 	deleteSecret,
 	getSecret,
 	listSecrets,
 	revealSecret,
+	storeApiKeyCopy,
 	updateSecret
 } from './vault.server';
 
@@ -87,6 +91,86 @@ describe('vault', () => {
 	});
 });
 
+describe('API key copies', () => {
+	/** Creates a key and its copy the way Settings does: in one transaction. */
+	async function keyWithCopy(name: string) {
+		return getDb().transaction(async (tx) => {
+			const created = await createApiKey(
+				{ name, scopes: ['notes:read', 'map:read'], expiresAt: null },
+				tx
+			);
+			const copy = await storeApiKeyCopy(tx, {
+				apiKeyId: created.view.id,
+				keyName: created.view.name,
+				key: created.key,
+				scopes: created.view.scopes
+			});
+			return { ...created, copy };
+		});
+	}
+
+	it('keeps the key sealed, named after it and linked to it', async () => {
+		const { key, view, copy } = await keyWithCopy('Agent');
+		expect(copy).toMatchObject({
+			name: 'API key: Agent',
+			serviceUrl: getEnv().ORIGIN,
+			description: 'Scopes: map:read, notes:read',
+			apiKeyId: view.id
+		});
+
+		const [row] = await getDb().select().from(vaultSecret).where(eq(vaultSecret.id, copy.id));
+		expect(row.ciphertext.toString('utf8')).not.toContain(key);
+		expect(await revealSecret(copy.id)).toBe(key);
+		expect(await apiKeysWithCopy()).toEqual([view.id]);
+	});
+
+	it('cuts a long key name to the limit of a vault entry', async () => {
+		const { copy } = await keyWithCopy('k'.repeat(100));
+		expect(Array.from(copy.name)).toHaveLength(SECRET_NAME_MAX_LENGTH);
+	});
+
+	it('goes when its key is revoked, and leaves other entries alone', async () => {
+		const { view, copy } = await keyWithCopy('Agent');
+		const other = await createSecret(secretInput('Mail'));
+		const plain = await createApiKey({
+			name: 'Plain',
+			scopes: ['notes:read'],
+			expiresAt: null
+		});
+
+		expect(await getDb().transaction((tx) => deleteApiKeyCopy(tx, plain.view.id))).toBeNull();
+		const deleted = await getDb().transaction(async (tx) => {
+			await revokeApiKey(view.id, new Date(), tx);
+			return deleteApiKeyCopy(tx, view.id);
+		});
+		expect(deleted?.id).toBe(copy.id);
+		await expect(getSecret(copy.id)).rejects.toBeInstanceOf(NotFoundError);
+		expect((await listSecrets()).map((secret) => secret.id)).toEqual([other.id]);
+		expect(await apiKeysWithCopy()).toEqual([]);
+	});
+
+	it('is never saved without its key', async () => {
+		await expect(
+			getDb().transaction(async (tx) => {
+				const created = await createApiKey(
+					{ name: 'Rolled back', scopes: ['notes:read'], expiresAt: null },
+					tx
+				);
+				await storeApiKeyCopy(tx, {
+					apiKeyId: created.view.id,
+					keyName: created.view.name,
+					key: created.key,
+					scopes: created.view.scopes
+				});
+				throw new Error('Rolled back on purpose.');
+			})
+		).rejects.toThrow('Rolled back on purpose.');
+
+		expect(await listSecrets()).toEqual([]);
+		expect((await listApiKeys()).map((key) => key.name)).not.toContain('Rolled back');
+	});
+});
+
 describe('API', () => {
 	it('shows metadata only and has no way to write', async () => {
 		const created = await createSecret(secretInput('Mail'));
@@ -106,6 +190,7 @@ describe('API', () => {
 			expect(response.status).toBe(200);
 			const text = await response.text();
 			expect(text).toContain('Mail');
+			expect(text).toContain('"api_key_id":null');
 			expect(text).not.toContain(VALUE);
 			expect(text).not.toMatch(/ciphertext|auth_tag|"iv"|"value"/);
 		}

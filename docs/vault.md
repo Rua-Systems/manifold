@@ -25,6 +25,12 @@ Both ask you to confirm your identity first: your password, and a code from your
 
 Every reveal and every copy is recorded in the audit log as `vault.reveal` or `vault.copy`, without the value.
 
+## Copies of API keys
+
+When you create an API key under **Settings → API Keys**, **Save a copy in the Vault** adds the key to the vault as an entry named **API key:** followed by the key's name. Its card says **Copy of an API key. Revoking the key under Settings → API Keys deletes it.** You reveal, copy, edit and delete it like any other entry.
+
+Revoking the key deletes its copy at once, and the audit log records `vault.delete` for it. A key that expires keeps its copy until you delete it. [REST API](api.md#copies-in-the-vault) describes the option.
+
 Without JavaScript, **Reveal** shows the value on the page that comes back, where it stays until you leave the page. **Copy** does the same, since only a script can write to the clipboard. A link to the confirmation page appears when a confirmation is due.
 
 ## Editing
@@ -44,7 +50,7 @@ Choose **Save**. The audit log records `vault.update` for the details and `vault
 
 The vault has a single API scope, `vault:read`, labelled **Read vault names (never values)**. There is no scope to write to the vault.
 
-- The REST API lists entries and reads single entries: the id, the name, the service address, the notes and when the entry was created and last changed. No route returns or accepts a value.
+- The REST API lists entries and reads single entries: the id, the name, the service address, the notes, the API key an entry is a copy of, and when the entry was created and last changed. No route returns or accepts a value.
 - The MCP server offers one vault tool, which lists the same details so that an agent can tell whether a credential for a service exists.
 - The search, in the command palette, on the search page and through the API or MCP, finds entries by name and service address. A hit leads to the Vault page, where the value still needs a confirmation.
 

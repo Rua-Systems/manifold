@@ -1,6 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
-import { getDb } from './db';
+import { getDb, type Database, type Transaction } from './db';
 import { apiKey } from './db/schema';
 import { NotFoundError } from './errors';
 import type { ApiKeyView } from '$lib/types/api-keys';
@@ -45,15 +45,21 @@ const viewColumns = {
 	createdAt: apiKey.createdAt
 };
 
-/** Creates a key and answers it in full; this is the only time the full key exists. */
-export async function createApiKey(input: {
-	name: string;
-	scopes: string[];
-	expiresAt: Date | null;
-}): Promise<{ key: string; view: ApiKeyView }> {
+/**
+ * Creates a key and answers it in full; this is the only time the full key exists. Pass a
+ * transaction to create it together with other rows, such as its copy in the vault.
+ */
+export async function createApiKey(
+	input: {
+		name: string;
+		scopes: string[];
+		expiresAt: Date | null;
+	},
+	db: Database | Transaction = getDb()
+): Promise<{ key: string; view: ApiKeyView }> {
 	const prefix = newPrefix();
 	const key = `mfd_${prefix}_${randomBytes(32).toString('base64url')}`;
-	const [created] = await getDb()
+	const [created] = await db
 		.insert(apiKey)
 		.values({
 			name: input.name,
@@ -70,8 +76,12 @@ export async function listApiKeys(): Promise<ApiKeyView[]> {
 	return getDb().select(viewColumns).from(apiKey).orderBy(desc(apiKey.createdAt));
 }
 
-export async function revokeApiKey(id: string, now = new Date()): Promise<ApiKeyView> {
-	const [revoked] = await getDb()
+export async function revokeApiKey(
+	id: string,
+	now = new Date(),
+	db: Database | Transaction = getDb()
+): Promise<ApiKeyView> {
+	const [revoked] = await db
 		.update(apiKey)
 		.set({ revokedAt: now, updatedAt: now })
 		.where(eq(apiKey.id, id))

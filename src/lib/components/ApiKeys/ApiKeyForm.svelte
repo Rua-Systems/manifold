@@ -98,6 +98,13 @@
 		<p class="hint" id="apiKeyExpiresHint">{m.api_keys_expires_hint()}</p>
 		<p class="error" id="apiKeyExpiresError">{errors.expires ?? ''}</p>
 	</div>
+	<div class="field">
+		<label class="check">
+			<input type="checkbox" name="vault" aria-describedby="apiKeyVaultHint" />
+			<span>{m.api_keys_vault()}</span>
+		</label>
+		<p class="hint" id="apiKeyVaultHint">{m.api_keys_vault_hint()}</p>
+	</div>
 	<div class="submit">
 		<p class="notice" role="alert">
 			{#if stepUpNeeded}
@@ -127,8 +134,24 @@
 	}
 
 	.field {
-		> label {
+		> label:not(.check) {
 			@include forms.fieldLabel;
+		}
+
+		> .check {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.6rem;
+			min-height: vars.$touchTarget;
+			font-size: 0.8rem;
+			color: clr.$textSecondaryColor;
+			cursor: pointer;
+
+			> input {
+				width: 1.1rem;
+				height: 1.1rem;
+				accent-color: clr.$accentColor;
+			}
 		}
 
 		> input {

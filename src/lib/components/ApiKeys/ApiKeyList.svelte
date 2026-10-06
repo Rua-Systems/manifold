@@ -9,9 +9,11 @@
 
 	interface Props {
 		keys: ApiKeyView[];
+		/** Ids of the keys with a copy in the vault, which revoking deletes. */
+		copies: string[];
 	}
 
-	let { keys }: Props = $props();
+	let { keys, copies }: Props = $props();
 
 	const notifications = getNotifications();
 
@@ -37,6 +39,16 @@
 		revoked: m.api_keys_status_revoked,
 		expired: m.api_keys_status_expired
 	};
+
+	function revokeMessage(key: ApiKeyView | null): string {
+		if (key === null) {
+			return '';
+		}
+		if (copies.includes(key.id)) {
+			return m.api_keys_revoke_confirm_copy({ name: key.name });
+		}
+		return m.api_keys_revoke_confirm({ name: key.name });
+	}
 
 	function startRevoke(key: ApiKeyView): void {
 		revoking = key;
@@ -86,6 +98,9 @@
 									time: relativeTime(key.lastUsedAt, getLocale()),
 									ip: key.lastUsedIp ?? m.security_unknown()
 								})}
+						{#if copies.includes(key.id)}
+							· {m.api_keys_vault_copy()}
+						{/if}
 					</p>
 				</div>
 				{#if keyState === 'active'}
@@ -107,7 +122,7 @@
 	bind:open={revokeOpen}
 	id="apiKeyRevoke"
 	title={m.api_keys_revoke_title()}
-	message={m.api_keys_revoke_confirm({ name: revoking?.name ?? '' })}
+	message={revokeMessage(revoking)}
 	action="?/revoke"
 	fields={{ id: revoking?.id ?? '' }}
 	confirmLabel={m.api_keys_revoke()}
