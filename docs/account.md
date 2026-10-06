@@ -9,7 +9,7 @@ Open `/login` (`/tr/login` for Turkish), enter your **Username or Email** and yo
 - An entry with an `@` sign is treated as an email address, anything else as a username. Both match regardless of upper and lower case.
 - A wrong password and an unknown name get the same answer, so nobody can find out which part was wrong.
 - Each client address may try 5 times per minute; after that the page asks you to wait a minute. Failed attempts appear in the audit log without what was typed, since a mistyped password can end up in the name field.
-- After signing in you land on **Services**, or on the page you were trying to open.
+- After signing in you land on the **Dashboard**, or on the page you were trying to open.
 
 When mail is set up, Manifold also mails you a notice when you sign in from a browser it has not seen before. A session ends by itself when it has not been used for about a week.
 

@@ -123,6 +123,29 @@ function processUsage(now: Date): ProcessUsage {
 	};
 }
 
+/** The few numbers the dashboard shows, without sizing every table and record. */
+export async function usageSummary(): Promise<{
+	databaseBytes: number;
+	uploadBytes: number;
+	diskFreeBytes: number | null;
+	rssBytes: number;
+}> {
+	const directory = uploadDirectory();
+	const [[size], uploads, disk] = await Promise.all([
+		getDb().execute<{ bytes: number }>(
+			sql`select pg_database_size(current_database())::float8 as bytes`
+		),
+		measureDirectory(directory),
+		diskSpace(directory)
+	]);
+	return {
+		databaseBytes: size.bytes,
+		uploadBytes: uploads.bytes,
+		diskFreeBytes: disk?.free ?? null,
+		rssBytes: process.memoryUsage().rss
+	};
+}
+
 /** Measures everything at once; nothing is cached, so the report is always current. */
 export async function usageReport(now = new Date()): Promise<UsageReport> {
 	const [content, files, database, storage] = await Promise.all([

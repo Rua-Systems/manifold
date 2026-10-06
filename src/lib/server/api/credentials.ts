@@ -1,4 +1,5 @@
 import { SERVER_MODULES } from '$lib/modules/registry.server';
+import type { DashboardStat } from '$lib/types/dashboard';
 import type { Actor } from '../actor';
 import { authenticateApiKey, type ApiKeyIdentity, type NoteGrant } from '../api-keys';
 import { ApiError } from './errors';
@@ -14,6 +15,15 @@ export interface CredentialProvider {
 		presented: string,
 		origin: { ip: string | null }
 	) => Promise<ApiKeyIdentity | null>;
+	/** How many of these tokens work now, for the dashboard's access card. */
+	summary?: () => Promise<DashboardStat>;
+}
+
+/** The working tokens of every module that issues some, for the dashboard. */
+export async function credentialSummaries(): Promise<DashboardStat[]> {
+	const providers = SERVER_MODULES.flatMap((module) => module.credentials ?? []);
+	const summaries = await Promise.all(providers.map((provider) => provider.summary?.()));
+	return summaries.filter((summary) => summary !== undefined);
 }
 
 /** The identity behind a presented Bearer token, or null for anything invalid, all alike. */

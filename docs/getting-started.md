@@ -21,11 +21,11 @@ The features you work with come as modules. A module has its own page, its own e
 | Map Notes | `/notes/map` | Pins, lines and polygons on a map, each linked to a note. Map Notes is part of the Notes module.  |
 | Vault     | `/vault`     | Passwords and keys, encrypted in the database and shown only after you confirm your identity.     |
 
-Services is the page you land on after signing in. [Services](services.md), [Notes](notes.md), [Map Notes](map-notes.md) and [Vault](vault.md) describe each module.
+After signing in you land on the [Dashboard](dashboard.md), which sums up the modules, access and usage on one page. [Services](services.md), [Notes](notes.md), [Map Notes](map-notes.md) and [Vault](vault.md) describe each module.
 
 ## The sidebar and the account menu
 
-The sidebar lists **Search**, the modules and **Settings**. **Services** and **Notes** are groups that open to show their items: every service, and for notes **Map Notes**, **New Note**, a filter, your most recently changed notes and **Show all**. **Vault** is a plain link. The button with the person icon in the top right corner opens the account menu, with **Settings**, the **Language** and **Theme** switches, and **Logout**.
+The sidebar lists **Search**, **Dashboard**, the modules and **Settings**. **Services** and **Notes** are groups that open to show their items: every service, and for notes **Map Notes**, **New Note**, a filter, your most recently changed notes and **Show all**. **Vault** is a plain link. The button with the person icon in the top right corner opens the account menu, with **Settings**, the **Language** and **Theme** switches, and **Logout**.
 
 ## Search and the command palette
 

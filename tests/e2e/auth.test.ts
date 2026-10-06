@@ -4,13 +4,13 @@ import { expect, signIn, test } from './fixtures';
 test('the owner signs in with the username', async ({ page }) => {
 	await signIn(page, TEST_OWNER.username);
 
-	await expect(page.getByRole('heading', { level: 1, name: 'Services' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
 });
 
 test('the owner signs in with the email address', async ({ page }) => {
 	await signIn(page, TEST_OWNER.email.toUpperCase());
 
-	await expect(page).toHaveURL(/\/services$/);
+	await expect(page).toHaveURL(/\/dashboard$/);
 });
 
 test('a wrong password is refused without saying which part was wrong', async ({ page }) => {
@@ -68,21 +68,21 @@ test('the root sends guests to sign in and the owner to services', async ({ page
 
 	await signIn(page);
 	await page.goto('/');
-	await expect(page).toHaveURL(/\/services$/);
+	await expect(page).toHaveURL(/\/dashboard$/);
 });
 
-test('old dashboard links land on services', async ({ page }) => {
+test('old dashboard links land on the dashboard', async ({ page }) => {
 	await page.goto('/dashboard/map-notes');
-	await expect(page).toHaveURL(/\/login\?redirectTo=%2Fservices$/);
+	await expect(page).toHaveURL(/\/login\?redirectTo=%2Fdashboard$/);
 
 	await signIn(page);
 	for (const path of ['/dashboard', '/dashboard/map-notes']) {
 		await page.goto(path);
-		await expect(page).toHaveURL(/\/services$/);
+		await expect(page).toHaveURL(/\/dashboard$/);
 	}
 
-	await page.goto('/tr/dashboard');
-	await expect(page).toHaveURL(/\/tr\/services$/);
+	await page.goto('/tr/dashboard/map-notes');
+	await expect(page).toHaveURL(/\/tr\/dashboard$/);
 });
 
 test('protected pages send guests to sign in and back afterwards', async ({ page }) => {

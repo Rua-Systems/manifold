@@ -82,7 +82,7 @@ async function auditFailedSignIn(event: RequestEvent, method: string): Promise<v
 }
 
 function redirectTarget(data: FormData): string {
-	return safeRedirectTarget(data.get('redirectTo'), localizeHref('/services'));
+	return safeRedirectTarget(data.get('redirectTo'), localizeHref('/dashboard'));
 }
 
 function requireEmail(): void {
@@ -96,7 +96,7 @@ export const load: PageServerLoad = ({ locals, url }) => {
 	if (locals.user !== null) {
 		redirect(
 			303,
-			safeRedirectTarget(url.searchParams.get('redirectTo'), localizeHref('/services'))
+			safeRedirectTarget(url.searchParams.get('redirectTo'), localizeHref('/dashboard'))
 		);
 	}
 };

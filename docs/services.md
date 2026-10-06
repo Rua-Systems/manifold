@@ -1,6 +1,6 @@
 # Services
 
-Services are links to the services you run, such as a router, a monitoring dashboard or a NAS, each with an optional icon. They are kept in an order you choose and appear in three places: on the **Services** page, in the sidebar and in the command palette. **Services** is also the page you land on after signing in.
+Services are links to the services you run, such as a router, a monitoring dashboard or a NAS, each with an optional icon. They are kept in an order you choose and appear in four places: on the **Services** page, in the sidebar, in the command palette and as shortcuts on the [Dashboard](dashboard.md).
 
 ## The Services page
 

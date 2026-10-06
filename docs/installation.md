@@ -133,7 +133,7 @@ The most common reason is an invalid environment: the app names every variable t
 
 ## 5. Sign in
 
-Open `/login` on your `ORIGIN`, for example `https://manifold.example.com/login`, and sign in with `OWNER_USERNAME` or `OWNER_EMAIL` and `OWNER_PASSWORD`. Manifold has exactly one account, the owner, and no sign-up. After signing in you land on **Services**.
+Open `/login` on your `ORIGIN`, for example `https://manifold.example.com/login`, and sign in with `OWNER_USERNAME` or `OWNER_EMAIL` and `OWNER_PASSWORD`. Manifold has exactly one account, the owner, and no sign-up. After signing in you land on the **Dashboard**.
 
 Once the owner exists, the `OWNER_*` variables are ignored, and the log reminds you that they can be removed. Remove at least `OWNER_PASSWORD` from `.env`. If you forget the username later, `docker compose exec app node cli.js owner:show` prints it; [Operations](operations.md) describes the other recovery commands.
 

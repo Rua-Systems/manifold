@@ -13,6 +13,7 @@
 	import { deLocalizeHref } from '$lib/paraglide/runtime.js';
 	import { getPalette } from '$lib/state/palette.svelte';
 	import { getSidebarState } from '$lib/state/sidebar.svelte';
+	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import Search from '@lucide/svelte/icons/search';
 	import type { SearchHit } from '$lib/types/search';
 	import { postAction } from '$lib/utils/actions';
@@ -252,6 +253,22 @@
 							<kbd>Ctrl K</kbd>
 						</span>
 					</button>
+				</div>
+			</li>
+			<li class="entry">
+				<div class="entry-row">
+					<a
+						class="entry-link"
+						class:active={currentMarker(page.url, '/dashboard') === 'page'}
+						href={localizedHref('/dashboard')}
+						aria-current={currentMarker(page.url, '/dashboard')}
+						title={m.dashboard_title()}
+					>
+						<span class="icon">
+							<LayoutDashboard size="1.2rem" />
+						</span>
+						<span class="label">{m.dashboard_title()}</span>
+					</a>
 				</div>
 			</li>
 			{#each MODULES as module (module.id)}

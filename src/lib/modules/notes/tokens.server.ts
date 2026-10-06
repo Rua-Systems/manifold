@@ -4,7 +4,8 @@ import { getDb } from '$lib/server/db';
 import { NotFoundError } from '$lib/server/errors';
 import { issueToken, tokenMatches, tokenPrefix } from '$lib/server/secret-tokens';
 import { isUuid } from '$lib/utils/uuid';
-import { and, desc, eq, isNull, type SQL } from 'drizzle-orm';
+import { m } from '$lib/paraglide/messages.js';
+import { and, count, desc, eq, gt, isNull, type SQL } from 'drizzle-orm';
 import { note, noteFile, noteToken } from './schema.server';
 import type { NoteTokenAccess, NoteTokenView } from './types';
 
@@ -194,8 +195,26 @@ export function noteTokenIdentity(grant: NoteTokenGrant): ApiKeyIdentity {
 	};
 }
 
+/** Tokens that work now: neither revoked nor expired, on a note outside the trash. */
+export async function countWorkingNoteTokens(now = new Date()): Promise<number> {
+	const [row] = await getDb()
+		.select({ value: count() })
+		.from(noteToken)
+		.innerJoin(note, eq(note.id, noteToken.noteId))
+		.where(
+			and(isNull(noteToken.revokedAt), gt(noteToken.expiresAt, now), isNull(note.deletedAt))
+		);
+	return row.value;
+}
+
 export const noteTokenCredentials: CredentialProvider = {
 	prefix: NOTE_TOKEN_PREFIX,
+	summary: async () => ({
+		id: 'note_tokens',
+		label: m.dashboard_note_tokens(),
+		value: await countWorkingNoteTokens(),
+		unit: 'count'
+	}),
 	authenticate: async (presented, origin) => {
 		const grant = await authenticateNoteToken(presented, origin);
 		if (grant === null) {

@@ -2,7 +2,9 @@ import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
 import type { McpTool } from '$lib/server/mcp/types';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
+import type { DashboardCard } from '$lib/types/dashboard';
 import type { UsageItem } from '$lib/types/usage';
+import { MODULES } from './registry';
 import { notesServerManifest } from './notes/manifest.server';
 import { servicesServerManifest } from './services/manifest.server';
 import { vaultServerManifest } from './vault/manifest.server';
@@ -46,6 +48,18 @@ export function moduleApiRoutes(): ApiRoute[] {
 
 export function moduleMcpTools(): McpTool[] {
 	return SERVER_MODULES.flatMap((module) => module.mcp ?? []);
+}
+
+/** The dashboard cards of every module that has some, in sidebar order. */
+export async function moduleDashboardCards(): Promise<DashboardCard[]> {
+	const byModule = new Map(
+		await Promise.all(
+			SERVER_MODULES.map(
+				async (module) => [module.id, (await module.dashboard?.()) ?? []] as const
+			)
+		)
+	);
+	return MODULES.flatMap((module) => byModule.get(module.id) ?? []);
 }
 
 /** The usage of every module that reports one, by module id. */
