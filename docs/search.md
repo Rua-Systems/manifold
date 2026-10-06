@@ -33,12 +33,12 @@ Hits of all modules are sorted together, best first. A title, alias or name that
 
 Press `Ctrl+K`, or `Cmd+K` on a Mac, on any page while you are signed in, or choose **Search** at the top of the sidebar. The palette starts empty each time and lists everything it offers, in sections:
 
-| Section            | Entries                                                                                                                                      |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Go to**          | **Go to** each module and to **Settings**, **Security**, **API Keys**, **Map** and **Data**; **New Service**, **Map Notes** and **New Note** |
-| **Actions**        | **Toggle light and dark theme**, switching to the other language, and **Logout**                                                             |
-| **Services**       | Every service, with its address; choosing one opens it in a new tab                                                                          |
-| **Search results** | Hits of the search, from the second character you type on, and **All results for** what you typed                                            |
+| Section            | Entries                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Go to**          | **Go to** each module and to **Settings**, **Security**, **API Keys**, **Map**, **Usage** and **Data**; **New Service**, **Map Notes** and **New Note** |
+| **Actions**        | **Toggle light and dark theme**, switching to the other language, and **Logout**                                                                        |
+| **Services**       | Every service, with its address; choosing one opens it in a new tab                                                                                     |
+| **Search results** | Hits of the search, from the second character you type on, and **All results for** what you typed                                                       |
 
 Typing narrows the first three sections to entries whose text contains what you typed. From the second character on, the palette also asks the search, shortly after you stop typing, and lists up to ten hits under **Search results**, each with a short passage, an address or its kind (**Note**, **Service** or **Vault**). The last entry, **All results for** what you typed, opens the [search page](#the-search-page) with every hit. **Nothing matches.** means neither found anything.
 

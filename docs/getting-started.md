@@ -39,17 +39,18 @@ One search covers your notes, your services and the names of your vault entries.
 
 Scripts and agents authenticate with API keys, which you create under **Settings → API Keys**. A key has a name, one or more scopes and an optional last day (UTC) after which it stops working. Creating a key asks you to confirm your identity; the full key, which starts with `mfd_`, is shown only once, and Manifold keeps only a hash of it. The list shows each key's scopes, its status (**Active**, **Expired** or **Revoked**) and when and from which address it was last used. **Revoke** stops a key at once; to rotate a key, create a new one and revoke the old one. Scopes are granted per module, and a write scope does not include reading: choosing a write scope in the form ticks its read scope too, and you can clear it again.
 
-| Scope            | Grants                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------- |
-| `services:read`  | Reading services.                                                                   |
-| `services:write` | Adding, changing, ordering and deleting services.                                   |
-| `notes:read`     | Reading notes and their history.                                                    |
-| `notes:write`    | Creating and changing notes, moving them to the trash and back, restoring versions. |
-| `map:read`       | Reading map geometries.                                                             |
-| `map:write`      | Adding, changing and deleting map geometries.                                       |
-| `vault:read`     | Reading the names, addresses and notes of vault entries, never their values.        |
-| `files:read`     | Downloading uploaded files.                                                         |
-| `files:write`    | Uploading images.                                                                   |
+| Scope            | Grants                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `services:read`  | Reading services.                                                                    |
+| `services:write` | Adding, changing, ordering and deleting services.                                    |
+| `notes:read`     | Reading notes and their history.                                                     |
+| `notes:write`    | Creating and changing notes, moving them to the trash and back, restoring versions.  |
+| `map:read`       | Reading map geometries.                                                              |
+| `map:write`      | Adding, changing and deleting map geometries.                                        |
+| `vault:read`     | Reading the names, addresses and notes of vault entries, never their values.         |
+| `files:read`     | Downloading uploaded files.                                                          |
+| `files:write`    | Uploading images.                                                                    |
+| `usage:read`     | Reading the [usage report](usage.md): counts and sizes, the database and the server. |
 
 There is no scope that writes to the vault.
 

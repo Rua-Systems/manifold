@@ -1,6 +1,9 @@
+import { m } from '$lib/paraglide/messages.js';
+import { measureRows } from '$lib/server/usage/measure';
 import type { ServerModuleManifest } from '../types.server';
 import { vaultApiRoutes } from './api.server';
 import { vaultMcpTools } from './mcp.server';
+import { vaultSecret } from './schema.server';
 import { searchSecrets, VAULT_MODULE } from './vault.server';
 
 export const vaultServerManifest: ServerModuleManifest = {
@@ -21,5 +24,8 @@ export const vaultServerManifest: ServerModuleManifest = {
 				external: false,
 				score: secret.score
 			}))
-	}
+	},
+	usage: async () => [
+		{ id: 'vault.secrets', label: m.usage_vault_secrets(), ...(await measureRows(vaultSecret)) }
+	]
 };

@@ -1,8 +1,10 @@
 import { m } from '$lib/paraglide/messages.js';
+import { measureRows } from '$lib/server/usage/measure';
 import type { SidebarItem } from '../types';
 import type { ServerModuleManifest } from '../types.server';
 import { servicesApiRoutes } from './api.server';
 import { servicesMcpTools } from './mcp.server';
+import { service } from './schema.server';
 import { listServices, searchServices, SERVICES_MODULE } from './services.server';
 import type { Service } from './types';
 
@@ -57,5 +59,9 @@ export const servicesServerManifest: ServerModuleManifest = {
 				external: true,
 				score: item.score
 			}))
-	}
+	},
+	// Icons are uploaded files, which the report counts by module on its own.
+	usage: async () => [
+		{ id: 'services.services', label: m.usage_services(), ...(await measureRows(service)) }
+	]
 };

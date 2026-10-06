@@ -19,7 +19,8 @@ const ALL_SCOPES = [
 	'map:write',
 	'services:read',
 	'services:write',
-	'vault:read'
+	'vault:read',
+	'usage:read'
 ];
 
 const clients: Client[] = [];
@@ -220,5 +221,18 @@ describe('MCP', () => {
 
 		const hits = await call(client, 'search', { query: 'grafana' });
 		expect((hits.data as { type: string }[]).map((hit) => hit.type)).toEqual(['secret']);
+	});
+
+	it('reports usage to a key with usage:read', async () => {
+		const usage = await call(await connect(['usage:read']), 'get_usage', {});
+		expect(usage.isError).toBe(false);
+		expect(usage.data).toMatchObject({
+			measured_at: expect.any(String),
+			database: { bytes: expect.any(Number) },
+			process: { node_version: process.version }
+		});
+
+		const tools = await (await connect(['notes:read'])).listTools();
+		expect(tools.tools.map((tool) => tool.name)).not.toContain('get_usage');
 	});
 });
