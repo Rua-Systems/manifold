@@ -151,6 +151,32 @@ describe('note tokens', () => {
 	});
 });
 
+describe('revisions through a note token', () => {
+	it('join while a shared page autosaves, but not through the API', async () => {
+		const target = await createNote({ title: 'Draft' }, OWNER);
+		const { view } = await tokenFor(target.id, 'edit');
+		const actor = { type: 'note_token' as const, id: view.id };
+
+		await updateNote(target.id, { title: 'One', baseVersion: 1 }, actor, { autosave: true });
+		await updateNote(target.id, { title: 'Two', baseVersion: 2 }, actor, { autosave: true });
+		const shared = await getDb()
+			.select()
+			.from(noteRevision)
+			.where(eq(noteRevision.noteId, target.id));
+		expect(shared.map((revision) => revision.actorType).sort()).toEqual([
+			'note_token',
+			'owner'
+		]);
+
+		await updateNote(target.id, { title: 'Three', baseVersion: 3 }, actor);
+		const all = await getDb()
+			.select()
+			.from(noteRevision)
+			.where(eq(noteRevision.noteId, target.id));
+		expect(all).toHaveLength(3);
+	});
+});
+
 describe('note tokens on the API', () => {
 	it('reads its own note only, and nothing else', async () => {
 		const target = await createNote({ title: 'Mine', content: doc('Read me') }, OWNER);
