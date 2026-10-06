@@ -120,7 +120,8 @@ export const sharedNoteActions = {
 					content: parseContent(textValue(data, 'content')),
 					baseVersion: baseVersion.data
 				},
-				actor
+				actor,
+				{ autosave: true }
 			);
 			await recordAudit({
 				actor,
