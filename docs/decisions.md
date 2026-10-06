@@ -234,3 +234,21 @@ The choices made while building Manifold that someone could reasonably have made
 - **Modules report their own records through a `usage` hook,** like search and housekeeping, so a new module appears in the report without touching it. Records are sized with `pg_column_size` of the whole row, which counts compressed text as stored and leaves indexes out; the database section lists every table with `pg_total_relation_size`, indexes included, and live rows from `pg_stat_user_tables` instead of counting them.
 - **The disk readout measures the disk of `UPLOAD_DIR` with `statfs`,** the one disk the app can see. The database lives in its own volume, often on the same disk but not always, so the report does not claim to know its free space.
 - **`usage:read` is a scope of the core, like the file scopes,** so a monitoring script or an agent can read the report without any access to notes, services or the vault. The report holds counts and sizes only.
+
+## 0.5.0
+
+- **A note token is both a share link and a key,** as the owner asked: one secret, one expiry and one revocation for a person in a browser and for a script on the API. As a key it reaches only routes and tools marked `noteToken`, on its own note. Any other note answers 404 rather than 403, so a token cannot tell which notes exist.
+- **The token rides in the link's fragment.** Browsers never send the part after `#`, so the token stays out of server and proxy logs, which ASVS V14.2.1 asks of tokens. The page clears the fragment with the browser's own `history.replaceState`, since SvelteKit's is not ready while the first page hydrates. It posts the token once and keeps it in an `HttpOnly`, `SameSite=Strict` cookie until the token's last day.
+- **Every note token expires.** A token that opens a note without signing in should not work forever by accident. The field starts a week ahead, and the owner can pick any later day.
+- **Creating a note token needs a step-up, like an API key.** Revoking and deleting do not: they take access away.
+- **A shared page's autosaves join one revision per five minutes, like the owner's.** API and MCP writes with the same token still add their own, as they do for API keys.
+- **No uploads on the shared page.** An upload would let a visitor store files on the owner's server. Images the note already shows are served to its token through `note_file`.
+- **Tokens come from a module, through a `credentials` hook.** The core resolves Bearer tokens by their start: `mfd_` for API keys, other prefixes for the providers modules register. The notes module owns its tokens without the core importing it.
+- **API keys can be deleted.** The owner wanted revoked and expired keys out of the list. The audit log keeps their events, and a deleted key fails like an unknown one.
+- **The dashboard is drawn from data, not from module components.** Modules return cards of stats, a daily series and links through a `dashboard` hook, and the core draws them all alike. A new module only adds the hook, and every card looks the same.
+- **The dashboard has a fixed layout for now and no vault card,** as the owner chose. Hiding and ordering cards can come later; the vault stays off a page that is open most of the time.
+- **Charts are hand-written SVG with no chart library.** Two small column charts did not justify a dependency. They follow the dataviz rules:
+  - one series in its own `--color-chart` token, because the light accent reads too gray against the surface;
+  - thin columns with rounded tops and a hairline grid, and the busiest day labelled;
+  - a pointer tooltip, a keyboard slider and a hidden table with every value.
+- **Days on the dashboard are UTC days,** like the audit log's filter and the expiry of keys and tokens, so the server and the browser agree on them.

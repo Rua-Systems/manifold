@@ -2,6 +2,25 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.5.0 - 2026-10-06
+
+Notes can be shared through tokens, a dashboard opens after signing in, and API keys can be deleted. This release adds database migrations, which run on start; take a backup before you update. There are no configuration changes; a minor line such as `0.4` does not move to 0.5 by itself, so set `MANIFOLD_VERSION` to `0.5` or `0.5.0`.
+
+### Added
+
+- **Note tokens:** **Share** on a note's page creates a token for that note alone, with **Read only** or **Read and edit** access and a last day that starts a week ahead and is always required. It opens the note through a share link without signing in, or works as a key on the REST API and MCP for that note only. Creating one asks you to confirm your identity; the link and the token are shown once. See [Sharing a note](docs/notes.md#sharing-a-note).
+- **Shared note page:** `/shared` shows the note alone, read only or with the editor and its autosave, but without uploads, history or trash. The token travels in the link's fragment, never in an address the server sees.
+- **Dashboard:** the page after signing in. It has cards for your services as shortcuts and for your notes, with a chart of revisions per day over 30 days and the recent notes. It also covers the map's pins, lines and polygons; access, with signed in browsers, working API keys and note tokens, failed sign ins per day over seven days and the latest events; and usage. **Dashboard** in the sidebar and **Go to Dashboard** in the command palette open it.
+- **Delete** for API keys and note tokens under **Settings → API Keys**, next to **Revoke**. A deleted key leaves the list for good, and its copy in the vault goes with it.
+- **REST API and MCP:** note tokens reach `GET /api/v1/me`, `GET /api/v1/notes/{id}`, `PATCH /api/v1/notes/{id}` with edit access, and the `get_note` and `update_note` tools, all for their own note. `GET /api/v1/me` answers `note` for a note token.
+
+### Changed
+
+- Signing in, the root address and old `/dashboard/...` links lead to the dashboard instead of **Services**.
+- Revisions, the audit log and its filter name **Note token** as the author of changes made with one.
+- The usage report counts note tokens.
+- On phones, the tools of a note's bar move to a second row when they do not fit beside the link back.
+
 ## 0.4.0 - 2026-10-06
 
 API keys can keep a copy in the vault, and Settings has a usage report. This release adds a database migration, which runs on start; take a backup before you update. There are no configuration changes; a minor line such as `0.3` does not move to 0.4 by itself, so set `MANIFOLD_VERSION` to `0.4` or `0.4.0`.
