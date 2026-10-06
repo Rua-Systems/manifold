@@ -17,9 +17,10 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { NoteContent } from './content';
 import type { FeatureKind } from './map/geometry';
+import type { NoteTokenAccess, RevisionActorType } from './types';
 
-// Mirror of migrations/0005_notes_init.sql, 0006_notes_map_feature.sql and
-// 0013_notes_map_basemap.sql. The SQL files are the source of truth.
+// Mirror of migrations/0005_notes_init.sql, 0006_notes_map_feature.sql,
+// 0013_notes_map_basemap.sql and 0016_notes_note_token.sql. The SQL files are the source of truth.
 
 function timestamptz(name: string) {
 	return timestamp(name, { withTimezone: true });
@@ -59,7 +60,7 @@ export const noteRevision = pgTable(
 		version: integer('version').notNull(),
 		title: text('title').notNull(),
 		content: jsonb('content').$type<NoteContent>().notNull(),
-		actorType: text('actor_type').$type<'owner' | 'api_key' | 'system'>().notNull(),
+		actorType: text('actor_type').$type<RevisionActorType>().notNull(),
 		actorId: text('actor_id'),
 		createdAt: timestamptz('created_at').defaultNow().notNull(),
 		updatedAt: timestamptz('updated_at').defaultNow().notNull()
@@ -119,5 +120,29 @@ export const mapBasemap = pgTable(
 		uniqueIndex('map_basemap_in_use_idx')
 			.on(table.inUse)
 			.where(sql`${table.inUse}`)
+	]
+);
+
+export const noteToken = pgTable(
+	'note_token',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		noteId: uuid('note_id')
+			.notNull()
+			.references(() => note.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		access: text('access').$type<NoteTokenAccess>().notNull(),
+		prefix: text('prefix').notNull().unique(),
+		tokenHash: text('token_hash').notNull(),
+		expiresAt: timestamptz('expires_at').notNull(),
+		lastUsedAt: timestamptz('last_used_at'),
+		lastUsedIp: text('last_used_ip'),
+		revokedAt: timestamptz('revoked_at'),
+		createdAt: timestamptz('created_at').defaultNow().notNull(),
+		updatedAt: timestamptz('updated_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('note_token_note_id_idx').on(table.noteId),
+		index('note_token_created_at_idx').on(table.createdAt.desc())
 	]
 );

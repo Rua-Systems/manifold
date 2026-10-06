@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import NoteEditorPage from '$lib/modules/notes/components/NoteEditorPage.svelte';
 	import NoteLocation from '$lib/modules/notes/components/NoteLocation.svelte';
+	import NoteTokens from '$lib/modules/notes/components/NoteTokens.svelte';
 	import { localizedHref } from '$lib/utils/navigation';
 	import type { PageProps } from './$types';
 
@@ -36,6 +37,11 @@
 		uploadMaxBytes={data.uploadMaxBytes}
 		{oncreated}
 	>
+		{#snippet tools()}
+			{#if data.note !== null}
+				<NoteTokens noteId={data.note.id} tokens={data.tokens} />
+			{/if}
+		{/snippet}
 		{#if data.note !== null}
 			<NoteLocation noteId={data.note.id} features={data.features} config={data.map} />
 		{/if}

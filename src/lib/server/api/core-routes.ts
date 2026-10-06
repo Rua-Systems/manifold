@@ -104,6 +104,7 @@ export const CORE_ROUTES: ApiRoute[] = [
 		method: 'GET',
 		path: '/me',
 		scope: null,
+		noteToken: 'read',
 		tag: 'key',
 		summary: 'Describe the key making the request',
 		response: {
@@ -112,14 +113,21 @@ export const CORE_ROUTES: ApiRoute[] = [
 			schema: z.object({
 				name: z.string(),
 				scopes: z.array(z.string()),
-				expires_at: z.string().nullable()
+				expires_at: z.string().nullable(),
+				note: z
+					.object({ id: z.string(), access: z.enum(['read', 'edit']) })
+					.nullable()
+					.meta({
+						description: 'For a note token, the note it reaches and how; else null.'
+					})
 			})
 		},
 		handler: async ({ key }) => ({
 			body: {
 				name: key.name,
 				scopes: key.scopes,
-				expires_at: key.expiresAt?.toISOString() ?? null
+				expires_at: key.expiresAt?.toISOString() ?? null,
+				note: key.note ?? null
 			}
 		})
 	}),

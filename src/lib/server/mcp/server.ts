@@ -3,8 +3,7 @@ import { moduleMcpTools } from '$lib/modules/registry.server';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
-import type { Actor } from '../actor';
-import { authenticateApiKey } from '../api-keys';
+import { authenticateCredential, credentialActor, noteTokenMaySee } from '../api/credentials';
 import { ApiError, apiErrorFrom, errorBody, errorResponse } from '../api/errors';
 import { recordAudit, type AuditOrigin } from '../audit';
 import { getEnv } from '../env';
@@ -61,7 +60,9 @@ function toolText(value: unknown): { type: 'text'; text: string } {
 function buildServer(context: McpContext): McpServer {
 	const server = new McpServer({ name: getEnv().ORGANIZATION_NAME, version });
 	const allowed = mcpTools().filter(
-		(tool) => tool.scope === null || context.key.scopes.includes(tool.scope)
+		(tool) =>
+			(tool.scope === null || context.key.scopes.includes(tool.scope)) &&
+			noteTokenMaySee(context.key, tool.noteToken)
 	);
 	for (const tool of allowed) {
 		server.registerTool(
@@ -118,7 +119,8 @@ export async function handleMcpRequest(
 	options: { origin: AuditOrigin }
 ): Promise<Response> {
 	const token = bearerToken(request);
-	const key = token === null ? null : await authenticateApiKey(token, { ip: options.origin.ip });
+	const key =
+		token === null ? null : await authenticateCredential(token, { ip: options.origin.ip });
 	if (key === null) {
 		logSecurityEvent(token === null ? 'missing_key' : 'invalid_key', {
 			path: '/mcp',
@@ -150,8 +152,7 @@ export async function handleMcpRequest(
 		});
 	}
 
-	const actor: Actor = { type: 'api_key', id: key.id };
-	const server = buildServer({ key, actor, origin: options.origin });
+	const server = buildServer({ key, actor: credentialActor(key), origin: options.origin });
 	// Stateless: a transport and a server per request, answered as plain JSON.
 	const transport = new WebStandardStreamableHTTPServerTransport({
 		sessionIdGenerator: undefined,

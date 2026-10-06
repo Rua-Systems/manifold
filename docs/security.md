@@ -60,6 +60,13 @@ Every form of a signed-in session that checks your password or a code, the confi
 
 See [REST API](api.md) and [MCP server](mcp.md) for the details.
 
+## Shared notes
+
+- A note token is built and stored like an API key, starts with `mfn_`, and is created only after a confirmation of your identity. It reaches one note, for reading or for reading and editing, and always expires on a day you choose.
+- The share link carries the token after `#`, which browsers never send to a server, so it does not reach the server's or a proxy's logs. The page takes it out of the address, posts it once, and keeps it in an `HttpOnly`, `SameSite=Strict` cookie, `Secure` over `https`, until the token's last day.
+- The shared page shows nothing of the account: no sidebar, no other note, no history, no uploads. As a Bearer key, a note token reaches only the routes and tools marked for it, on its own note; another note answers as if it did not exist.
+- Opening a link is limited to 10 attempts per minute and address, and the token's requests count against `API_RATE_LIMIT_PER_MINUTE`. Revoking or deleting a token, or moving its note to the trash, stops it at once.
+
 ## The vault
 
 - Vault values are encrypted with AES-256-GCM under `ENCRYPTION_KEY`, 32 random bytes that the app checks on start. Every value gets its own random 12-byte IV and a full 16-byte authentication tag, and the id of its entry is authenticated along with it, so a ciphertext copied onto another entry does not decrypt.

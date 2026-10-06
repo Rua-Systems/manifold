@@ -1,3 +1,4 @@
+import type { CredentialProvider } from '$lib/server/api/credentials';
 import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
@@ -21,4 +22,6 @@ export interface ServerModuleManifest {
 	mcp?: McpTool[];
 	/** What the module keeps, for the usage report: each kind of record, counted and sized. */
 	usage?: () => Promise<UsageItem[]>;
+	/** Tokens the module issues that authenticate on the API and MCP like API keys. */
+	credentials?: CredentialProvider;
 }

@@ -1,5 +1,6 @@
 import { fieldErrors } from '$lib/utils/validation';
 import type { z } from 'zod';
+import { assertNoteGrant } from '../api/credentials';
 import { ApiError, invalidRequest } from '../api/errors';
 import type { ApiResponse, ApiRoute, HttpMethod } from '../api/types';
 import type { McpContext } from './types';
@@ -40,8 +41,10 @@ export async function callRoute(
 	request: RouteRequest,
 	context: McpContext
 ): Promise<ApiResponse> {
+	const params = parseWith(route.params, request.params);
+	assertNoteGrant(context.key, route.noteToken, params);
 	const result = await route.handler({
-		params: parseWith(route.params, request.params),
+		params,
 		query: parseWith(route.query, request.query),
 		body: parseWith(route.body, request.body),
 		key: context.key,

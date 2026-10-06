@@ -18,10 +18,13 @@ export interface NoteDetail {
 	deletedAt: Date | null;
 }
 
+/** Who wrote a revision: the owner, an API key, a note token or the app itself. */
+export type RevisionActorType = 'owner' | 'api_key' | 'note_token' | 'system';
+
 export interface NoteRevisionSummary {
 	version: number;
 	title: string;
-	actorType: 'owner' | 'api_key' | 'system';
+	actorType: RevisionActorType;
 	actorId: string | null;
 	createdAt: Date;
 	updatedAt: Date;
@@ -49,4 +52,33 @@ export interface NoteEditorHost {
 	/** Loads the note again, previewing `revision` when it is not null. */
 	load: (revision: number | null) => Promise<void>;
 	ontrashed: () => void;
+}
+
+/** What a note token allows on its note. */
+export type NoteTokenAccess = 'read' | 'edit';
+
+/** A note token as the note page and Settings list it; the token itself is never stored. */
+export interface NoteTokenView {
+	id: string;
+	noteId: string;
+	/** The note's title, empty for an untitled note. */
+	noteTitle: string;
+	name: string;
+	access: NoteTokenAccess;
+	prefix: string;
+	expiresAt: Date;
+	lastUsedAt: Date | null;
+	lastUsedIp: string | null;
+	revokedAt: Date | null;
+	createdAt: Date;
+}
+
+/** A note opened with a note token on /shared: what the visitor sees, and what they may do. */
+export interface SharedNote {
+	id: string;
+	title: string;
+	content: NoteContent;
+	version: number;
+	access: NoteTokenAccess;
+	expiresAt: Date;
 }

@@ -1,3 +1,5 @@
+import { noteTokenSettingsActions } from '$lib/modules/notes/tokens.page.server';
+import { listNoteTokens } from '$lib/modules/notes/tokens.server';
 import { allScopeIds } from '$lib/modules/scopes';
 import {
 	apiKeysWithCopy,
@@ -7,6 +9,7 @@ import {
 } from '$lib/modules/vault/vault.server';
 import { m } from '$lib/paraglide/messages.js';
 import { apiKeyCreateSchema } from '$lib/schemas/api-keys';
+import { endOfUtcDay } from '$lib/schemas/rules';
 import { ownerActor } from '$lib/server/actor';
 import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
 import { originOf, recordAudit } from '$lib/server/audit';
@@ -19,12 +22,14 @@ import { fieldErrors, textValue } from '$lib/utils/validation';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 export const load: PageServerLoad = async ({ locals }) => {
 	requireUser(locals);
-	const [keys, copies] = await Promise.all([listApiKeys(), apiKeysWithCopy()]);
-	return { keys, copies };
+	const [keys, copies, noteTokens] = await Promise.all([
+		listApiKeys(),
+		apiKeysWithCopy(),
+		listNoteTokens()
+	]);
+	return { keys, copies, noteTokens };
 };
 
 /** A key with an expiry date works until the end of that day, UTC. */
@@ -32,10 +37,12 @@ function expiryOf(date: string): Date | null {
 	if (date === '') {
 		return null;
 	}
-	return new Date(new Date(`${date}T00:00:00Z`).getTime() + DAY_MS);
+	return endOfUtcDay(date);
 }
 
 export const actions = {
+	...noteTokenSettingsActions,
+
 	create: async (event) => {
 		const { user, session } = requireUser(event.locals);
 		if (!(await isSteppedUp(session.id))) {

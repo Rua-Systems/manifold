@@ -27,7 +27,8 @@ export const RATE_LIMITS = {
 	sendCode: { max: 3, windowMs: MINUTE },
 	stepUp: { max: 5, windowMs: MINUTE },
 	failedCredentialCheck: { max: 5, windowMs: MINUTE },
-	upload: { max: 30, windowMs: MINUTE }
+	upload: { max: 30, windowMs: MINUTE },
+	openSharedNote: { max: 10, windowMs: MINUTE }
 } satisfies Record<string, RateLimit>;
 
 export type RateLimitBucket = keyof typeof RATE_LIMITS;

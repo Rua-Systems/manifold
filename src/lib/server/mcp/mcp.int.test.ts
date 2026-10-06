@@ -1,11 +1,14 @@
 import { note } from '$lib/modules/notes/schema.server';
 import { service } from '$lib/modules/services/schema.server';
 import { vaultSecret } from '$lib/modules/vault/schema.server';
+import { createNote } from '$lib/modules/notes/notes.server';
+import { createNoteToken } from '$lib/modules/notes/tokens.server';
 import { createSecret } from '$lib/modules/vault/vault.server';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { ownerActor } from '../actor';
 import { createApiKey } from '../api-keys';
 import { getDb } from '../db';
 import { purgeAuditEvents } from '../audit';
@@ -28,6 +31,10 @@ const clients: Client[] = [];
 /** An MCP client whose requests go straight to the handler, as over HTTP. */
 async function connect(scopes: string[]): Promise<Client> {
 	const { key } = await createApiKey({ name: 'Agent', scopes, expiresAt: null });
+	return connectWith(key);
+}
+
+async function connectWith(key: string): Promise<Client> {
 	const transport = new StreamableHTTPClientTransport(new URL('http://localhost/mcp'), {
 		requestInit: { headers: { authorization: `Bearer ${key}` } },
 		fetch: (url, init) =>
@@ -221,6 +228,45 @@ describe('MCP', () => {
 
 		const hits = await call(client, 'search', { query: 'grafana' });
 		expect((hits.data as { type: string }[]).map((hit) => hit.type)).toEqual(['secret']);
+	});
+
+	it('offers a note token the tools of its access, on its own note only', async () => {
+		const target = await createNote({ title: 'Shared with an agent' }, ownerActor('owner-1'));
+		const other = await createNote({ title: 'Not shared' }, ownerActor('owner-1'));
+		const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+		const read = await createNoteToken({
+			noteId: target.id,
+			name: 'Reader',
+			access: 'read',
+			expiresAt
+		});
+		const edit = await createNoteToken({
+			noteId: target.id,
+			name: 'Editor',
+			access: 'edit',
+			expiresAt
+		});
+
+		const reader = await connectWith(read.token);
+		expect((await reader.listTools()).tools.map((tool) => tool.name)).toEqual(['get_note']);
+		expect((await call(reader, 'get_note', { id: target.id })).data).toMatchObject({
+			title: 'Shared with an agent'
+		});
+		const refused = await call(reader, 'get_note', { id: other.id });
+		expect(refused.isError).toBe(true);
+		expect(refused.data).toMatchObject({ error: { code: 'not_found' } });
+
+		const editor = await connectWith(edit.token);
+		expect((await editor.listTools()).tools.map((tool) => tool.name).sort()).toEqual([
+			'get_note',
+			'update_note'
+		]);
+		const updated = await call(editor, 'update_note', {
+			id: target.id,
+			version: 1,
+			title: 'Changed by an agent'
+		});
+		expect(updated.data).toMatchObject({ title: 'Changed by an agent', version: 2 });
 	});
 
 	it('reports usage to a key with usage:read', async () => {

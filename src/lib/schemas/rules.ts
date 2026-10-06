@@ -35,6 +35,11 @@ export function isCalendarDate(value: string): boolean {
 	return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
+/** A `YYYY-MM-DD` day as the end of that day in UTC, when a key or token chosen for it expires. */
+export function endOfUtcDay(value: string): Date {
+	return new Date(new Date(`${value}T00:00:00Z`).getTime() + 24 * 60 * 60 * 1000);
+}
+
 export function isValidUsername(value: string): boolean {
 	return (
 		value.length >= USERNAME_MIN_LENGTH &&

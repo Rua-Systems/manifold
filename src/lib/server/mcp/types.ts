@@ -30,6 +30,8 @@ export interface McpTool {
 	input: z.ZodObject;
 	/** The audit log action of a write. */
 	audit?: string;
+	/** Offers the tool to note tokens with this access; tools without it are never offered to them. */
+	noteToken?: 'read' | 'edit';
 	handler: (args: never, context: McpContext) => Promise<McpToolResult>;
 }
 

@@ -23,7 +23,7 @@ import { contentToText, validateNoteContent } from './content.server';
 import { note, noteFile, noteRevision } from './schema.server';
 import { containsPattern, prefixQuery } from '$lib/server/search-query';
 import { noteTitleSchema } from './schemas';
-import type { NoteDetail, NoteRevisionSummary, NoteSummary } from './types';
+import type { NoteDetail, NoteRevisionSummary, NoteSummary, RevisionActorType } from './types';
 
 export const NOTES_MODULE = 'notes';
 
@@ -276,7 +276,7 @@ async function recordRevision(
 	const recent =
 		latest !== undefined && now.getTime() - latest.createdAt.getTime() < REVISION_WINDOW_MS;
 
-	if (!force && actor.type === 'owner' && sameActor && recent) {
+	if (!force && sameActor && recent) {
 		await tx
 			.update(noteRevision)
 			.set({
@@ -289,8 +289,8 @@ async function recordRevision(
 		return;
 	}
 
-	let actorType: 'owner' | 'api_key' | 'system' = 'system';
-	if (actor.type === 'owner' || actor.type === 'api_key') {
+	let actorType: RevisionActorType = 'system';
+	if (actor.type === 'owner' || actor.type === 'api_key' || actor.type === 'note_token') {
 		actorType = actor.type;
 	}
 	await tx.insert(noteRevision).values({
@@ -308,11 +308,19 @@ async function recordRevision(
 export interface WriteOptions {
 	/** Always start a new revision, as API and MCP writes and restores do. */
 	forceRevision?: boolean;
+	/**
+	 * An editor's autosave in a browser, such as on a shared note's page: like the owner's, it
+	 * joins the same writer's newest revision within the window instead of adding one.
+	 */
+	autosave?: boolean;
 	now?: Date;
 }
 
 function forcedFor(actor: Actor, options: WriteOptions): boolean {
-	return options.forceRevision === true || actor.type !== 'owner';
+	if (options.forceRevision === true) {
+		return true;
+	}
+	return actor.type !== 'owner' && options.autosave !== true;
 }
 
 /** Inserts a note inside the caller's transaction, for writes that create other rows with it. */

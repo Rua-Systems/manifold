@@ -89,7 +89,10 @@
 		<Tiptap {editor}>
 			{#if editable}
 				<div class="toolbar">
-					<Toolbar onimage={() => fileInput?.click()} {isAllowedLink} />
+					<Toolbar
+						onimage={onupload === undefined ? undefined : () => fileInput?.click()}
+						{isAllowedLink}
+					/>
 				</div>
 				<LinkMenu />
 				<TableMenu />
@@ -100,7 +103,7 @@
 		<!-- The editor only exists in the browser; this keeps its space during server rendering. -->
 		<div class="note-content"></div>
 	{/if}
-	{#if editable}
+	{#if editable && onupload !== undefined}
 		<input
 			bind:this={fileInput}
 			type="file"

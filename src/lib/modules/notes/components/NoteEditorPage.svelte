@@ -41,11 +41,14 @@
 		oncreated?: (id: string) => Promise<void>;
 		/** Set when the editor is shown outside the note page; it then never navigates. */
 		host?: NoteEditorHost;
+		/** More buttons for the bar, such as sharing; hidden in focus mode. */
+		tools?: Snippet;
 		/** Rendered below the editor. */
 		children?: Snippet;
 	}
 
-	let { note, revisions, preview, uploadMaxBytes, oncreated, host, children }: Props = $props();
+	let { note, revisions, preview, uploadMaxBytes, oncreated, host, tools, children }: Props =
+		$props();
 
 	const STATUSES: SaveStatus[] = ['idle', 'saved', 'unsaved', 'saving', 'failed', 'conflict'];
 
@@ -61,6 +64,7 @@
 	const ACTOR_LABELS: Record<NoteRevisionSummary['actorType'], () => string> = {
 		owner: m.notes_actor_owner,
 		api_key: m.notes_actor_api_key,
+		note_token: m.notes_actor_note_token,
 		system: m.notes_actor_system
 	};
 
@@ -339,6 +343,7 @@
 						<Pencil size={18} />
 					</button>
 				{/if}
+				{@render tools?.()}
 				<button
 					type="button"
 					class="tool"
@@ -517,11 +522,13 @@
 		}
 	}
 
+	// On narrow screens the tools move under the link back rather than widen the page.
 	.bar {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		gap: 1rem;
+		gap: 0.6rem 1rem;
 
 		> .back {
 			@include forms.mutedLink;

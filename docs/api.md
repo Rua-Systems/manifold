@@ -17,6 +17,16 @@ Manifold stores only a SHA-256 hash of the key and a short prefix to find it. Th
 
 A key cannot be changed after it is created. To give a program other scopes, create a new key and revoke the old one. Creating and revoking keys is recorded in the audit log, see [Your account](account.md). Treat keys like passwords: keep them in the configuration of the program that uses them, never in public code.
 
+### Note tokens
+
+A note token, created with **Share** on a note's page as described in [Sharing a note](notes.md#sharing-a-note), is a key for that one note. It starts with `mfn_` and is sent like an API key, as `Authorization: Bearer mfn_...`.
+
+- It reaches `GET /api/v1/me`, `GET /api/v1/notes/{id}` and, with **Read and edit**, `PATCH /api/v1/notes/{id}`, for its own note only. Another note's id answers `404 not_found`, as if the note did not exist, and every other route `403 insufficient_scope`.
+- `GET /api/v1/me` answers its name, the scopes its access stands for (`notes:read`, and `notes:write` with edit access), its last day and `note` with the note's `id` and `access`. For an API key, `note` is `null`.
+- `/files/{id}` serves it the images its note shows, and no other file.
+- It has its own rate limit of `API_RATE_LIMIT_PER_MINUTE`, shared with the share link's page and its saves. Changes are recorded with `note_token` as the actor type.
+- Every note token expires, on the day chosen when it was created. Unknown, revoked and expired tokens, and those of a note in the trash, get the same `401 invalid_key` as an invalid API key.
+
 ### Copies in the vault
 
 With **Save a copy in the Vault** ticked, the key is also saved in the [vault](vault.md), encrypted like every other entry, in the same step that creates it: either both exist or neither does. The page still shows the key once and adds **A copy is saved in the Vault.**
@@ -47,7 +57,7 @@ Each module has its own scopes, and uploaded files and the usage report have the
 
 - A write scope does not include the read scope. A key with only `notes:write` can create and change notes, but it cannot list or read them.
 - `vault:read` never sees a value. No API route and no MCP tool returns or accepts a vault value; values are revealed only in the app, after you confirm your identity. See [Vault](vault.md).
-- `GET /api/v1/me`, `GET /api/v1/search` and `GET /api/v1/openapi.json` work with any valid key. The search covers only the modules the key may read.
+- `GET /api/v1/me`, `GET /api/v1/search` and `GET /api/v1/openapi.json` work with any valid key. The search covers only the modules the key may read. Note tokens reach less, see [Note tokens](#note-tokens).
 
 ## Authentication
 
@@ -60,7 +70,12 @@ curl -H "Authorization: Bearer mfd_your_key" "https://manifold.example.com/api/v
 `/api/v1/me` describes the key that made the request:
 
 ```json
-{ "name": "Backup script", "scopes": ["notes:read", "notes:write"], "expires_at": null }
+{
+  "name": "Backup script",
+  "scopes": ["notes:read", "notes:write"],
+  "expires_at": null,
+  "note": null
+}
 ```
 
 - A request without a key is answered with `401 missing_key`, and an unknown, malformed, revoked or expired key with `401 invalid_key`. Both answers carry a `WWW-Authenticate` header. Every kind of invalid key gets the same answer, so the response never tells which one it was.

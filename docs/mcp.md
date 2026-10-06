@@ -26,6 +26,8 @@ Create a key under **Settings → API Keys** as described in [API keys](api.md#a
 
 An expiry date under **Expires after** limits the damage if the key leaks. Use one key per agent, so that revoking one leaves the others working.
 
+For an agent that should work on a single note, give it a note token instead, created with **Share** on the note's page, see [Sharing a note](notes.md#sharing-a-note). It is offered `get_note`, and `update_note` with **Read and edit**, both for that note alone; any other note answers `not_found`.
+
 ## Connecting Claude Code
 
 Add the server with its address and the key as a header:
@@ -120,5 +122,5 @@ Arguments that do not match a tool's input schema are refused with a plain-text 
 ## Keeping an agent in check
 
 - Every change an agent makes to a note adds a revision, which you can restore in the app. Notes it moves to the trash can be restored until the trash is emptied. `delete_service` and `delete_map_feature` cannot be undone.
-- The audit log under **Settings → Security** shows every write the agent made, with **API key** as the actor. See [Your account](account.md).
-- To stop an agent at once, revoke its key under **Settings → API Keys**.
+- The audit log under **Settings → Security** shows every write the agent made, with **API key** or **Note token** as the actor. See [Your account](account.md).
+- To stop an agent at once, revoke or delete its key or note token under **Settings → API Keys**.

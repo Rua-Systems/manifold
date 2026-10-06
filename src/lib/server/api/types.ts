@@ -58,6 +58,11 @@ export interface ApiRoute {
 	response: ApiRouteResponse;
 	/** The audit log action of a write, such as `note.update`. */
 	audit?: string;
+	/**
+	 * Opens the route to note tokens with this access, on their own note only; routes without it
+	 * refuse note tokens whatever their scopes.
+	 */
+	noteToken?: 'read' | 'edit';
 	handler: (context: ApiContext<never, never, never>) => Promise<ApiResponse>;
 }
 

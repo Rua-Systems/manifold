@@ -22,7 +22,7 @@ export const preferencesSchema = z.object({
 
 /** The audit log's filters, read from the address; anything malformed is ignored. */
 export const auditFilterSchema = z.object({
-	actor: z.enum(['owner', 'api_key', 'cli', 'system']).optional().catch(undefined),
+	actor: z.enum(['owner', 'api_key', 'note_token', 'cli', 'system']).optional().catch(undefined),
 	action: z.string().trim().max(100).optional().catch(undefined),
 	from: z.string().refine(isCalendarDate).optional().catch(undefined),
 	to: z.string().refine(isCalendarDate).optional().catch(undefined),

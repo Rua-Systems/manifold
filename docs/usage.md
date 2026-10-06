@@ -21,12 +21,12 @@ With the standard Compose setup, `UPLOAD_DIR` lies in the `app-data` volume, whe
 
 One table lists what each module keeps, in the order of the sidebar, followed by the system's own records:
 
-| Group        | Rows                                                                                  |
-| ------------ | ------------------------------------------------------------------------------------- |
-| **Services** | **Services**                                                                          |
-| **Notes**    | **Notes**, **Notes in the trash**, **Note revisions**, **Map features**, **Basemaps** |
-| **Vault**    | **Vault entries**                                                                     |
-| **System**   | **Audit log events**, **API keys**, **Sessions**                                      |
+| Group        | Rows                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------ |
+| **Services** | **Services**                                                                                           |
+| **Notes**    | **Notes**, **Notes in the trash**, **Note revisions**, **Note tokens**, **Map features**, **Basemaps** |
+| **Vault**    | **Vault entries**                                                                                      |
+| **System**   | **Audit log events**, **API keys**, **Sessions**                                                       |
 
 **Count** is the number of records, and **Size** the space their data takes as the database stores it: long texts such as the content of a note are stored compressed and counted compressed, and indexes are left out. A bar under each size compares it with the largest row of the table. Images in notes and service icons are uploaded files, which the next section counts.
 
