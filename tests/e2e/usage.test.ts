@@ -25,7 +25,8 @@ test('the usage report counts what the app keeps and measures again', async ({ p
 	for (const kind of ['Notes in the trash', 'Vault entries', 'Audit log events']) {
 		await expect(content.getByRole('rowheader', { name: kind, exact: true })).toBeVisible();
 	}
-	const notes = content.locator('tr', {
+	// The Notes module also heads its group of rows; the count sits in the row of the records.
+	const notes = content.locator('tr:not(.group)', {
 		has: page.getByRole('rowheader', { name: 'Notes', exact: true })
 	});
 	const count = Number((await notes.locator('td').first().textContent())?.replace(/\D/g, ''));
