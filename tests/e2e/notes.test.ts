@@ -188,6 +188,33 @@ test('focus mode shows the editor alone and Escape leaves it', async ({ page }) 
 	await expect(editor(page)).toHaveText('Quiet room');
 });
 
+test('focus mode also reads, and Edit switches inside it', async ({ page }) => {
+	const title = uniqueTitle('Calm');
+	await writeNote(page, title, 'Calm');
+	await page.reload();
+
+	const focus = page.getByRole('button', { name: 'Focus mode' });
+	const edit = page.getByRole('button', { name: 'Edit', exact: true });
+	await focus.click();
+	await expect(focus).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+	await expect(editor(page)).toHaveAttribute('contenteditable', 'false');
+	await expect(page.getByRole('link', { name: 'All notes' })).toBeHidden();
+
+	await edit.click();
+	await expect(editor(page)).toHaveAttribute('contenteditable', 'true');
+	await appendText(page, ' sea');
+	await edit.click();
+	await expect(saveStatus(page)).toHaveText('Saved');
+	await expect(editor(page)).toHaveAttribute('contenteditable', 'false');
+	await expect(focus).toHaveAttribute('aria-pressed', 'true');
+
+	await page.keyboard.press('Escape');
+	await expect(focus).toHaveAttribute('aria-pressed', 'false');
+	await expect(page.getByRole('link', { name: 'All notes' })).toBeVisible();
+	await expect(editor(page)).toHaveText('Calm sea');
+});
+
 test('a conflicting edit can be kept on top', async ({ page, context }) => {
 	const address = await writeNote(page, uniqueTitle('Shared'), 'Original');
 	const stale = await context.newPage();

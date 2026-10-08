@@ -98,7 +98,9 @@
 		)
 	);
 
-	/** The editor alone over the whole screen. The map's panel does not offer it. */
+	/**
+	 * The note alone over the whole screen, to read or write. The map's panel does not offer it.
+	 */
 	let focused = $state(false);
 
 	const displayTitle = $derived(draft.title || m.notes_untitled());
@@ -203,7 +205,6 @@
 			return;
 		}
 		editing = false;
-		focused = false;
 		await draft.flush();
 	}
 
@@ -312,7 +313,7 @@
 				{/each}
 				<span class="current {draft.status}">{STATUS_LABELS[draft.status]()}</span>
 			</p>
-			{#if preview === null && editing && host === undefined}
+			{#if preview === null && host === undefined}
 				<button
 					type="button"
 					class="tool"
@@ -329,20 +330,21 @@
 					{/if}
 				</button>
 			{/if}
+			<!-- Edit stays in focus mode, so reading and writing switch without leaving it. -->
+			{#if preview === null}
+				<button
+					type="button"
+					class="tool"
+					class:active={editing}
+					aria-label={m.notes_edit()}
+					aria-pressed={editing}
+					title={m.notes_edit()}
+					onclick={toggleEditing}
+				>
+					<Pencil size={18} />
+				</button>
+			{/if}
 			{#if !focused}
-				{#if preview === null}
-					<button
-						type="button"
-						class="tool"
-						class:active={editing}
-						aria-label={m.notes_edit()}
-						aria-pressed={editing}
-						title={m.notes_edit()}
-						onclick={toggleEditing}
-					>
-						<Pencil size={18} />
-					</button>
-				{/if}
 				{@render tools?.()}
 				<button
 					type="button"

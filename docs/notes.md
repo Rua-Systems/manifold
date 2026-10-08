@@ -22,7 +22,7 @@ A saved note opens for reading: the title and the text without the toolbar, and 
 
 ## Focus mode
 
-While you write, **Focus mode** at the top shows the note alone over the whole screen, with the rest of the app blurred behind it: the title, the toolbar, the text and the save status. **Focus mode** again, or `Escape`, leaves it. The note panel of the map has no focus mode.
+**Focus mode** at the top shows the note alone over the whole screen, with the rest of the app blurred behind it, whether you read or write. While reading it shows the title and the text; while writing, the title field, the toolbar and the text. The save status and **Edit** stay at the top, so you can switch between reading and writing without leaving it. **Focus mode** again, or `Escape`, leaves it. The note panel of the map has no focus mode.
 
 ## The editor
 
