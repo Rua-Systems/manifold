@@ -12,7 +12,7 @@
 	let { id, title, days }: Props = $props();
 
 	/** The plot, in CSS pixels; the width follows the card, the server renders the default. */
-	const HEIGHT = 132;
+	const HEIGHT = 116;
 	const TOP = 16;
 	const BOTTOM = 22;
 	const LEFT = 28;

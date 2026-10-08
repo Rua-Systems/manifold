@@ -43,12 +43,14 @@
 	@use '../../../styles/forms' as forms;
 	@use '../../../styles/variables' as vars;
 
+	// Fills its place in the layout, so the cards of a row end on one line.
 	.card {
 		display: flex;
 		flex-direction: column;
-		gap: 1.2rem;
+		gap: 0.9rem;
 		min-width: 0;
-		padding: 1.1rem 1.2rem 1.2rem;
+		height: 100%;
+		padding: 0.85rem 1rem 1rem;
 		background-color: clr.$surfaceColor;
 		border: 1px solid clr.$borderSubtleColor;
 		border-radius: vars.$radius;
