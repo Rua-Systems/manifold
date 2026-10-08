@@ -61,9 +61,10 @@
 	@use '../../../styles/variables' as vars;
 
 	.block {
+		container-type: inline-size;
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.4rem;
 
 		> h3 {
 			font-size: 0.64rem;
@@ -135,6 +136,23 @@
 					color: clr.$textMutedColor;
 				}
 			}
+		}
+	}
+
+	// A list across the whole layout, such as the service shortcuts, fills rows instead of one
+	// long column.
+	@container (min-width: 36rem) {
+		.block > ul {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+			gap: 0 0.8rem;
+		}
+	}
+
+	// A mouse needs no touch sized rows, and the cards stay short.
+	@media (pointer: fine) {
+		.block > ul > li > a {
+			min-height: 2rem;
 		}
 	}
 </style>

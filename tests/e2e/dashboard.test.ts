@@ -44,3 +44,22 @@ test('the charts read out each day from the keyboard', async ({ page }) => {
 		page.getByRole('table', { name: 'Note revisions per day, last 30 days' })
 	).toHaveCount(1);
 });
+
+test('the long cards share a row and services runs below them', async ({ page, isMobile }) => {
+	test.skip(isMobile, 'Phones show the cards in one column.');
+	const box = async (name: string) => {
+		const found = await page.getByRole('region', { name, exact: true }).boundingBox();
+		if (found === null) {
+			throw new Error(`The ${name} card is not visible.`);
+		}
+		return found;
+	};
+	const notes = await box('Notes');
+	const access = await box('Security and Access');
+	const services = await box('Services');
+
+	expect(access.y).toBeCloseTo(notes.y, 0);
+	expect(access.height).toBeCloseTo(notes.height, 0);
+	expect(services.y).toBeGreaterThan(notes.y + notes.height);
+	expect(services.width).toBeGreaterThan(notes.width + access.width);
+});

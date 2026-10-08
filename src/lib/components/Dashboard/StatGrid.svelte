@@ -34,14 +34,14 @@
 
 	.stats {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-		gap: 0.9rem 1rem;
+		grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+		gap: 0.7rem 0.8rem;
 		margin: 0;
 
 		> .stat {
 			display: flex;
 			flex-direction: column-reverse;
-			gap: 0.2rem;
+			gap: 0.15rem;
 
 			> dt {
 				font-size: 0.64rem;
@@ -52,7 +52,7 @@
 
 			> dd {
 				margin: 0;
-				font-size: 1.45rem;
+				font-size: 1.3rem;
 				font-weight: 700;
 				line-height: 1.1;
 				color: clr.$textPrimaryColor;
