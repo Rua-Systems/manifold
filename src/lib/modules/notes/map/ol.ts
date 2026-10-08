@@ -25,7 +25,13 @@ export function toMapGeometry(geometry: Geometry): MapGeometry {
 }
 
 export function fromMapGeometry(geometry: MapGeometry): Geometry {
-	return geoJson.readGeometry(geometry);
+	const read = geoJson.readGeometry(geometry);
+	// OpenLayers reads empty coordinates as no geometry. Stored geometries are validated to have
+	// coordinates, so null here means a broken record, not a shape to leave off the map.
+	if (read === null) {
+		throw new Error('The map geometry has no coordinates.');
+	}
+	return read;
 }
 
 export function basemapSource(basemap: MapBasemap): XYZ {
