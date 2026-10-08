@@ -342,25 +342,24 @@
 		height: vars.$touchTarget;
 		padding: 0;
 		color: clr.$textSecondaryColor;
-		background-color: transparent;
+		@include forms.frostedBacking;
 		border: 1px solid clr.$borderSubtleColor;
 		border-radius: vars.$radius;
 		cursor: pointer;
 		transition:
 			color 160ms ease,
-			border-color 160ms ease,
-			background-color 160ms ease;
+			border-color 160ms ease;
 
 		&:hover:not(:disabled) {
 			color: clr.$accentColor;
 			border-color: clr.$accentColor;
-			background-color: clr.$accentWashColor;
+			@include forms.tint(clr.$accentWashColor);
 		}
 
 		&.danger:hover:not(:disabled) {
 			color: clr.$errorColor;
 			border-color: clr.$errorColor;
-			background-color: transparent;
+			background-image: none;
 		}
 
 		&:disabled {

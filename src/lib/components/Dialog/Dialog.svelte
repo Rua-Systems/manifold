@@ -64,6 +64,7 @@
 
 <style lang="scss">
 	@use '../../../styles/colors' as clr;
+	@use '../../../styles/forms' as forms;
 	@use '../../../styles/variables' as vars;
 
 	.dialog {
@@ -114,7 +115,7 @@
 			height: vars.$touchTarget;
 			padding: 0;
 			color: clr.$textMutedColor;
-			background-color: transparent;
+			@include forms.frostedBacking;
 			border: 1px solid clr.$borderSubtleColor;
 			border-radius: vars.$radius;
 			cursor: pointer;

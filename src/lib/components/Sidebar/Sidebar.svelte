@@ -363,6 +363,7 @@
 
 <style lang="scss">
 	@use '../../../styles/colors' as clr;
+	@use '../../../styles/forms' as forms;
 	@use '../../../styles/variables' as vars;
 
 	.backdrop {
@@ -432,19 +433,18 @@
 		height: vars.$touchTarget;
 		padding: 0;
 		color: clr.$textMutedColor;
-		background-color: transparent;
+		@include forms.frostedBacking;
 		border: 1px solid clr.$borderSubtleColor;
 		border-radius: vars.$radius;
 		cursor: pointer;
 		transition:
 			color 160ms ease,
-			border-color 160ms ease,
-			background-color 160ms ease;
+			border-color 160ms ease;
 
 		&:hover {
 			color: clr.$accentColor;
 			border-color: clr.$accentColor;
-			background-color: clr.$accentWashColor;
+			@include forms.tint(clr.$accentWashColor);
 		}
 
 		> .chevron {

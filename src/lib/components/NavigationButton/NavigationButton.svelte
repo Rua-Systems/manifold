@@ -158,6 +158,7 @@
 
 <style lang="scss">
 	@use '../../../styles/colors' as clr;
+	@use '../../../styles/forms' as forms;
 	@use '../../../styles/variables' as vars;
 
 	@keyframes linkIn {
@@ -329,19 +330,18 @@
 		height: 2.75rem;
 		padding: 0;
 		color: clr.$accentColor;
-		background-color: transparent;
+		@include forms.frostedBacking;
 		border: 1px solid clr.$accentMutedColor;
 		border-radius: vars.$radius;
 		cursor: pointer;
 		transition:
 			color 160ms ease,
-			border-color 160ms ease,
-			background-color 160ms ease;
+			border-color 160ms ease;
 
 		&:hover {
 			color: clr.$textPrimaryColor;
 			border-color: clr.$accentColor;
-			background-color: clr.$accentWashColor;
+			@include forms.tint(clr.$accentWashColor);
 		}
 	}
 

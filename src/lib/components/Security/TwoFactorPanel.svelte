@@ -246,7 +246,7 @@
 			&.danger:hover:not(:disabled) {
 				color: clr.$errorColor;
 				border-color: clr.$errorColor;
-				background-color: transparent;
+				background-image: none;
 			}
 		}
 	}
