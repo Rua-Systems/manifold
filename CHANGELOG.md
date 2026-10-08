@@ -2,6 +2,24 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.5.1 - 2026-10-08
+
+The dashboard gets a fixed layout, framed buttons get a frosted backing, and focus mode works while reading. There are no database or configuration changes; a minor line such as `0.5` picks this release up by itself.
+
+### Added
+
+- **Focus mode while reading:** **Focus mode** shows a note alone over the whole screen while you read, not only while you write. **Edit** stays at the top inside it, so reading and writing switch without leaving it. See [Focus mode](docs/notes.md#focus-mode).
+
+### Changed
+
+- **Dashboard layout:** every card has a fixed place, and the cards of a row end on one line, so no hole opens beside a short card. On a wide page **Notes** and **Security and Access** stand side by side, **Map Notes** and **Usage** share the third column, and **Services** runs along the bottom with its shortcuts in rows. A narrower page has two columns, and a phone one. The cards are tighter, and with a mouse their lists have shorter rows. See [Dashboard](docs/dashboard.md).
+- **Framed buttons:** buttons and controls with a frame get a translucent backing that blurs the dotted page behind them, and hovering tints that backing instead of replacing it. Icon buttons without a frame show it while active.
+- Dependencies are updated within their minor versions, among them OpenLayers 10.11, TipTap 3.31.4, better-auth 1.7.7 and the MCP SDK 1.32.
+
+### Fixed
+
+- The text of **Measure Again** under **Settings → Usage**, and of the copy button in a note's share dialog, touched the button's frame.
+
 ## 0.5.0 - 2026-10-06
 
 Notes can be shared through tokens, a dashboard opens after signing in, and API keys can be deleted. This release adds database migrations, which run on start; take a backup before you update. There are no configuration changes; a minor line such as `0.4` does not move to 0.5 by itself, so set `MANIFOLD_VERSION` to `0.5` or `0.5.0`.

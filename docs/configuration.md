@@ -163,7 +163,7 @@ The image sets these variables, and `UPLOAD_DIR` as described above. `docker-com
 `MANIFOLD_VERSION` is read only by Compose. It chooses the tag of `ghcr.io/rua-systems/manifold` that `docker-compose.yml` runs:
 
 - `latest`, the default, is the newest release.
-- A release such as `0.5.0` stays on exactly that version.
+- A release such as `0.5.1` stays on exactly that version.
 - A minor line such as `0.5` follows the newest patch release of 0.5.
 
 In production, set a release or a minor line, so that a new minor version arrives only when you choose it, see [Updating](deployment.md#updating). `docker compose up --build` builds the image from your checkout instead of pulling it.
