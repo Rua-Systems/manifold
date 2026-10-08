@@ -252,3 +252,11 @@ The choices made while building Manifold that someone could reasonably have made
   - thin columns with rounded tops and a hairline grid, and the busiest day labelled;
   - a pointer tooltip, a keyboard slider and a hidden table with every value.
 - **Days on the dashboard are UTC days,** like the audit log's filter and the expiry of keys and tokens, so the server and the browser agree on them.
+
+## 0.5.1
+
+- **The dashboard's layout lives in the page, keyed by card id.** The owner asked for a fixed layout with no holes. Named grid areas are the way to promise both, and the cards stay plain data. A card of a new module comes after the known ones, one column wide, until the layout gives it a place. The columns follow the page's width through a container query, because the sidebar changes that width.
+- **The cards are sorted into reading order,** so in every layout the order on screen is the order of the keyboard and of screen readers.
+- **Framed buttons get a frosted backing; unframed icon buttons only while active.** Through a transparent frame the dotted page looked like part of the button. Unframed icon buttons sit in toolbars that have a backing of their own, and a box behind every icon would crowd them. The bordered rows of the note picker keep a plain background, since a blur on each row costs scrolling.
+- **Focus mode is one mode for reading and writing,** as the owner chose, rather than a separate reading view. **Edit** stays in it, and switching does not leave it.
+- **OpenLayers 10.11 reads empty coordinates as no geometry.** Stored geometries always have coordinates, so a null geometry throws instead of being left off the map.

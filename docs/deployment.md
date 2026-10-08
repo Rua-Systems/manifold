@@ -146,7 +146,7 @@ Coolify runs Manifold behind its own proxy, which obtains the certificate for yo
          retries: 20
 
      app:
-       image: ghcr.io/rua-systems/manifold:0.5.0
+       image: ghcr.io/rua-systems/manifold:0.5.1
        depends_on:
          db:
            condition: service_healthy
