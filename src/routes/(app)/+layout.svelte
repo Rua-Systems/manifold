@@ -64,6 +64,7 @@
 
 <style lang="scss">
 	@use '../../styles/colors' as clr;
+	@use '../../styles/forms' as forms;
 	@use '../../styles/variables' as vars;
 
 	.app {
@@ -116,7 +117,7 @@
 				height: vars.$touchTarget;
 				padding: 0;
 				color: clr.$textPrimaryColor;
-				background-color: transparent;
+				@include forms.frostedBacking;
 				border: 1px solid clr.$accentMutedColor;
 				border-radius: vars.$radius;
 				cursor: pointer;

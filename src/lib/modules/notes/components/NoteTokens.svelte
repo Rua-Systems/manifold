@@ -197,8 +197,7 @@
 	@use '../../../../styles/variables' as vars;
 
 	.tool {
-		@include forms.toolButton;
-		border: 1px solid clr.$borderSubtleColor;
+		@include forms.framedToolButton;
 	}
 
 	.share {
@@ -257,9 +256,8 @@
 		}
 
 		> button {
-			@include forms.quietButton;
+			@include forms.framedButton;
 			align-self: flex-start;
-			border: 1px solid clr.$borderSubtleColor;
 		}
 	}
 

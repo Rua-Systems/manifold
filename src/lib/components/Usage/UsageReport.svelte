@@ -192,8 +192,7 @@
 		}
 
 		> form > button {
-			@include forms.quietButton;
-			border: 1px solid clr.$borderSubtleColor;
+			@include forms.framedButton;
 		}
 	}
 

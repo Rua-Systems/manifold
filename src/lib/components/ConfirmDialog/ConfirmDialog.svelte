@@ -78,6 +78,7 @@
 				color: clr.$textPrimaryColor;
 				border-color: clr.$errorColor;
 				background-color: clr.$errorColor;
+				background-image: none;
 			}
 		}
 	}

@@ -359,12 +359,11 @@
 	}
 
 	.icon-button {
-		@include forms.toolButton;
-		border: 1px solid clr.$borderSubtleColor;
+		@include forms.framedToolButton;
 
 		&.danger:hover:not(:disabled) {
 			color: clr.$errorColor;
-			background-color: transparent;
+			@include forms.frostedBacking;
 		}
 	}
 

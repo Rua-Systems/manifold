@@ -88,7 +88,22 @@
 	gap: 0.45rem;
 }
 
+/**
+ * The backing of a framed control: the dotted page behind it blurs instead of showing through, as
+ * behind the navigation button.
+ */
+@mixin frostedBacking {
+	background-color: clr.$surfaceTranslucentColor;
+	backdrop-filter: blur(10px);
+}
+
+/** A tint over the frosted backing, so a hovered or active control keeps hiding the dots. */
+@mixin tint($color) {
+	background-image: linear-gradient($color, $color);
+}
+
 @mixin segmentedControl {
+	@include frostedBacking;
 	display: grid;
 	grid-auto-columns: 1fr;
 	grid-auto-flow: column;
@@ -135,7 +150,7 @@
 	letter-spacing: 0.18em;
 	text-transform: uppercase;
 	color: clr.$textPrimaryColor;
-	background-color: transparent;
+	@include frostedBacking;
 	border: 1px solid clr.$accentMutedColor;
 	border-radius: vars.$radius;
 	cursor: pointer;
@@ -148,7 +163,7 @@
 	&:hover:not(:disabled) {
 		color: clr.$accentColor;
 		border-color: clr.$accentColor;
-		background-color: clr.$accentWashColor;
+		@include tint(clr.$accentWashColor);
 	}
 
 	&:active:not(:disabled) {
@@ -181,6 +196,22 @@
 
 	&:disabled {
 		cursor: not-allowed;
+	}
+}
+
+/** A quiet button with a frame, for a lesser action that stands on its own. */
+@mixin framedButton {
+	@include quietButton;
+	@include frostedBacking;
+	padding: 0 0.9rem;
+	border: 1px solid clr.$borderSubtleColor;
+	border-radius: vars.$radius;
+	transition:
+		color 160ms ease,
+		border-color 160ms ease;
+
+	&:hover:not(:disabled) {
+		border-color: clr.$accentMutedColor;
 	}
 }
 
@@ -229,8 +260,16 @@
 	}
 }
 
+/** A tool button with a frame, such as the tools above a note, which stand on the page itself. */
+@mixin framedToolButton {
+	@include toolButton;
+	@include frostedBacking;
+	border: 1px solid clr.$borderSubtleColor;
+}
+
 /** A tool button whose command is on, such as bold inside bold text. */
 @mixin toolButtonActive {
 	color: clr.$accentColor;
-	background-color: clr.$accentWashColor;
+	@include frostedBacking;
+	@include tint(clr.$accentWashColor);
 }
