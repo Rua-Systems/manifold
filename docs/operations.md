@@ -223,7 +223,7 @@ Docker only marks an unhealthy container; the `restart: unless-stopped` policy r
 ## Updating
 
 1. Create a backup and copy it off the server.
-2. Choose the image in `.env` with `MANIFOLD_VERSION`: `latest`, a release such as `0.5.1`, or a minor line such as `0.5`.
+2. Choose the image in `.env` with `MANIFOLD_VERSION`: `latest`, a release such as `0.6.0`, or a minor line such as `0.6`.
 3. Pull the image:
 
    ```bash

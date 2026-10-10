@@ -260,3 +260,23 @@ The choices made while building Manifold that someone could reasonably have made
 - **Framed buttons get a frosted backing; unframed icon buttons only while active.** Through a transparent frame the dotted page looked like part of the button. Unframed icon buttons sit in toolbars that have a backing of their own, and a box behind every icon would crowd them. The bordered rows of the note picker keep a plain background, since a blur on each row costs scrolling.
 - **Focus mode is one mode for reading and writing,** as the owner chose, rather than a separate reading view. **Edit** stays in it, and switching does not leave it.
 - **OpenLayers 10.11 reads empty coordinates as no geometry.** Stored geometries always have coordinates, so a null geometry throws instead of being left off the map.
+
+## 0.6.0
+
+- **Any file is accepted, and its type comes from its content.** Signatures name images, PDF, audio and video; text needs one of its extensions and UTF-8 without NUL bytes; SVG is read whole and checked like a service icon. The type a client claims is never used. Anything unrecognised is stored as `application/octet-stream` and only ever sent as an attachment, so no uploaded file can render as a page.
+- **Uploads stream to disk through `@fastify/busboy`.** `request.formData()` holds the whole body in memory, which a 100 MB default cannot afford. The parser cuts a file at the limit and removes it, and a broken body keeps nothing. The app's own pages still post to form actions; the actions read the body themselves.
+- **Images keep a 10 MB cap under the 100 MB upload limit.** Note images and service icons are shown everywhere and decoded by every browser that opens a note, so they stay small.
+- **Files are served from disk in ranges,** since players seek in audio and video. One range per request is enough for browsers; a request for several gets the whole file. HEAD answers without opening the file.
+- **A restore trusts the restored records, not the bytes.** With any type allowed, the old check (is it an image) no longer tells a Manifold upload from something placed in an archive. A file is copied only when a restored `file` row names it.
+- **The Files module keeps its own files through `file_entry`.** The core's `file` table stays module-free; a row in `file_entry` is a reference like a note's or a service's, so the orphan purge leaves the file alone. Files of other modules stay theirs and show as read-only sources.
+- **A file in use is never deleted.** The delete runs in one statement that excludes every file another module's reference points to, so a reference created meanwhile still wins. A `fileUses` hook lets each module name and link its places for the page; a note in the trash still counts.
+- **Folders have unique names per folder, whatever the case, and only empty folders are deleted,** as the owner chose. Moving checks the target's path so a folder never ends up inside itself.
+- **The file scopes moved to the module with their ids.** Keys made before keep working; only the group and the write label changed.
+- **pdf.js draws PDFs in the page, not the browser's viewer.** Files keep their sandboxing policy, under which browsers refuse to show PDFs, and Android Chrome would only download them. pdf.js loads on demand and fetches through the page, since its worker runs under the resource policy that lets it load nothing. Its optional canvas binding for Node is removed from the image, and the SBOM is written before that because npm checks the tree.
+- **A PDF opened as a page is downloaded.** A link in a shared note would otherwise show the browser's blocked page; pdf.js still fetches it inline.
+- **Attachments in notes are links to `/files/<id>`, not a node of their own.** A link survives Markdown, the API and MCP as it is, needs no new schema, and still counts as a use. The editor writes the name and size as its text.
+- **Insert from Files uses a search, not the folder tree.** Picking a file to insert is mostly finding it by name or taking one just uploaded.
+- **Folders live at `/api/v1/file-folders`.** The router takes the first route that matches, and `/files/{id}` would also match `/files/folders`.
+- **MCP tools only read files,** as decided for this release; uploads and changes stay with the API and the page.
+- **Image editing runs in the browser and saves a copy.** A canvas needs no image library on the server, and a copy never changes what a note already shows. The arithmetic lives apart from the canvas so it is tested. A GIF becomes a PNG of its first frame.
+- **Uploads on the Files page have their own limit of 120 a minute,** since each file is its own request; the editor's 30 a minute stays for notes.
