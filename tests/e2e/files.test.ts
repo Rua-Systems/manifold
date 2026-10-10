@@ -50,7 +50,7 @@ test('a folder takes uploads, and a file is renamed, moved and deleted', async (
 	await expect(page.getByRole('navigation', { name: 'Location' })).toContainText(folder);
 
 	await upload(page, name, 'text/plain', Buffer.from('first line\nsecond line'));
-	await row(page, name).getByRole('link').click();
+	await row(page, name).locator('a.main').click();
 	await expect(page).toHaveURL(/\/files\/view\/[0-9a-f-]{36}$/);
 	await expect(page.locator('pre')).toContainText('second line');
 	await expect(page.getByText('Nothing shows this file.')).toBeVisible();
@@ -97,7 +97,7 @@ test('a PDF is shown page by page and the filter finds it', async ({ page }) => 
 	await page.locator('select[name=kind]').selectOption('image');
 	await expect(row(page, name)).toHaveCount(0);
 	await page.locator('select[name=kind]').selectOption('pdf');
-	await row(page, name).getByRole('link').click();
+	await row(page, name).locator('a.main').click();
 
 	await expect(page.getByText('Pages: 1')).toBeVisible();
 	await expect(page.getByRole('img', { name: 'Page 1 of 1' })).toBeVisible();
@@ -126,7 +126,7 @@ test('an image in a note is listed under Notes and cannot be deleted', async ({ 
 	await expect(page).toHaveURL(/source=notes/);
 	const image = page.locator('.items > .row', { hasText: 'In use' }).first();
 	await expect(image.getByRole('button', { name: /^Delete / })).toBeDisabled();
-	await image.getByRole('link').first().click();
+	await image.locator('a.main').click();
 	await expect(page.getByRole('link', { name: title })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeDisabled();
 });
