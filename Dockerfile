@@ -8,7 +8,10 @@ RUN npm ci
 
 COPY . .
 
-RUN npm run build && npm run --silent sbom > sbom.cdx.json && npm prune --omit=dev
+# pdf.js runs only in the browser; its optional canvas binding for Node is a native module the
+# server never loads, so it leaves the image, and the SBOM is written after it is gone.
+RUN npm run build && npm prune --omit=dev && rm -rf node_modules/@napi-rs \
+	&& npm run --silent sbom > sbom.cdx.json
 
 FROM node:24-alpine AS runtime
 

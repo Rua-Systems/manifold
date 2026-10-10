@@ -168,6 +168,7 @@ Limits (V2.1.3):
 | REST, MCP and file requests with a key          | API key         | `API_RATE_LIMIT_PER_MINUTE`, 120 per minute by default       |
 | Image uploads from the editor                   | Account         | 30 per minute                                                |
 | Data exports                                    | Installation    | One at a time                                                |
+| Uploads on the Files page                       | Account         | 120 per minute                                               |
 | Upload size                                     | Request         | `UPLOAD_MAX_BYTES`, 100 MB by default; images 10 MB at most  |
 | Other request bodies                            | Request         | 5 MB; a chunked body without a length is refused             |
 | Trash and audit log                             | Installation    | `TRASH_RETENTION_DAYS` (30) and `AUDIT_RETENTION_DAYS` (180) |
@@ -176,9 +177,9 @@ The number of notes, files, vault entries and keys is bounded only by the disk. 
 
 ## File handling
 
-Uploads (note images, service icons and `POST /api/v1/files`):
+Uploads (note images, service icons, the Files page and `POST /api/v1/files`):
 
-- Note images: PNG, JPEG, WebP and GIF, recognized by their magic bytes; service icons may also be SVG. API uploads: any file. Its type comes from its magic bytes (images, PDF, audio, video), or from a text extension together with UTF-8 content without NUL bytes; SVG is checked whole like an icon. Any other file is stored as `application/octet-stream`. File names and the type the client claims are never trusted.
+- Note images: PNG, JPEG, WebP and GIF, recognized by their magic bytes; service icons may also be SVG. The Files page and API uploads: any file. Its type comes from its magic bytes (images, PDF, audio, video), or from a text extension together with UTF-8 content without NUL bytes; SVG is checked whole like an icon. Any other file is stored as `application/octet-stream`. File names and the type the client claims are never trusted.
 - SVG icons must be valid UTF-8 and may not contain scripts, embedded documents, event handlers, entity declarations or references to other addresses.
 - At most `UPLOAD_MAX_BYTES` per file, checked before the body is read (`checkBodySize`) and again while it streams to disk (`receiveUploads` in src/lib/server/files/upload-stream.ts, a parser limit that stops the file and removes it); images stay under 10 MB (`imageMaxBytes`). Files are never decoded or run on the server.
 - Files are stored under generated UUIDs in `UPLOAD_DIR` and served only by `/files/<id>` and `GET /api/v1/files/{id}`, to the owner and to keys with `files:read`, with the detected type, `nosniff`, `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` and a cleaned file name: `Content-Disposition: inline` for images, PDF, audio, video and text, and `attachment` with `application/octet-stream` for anything else (`serveFile`). Single byte ranges are answered with `206`. Files that nothing refers to any more are deleted by the daily housekeeping.

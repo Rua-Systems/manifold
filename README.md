@@ -19,8 +19,9 @@ Manifold is developed by [Rua Systems](https://rua.systems).
 - **Services:** links to the services you run, with icons and an order you choose; they also fill the sidebar.
 - **Notes:** a rich text editor with headings, lists, task lists, quotes, code blocks, links, tables and images, automatic saving, conflict handling between tabs and devices, a revision history with restore, and a trash.
 - **Map Notes:** pins, lines and polygons on an OpenLayers map, each linked to a note, with the note editor next to the map.
+- **Files:** every file kept in Manifold in one place, in folders of your own: upload any type, preview images, PDF, audio, video and text, and see which notes and services use a file.
 - **Vault:** passwords and keys encrypted with AES-256-GCM, revealed or copied only after you confirm your identity.
-- **Search and command palette:** one search over notes, services and vault names, and a palette on Ctrl+K or Cmd+K for pages, actions and results.
+- **Search and command palette:** one search over notes, services, file names and vault names, and a palette on Ctrl+K or Cmd+K for pages, actions and results.
 
 ### Integrations
 
@@ -61,7 +62,7 @@ The documentation lives in [docs/](docs/README.md).
 
 - **Getting started**: [Concepts](docs/getting-started.md), [Installation](docs/installation.md) and [Configuration](docs/configuration.md).
 - **Deployment and operations**: [Deployment](docs/deployment.md) behind Caddy, Nginx or Coolify, [Operations](docs/operations.md) with the command line, recovery and key rotation, [Backups and restores](docs/backups.md), and [Email](docs/email.md).
-- **Using Manifold**: [Your account](docs/account.md), [Services](docs/services.md), [Notes](docs/notes.md), [Map Notes](docs/map-notes.md), [Vault](docs/vault.md) and [Search and the command palette](docs/search.md).
+- **Using Manifold**: [Your account](docs/account.md), [Services](docs/services.md), [Notes](docs/notes.md), [Map Notes](docs/map-notes.md), [Files](docs/files.md), [Vault](docs/vault.md) and [Search and the command palette](docs/search.md).
 - **Integrations**: the [REST API](docs/api.md) and the [MCP server](docs/mcp.md).
 - **Reference**: [Security](docs/security.md), [Troubleshooting](docs/troubleshooting.md), [Development](docs/development.md) and the [Decisions](docs/decisions.md) behind the design.
 

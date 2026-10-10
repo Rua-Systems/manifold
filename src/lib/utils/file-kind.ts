@@ -31,6 +31,16 @@ export function fileKind(mimeType: string): FileKind {
 	return KINDS.get(mimeType) ?? 'other';
 }
 
+/** The stored types of a kind; for `other`, the types it excludes are those of every other kind. */
+export function typesOfKind(kind: FileKind): string[] {
+	return [...KINDS].filter(([, value]) => value === kind).map(([type]) => type);
+}
+
+/** Every stored type that has a preview. */
+export function previewableTypes(): string[] {
+	return [...KINDS.keys()];
+}
+
 /** Whether a file of this type may be shown inline; every other one is sent as a download. */
 export function isPreviewable(mimeType: string): boolean {
 	return fileKind(mimeType) !== 'other';

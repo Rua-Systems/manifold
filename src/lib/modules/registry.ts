@@ -1,3 +1,4 @@
+import { filesManifest } from './files/manifest';
 import { notesManifest } from './notes/manifest';
 import { servicesManifest } from './services/manifest';
 import { vaultManifest } from './vault/manifest';
@@ -11,6 +12,7 @@ import type { ModuleManifest } from './types';
 export const MODULES: readonly ModuleManifest[] = [
 	servicesManifest,
 	notesManifest,
+	filesManifest,
 	vaultManifest
 ].sort((first, second) => first.position - second.position);
 

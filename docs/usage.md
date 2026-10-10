@@ -25,6 +25,7 @@ One table lists what each module keeps, in the order of the sidebar, followed by
 | ------------ | ------------------------------------------------------------------------------------------------------ |
 | **Services** | **Services**                                                                                           |
 | **Notes**    | **Notes**, **Notes in the trash**, **Note revisions**, **Note tokens**, **Map features**, **Basemaps** |
+| **Files**    | **Folders**, **Files in the Files module**                                                             |
 | **Vault**    | **Vault entries**                                                                                      |
 | **System**   | **Audit log events**, **API keys**, **Sessions**                                                       |
 
@@ -34,7 +35,7 @@ Revisions are often the largest row: each note keeps its whole history, see [Not
 
 ## Uploaded files
 
-The files table lists the uploads by the module that owns them, largest first: **Notes** for images in notes, **Services** for service icons, and **Uploaded through the API** for files uploaded with `POST /api/v1/files` that no note or service uses yet. A file nothing uses is deleted by the daily housekeeping once it is a day old, see [Operations](operations.md).
+The files table lists the uploads by the module that owns them, largest first: **Files** for the files uploaded on the Files page, **Notes** for images in notes, **Services** for service icons, and **Uploaded through the API** for files uploaded with `POST /api/v1/files` that no note or service uses yet. A file nothing uses is deleted by the daily housekeeping once it is a day old, see [Operations](operations.md); files on the Files page stay until you delete them, see [Files](files.md).
 
 The sizes here come from the database's records of the files, the readout under [Overview](#overview) from the files on disk.
 

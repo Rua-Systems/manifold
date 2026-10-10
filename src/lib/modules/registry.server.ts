@@ -6,6 +6,7 @@ import type { DashboardCard } from '$lib/types/dashboard';
 import type { FileUse } from '$lib/types/files';
 import type { UsageItem } from '$lib/types/usage';
 import { MODULES } from './registry';
+import { filesServerManifest } from './files/manifest.server';
 import { notesServerManifest } from './notes/manifest.server';
 import { servicesServerManifest } from './services/manifest.server';
 import { vaultServerManifest } from './vault/manifest.server';
@@ -16,6 +17,7 @@ import type { ServerModuleManifest } from './types.server';
 export const SERVER_MODULES: readonly ServerModuleManifest[] = [
 	servicesServerManifest,
 	notesServerManifest,
+	filesServerManifest,
 	vaultServerManifest
 ];
 

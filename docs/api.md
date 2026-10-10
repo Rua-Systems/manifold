@@ -1,6 +1,6 @@
 # REST API
 
-The REST API under `/api/v1` gives scripts and other applications access to your services, notes, map features, uploaded images, the names in your vault and the usage report. It speaks JSON with snake_case field names, authenticates every request with an API key and is described in OpenAPI 3.1 at `/api/v1/openapi.json`. AI agents use the same keys through the [MCP server](mcp.md).
+The REST API under `/api/v1` gives scripts and other applications access to your services, notes, map features, uploaded files, the names in your vault and the usage report. It speaks JSON with snake_case field names, authenticates every request with an API key and is described in OpenAPI 3.1 at `/api/v1/openapi.json`. AI agents use the same keys through the [MCP server](mcp.md).
 
 ## API keys
 
@@ -286,11 +286,11 @@ Basemaps are the tile sources added under **Settings → Map**. The **Standard**
 
 `GET /api/v1/search` searches notes, services and vault entry names at once, with the same ranking as the search in the app:
 
-| Parameter | Meaning                                                                  |
-| --------- | ------------------------------------------------------------------------ |
-| `q`       | The words to find, up to 200 characters. Required.                       |
-| `types`   | Comma-separated types: `note`, `service` or `secret`. All when left out. |
-| `limit`   | Hits, 20 by default and at most 50.                                      |
+| Parameter | Meaning                                                                          |
+| --------- | -------------------------------------------------------------------------------- |
+| `q`       | The words to find, up to 200 characters. Required.                               |
+| `types`   | Comma-separated types: `note`, `service`, `file` or `secret`. All when left out. |
+| `limit`   | Hits, 20 by default and at most 50.                                              |
 
 ```bash
 curl -H "Authorization: Bearer mfd_your_key" "https://manifold.example.com/api/v1/search?q=grafana&types=note,service"

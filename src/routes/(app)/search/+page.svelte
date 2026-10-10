@@ -10,7 +10,8 @@
 	const TYPE_LABELS: Record<string, () => string> = {
 		note: m.palette_type_note,
 		service: m.palette_type_service,
-		secret: m.palette_type_secret
+		secret: m.palette_type_secret,
+		file: m.palette_type_file
 	};
 </script>
 

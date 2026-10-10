@@ -193,7 +193,8 @@ export async function serveFile(stored: StoredFile, request: Request): Promise<R
 	return new Response(body, { status, headers });
 }
 
-function unreferenced(references: FileReference[]): SQL[] {
+/** Conditions that hold for a file no column of `references` points to. */
+export function unreferencedBy(references: FileReference[]): SQL[] {
 	return references.map(
 		(reference) =>
 			sql`not exists (select 1 from ${sql.identifier(reference.table)} where ${sql.identifier(reference.table)}.${sql.identifier(reference.column)} = ${file.id})`
@@ -211,7 +212,7 @@ export async function purgeUnreferencedFiles(
 	const cutoff = new Date(now.getTime() - ORPHAN_AGE_MS);
 	const deleted = await getDb()
 		.delete(file)
-		.where(and(lt(file.createdAt, cutoff), ...unreferenced(references)))
+		.where(and(lt(file.createdAt, cutoff), ...unreferencedBy(references)))
 		.returning({ storageKey: file.storageKey });
 
 	for (const row of deleted) {
@@ -230,7 +231,7 @@ export async function deleteUnreferencedFile(
 ): Promise<boolean> {
 	const deleted = await getDb()
 		.delete(file)
-		.where(and(eq(file.id, id), ...unreferenced(references)))
+		.where(and(eq(file.id, id), ...unreferencedBy(references)))
 		.returning({ storageKey: file.storageKey });
 
 	for (const row of deleted) {
