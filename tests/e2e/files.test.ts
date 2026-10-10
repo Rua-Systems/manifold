@@ -127,7 +127,10 @@ test('an image in a note is listed under Notes and cannot be deleted', async ({ 
 	const image = page.locator('.items > .row', { hasText: 'In use' }).first();
 	await expect(image.getByRole('button', { name: /^Delete / })).toBeDisabled();
 	await image.locator('a.main').click();
-	await expect(page.getByRole('link', { name: title })).toBeVisible();
+	// The sidebar lists recent notes too, so the use is looked for in the details.
+	await expect(
+		page.getByRole('complementary', { name: 'Details' }).getByRole('link', { name: title })
+	).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeDisabled();
 });
 
@@ -153,7 +156,10 @@ test('a note takes a file from Files as a link that opens its page', async ({ pa
 	await link.click();
 	await expect(page).toHaveURL(/\/files\/view\/[0-9a-f-]{36}$/);
 	await expect(page.locator('pre')).toContainText('handout text');
-	await expect(page.getByRole('link', { name: title })).toBeVisible();
+	// The sidebar lists recent notes too, so the use is looked for in the details.
+	await expect(
+		page.getByRole('complementary', { name: 'Details' }).getByRole('link', { name: title })
+	).toBeVisible();
 });
 
 test('a file attached in a note is uploaded and shows its name and size', async ({ page }) => {
