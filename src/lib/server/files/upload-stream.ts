@@ -10,7 +10,12 @@ import { file } from '../db/schema';
 import { logSecurityEvent } from '../log';
 import { DETECT_HEAD_BYTES, detectFileType, isSvgDocument, startsLikeSvg } from './detect';
 import { cleanName, type FileRejection, type StoredFile } from './files';
-import { createStoredFileStream, readStoredFile, removeStoredFile } from './storage';
+import {
+	createStoredFileStream,
+	ensureUploadDirectory,
+	readStoredFile,
+	removeStoredFile
+} from './storage';
 
 // Uploads are written to disk as they arrive, so a large file never sits in memory whole. The
 // multipart body is parsed part by part, and each file is hashed, measured and typed on its way.
@@ -111,7 +116,8 @@ async function storePart(
 	const storageKey = randomUUID();
 	const meter = new Meter();
 	try {
-		await pipeline(stream, meter, await createStoredFileStream(storageKey));
+		// Piped before the first await: the parser may report an error on the part at once.
+		await pipeline(stream, meter, createStoredFileStream(storageKey));
 	} catch (error) {
 		await removeStoredFile(storageKey);
 		throw error;
@@ -203,9 +209,10 @@ export async function receiveUploads(
 		fields.set(name, value);
 	});
 	let storageFailure: unknown = null;
-	parser.on('file', (_field, stream, filename) => {
+	parser.on('file', (_field, stream, filename: string | undefined) => {
 		streams.push(stream);
-		const part = storePart(stream, filename, options);
+		// A part with an empty file name arrives without one.
+		const part = storePart(stream, filename ?? '', options);
 		// A part that cannot be stored stops the whole request instead of leaving it waiting.
 		part.catch((error: unknown) => {
 			storageFailure ??= error;
@@ -214,6 +221,7 @@ export async function receiveUploads(
 		parts.push(part);
 	});
 
+	await ensureUploadDirectory();
 	const body = Readable.fromWeb(request.body as unknown as NodeReadableStream<Uint8Array>);
 	try {
 		await pipeline(body, parser);

@@ -27,9 +27,15 @@ export async function writeStoredFile(storageKey: string, bytes: Uint8Array): Pr
 	await writeFile(pathFor(storageKey), bytes, { flag: 'wx' });
 }
 
-/** A new stored file to stream into; it fails rather than replace one that exists. */
-export async function createStoredFileStream(storageKey: string): Promise<WriteStream> {
+export async function ensureUploadDirectory(): Promise<void> {
 	await mkdir(uploadDirectory(), { recursive: true });
+}
+
+/**
+ * A new stored file to stream into, in the folder `ensureUploadDirectory` made; it fails rather
+ * than replace one that exists.
+ */
+export function createStoredFileStream(storageKey: string): WriteStream {
 	return createWriteStream(pathFor(storageKey), { flags: 'wx' });
 }
 
