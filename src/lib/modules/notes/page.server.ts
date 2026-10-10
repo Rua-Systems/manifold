@@ -3,8 +3,14 @@ import { localizeHref } from '$lib/paraglide/runtime.js';
 import { ownerActor } from '$lib/server/actor';
 import { getEnv } from '$lib/server/env';
 import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { FileRejectedError, imageMaxBytes, storeUpload } from '$lib/server/files/files';
+import { deleteUnreferencedFile, imageMaxBytes } from '$lib/server/files/files';
 import { fileRejectionMessage } from '$lib/server/files/messages';
+import {
+	receiveUploads,
+	UploadFormatError,
+	type ReceivedUploads
+} from '$lib/server/files/upload-stream';
+import { fileKind } from '$lib/utils/file-kind';
 import { requireUser } from '$lib/server/guard';
 import { textValue } from '$lib/utils/validation';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
@@ -28,7 +34,7 @@ import { NEW_NOTE_ID } from './paths';
 import { noteVersionSchema } from './schemas';
 import { createNoteTokenAction } from './tokens.page.server';
 import { listNoteTokens } from './tokens.server';
-import type { NotePreview, NoteSummary } from './types';
+import type { AttachedFile, NotePreview, NoteSummary } from './types';
 import { isUploadLimited } from '$lib/server/rate-limit';
 
 /** The notes page shows at most this many search hits. */
@@ -111,7 +117,7 @@ export async function loadNoteData(id: string, revision: number | null) {
  * turns into a saved one, so the editor is not rebuilt under the owner's cursor.
  */
 export async function loadNotePage(id: string, url: URL) {
-	const shared = { map: await mapConfig(), uploadMaxBytes: imageMaxBytes() };
+	const shared = { map: await mapConfig(), uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES };
 	if (id === NEW_NOTE_ID) {
 		return {
 			note: null,
@@ -135,32 +141,60 @@ export async function loadNotePage(id: string, url: URL) {
 	}
 }
 
-/** Stores an image pasted or picked in the editor and answers with its address. */
-export async function uploadImage({ request, locals }: RequestEvent) {
+function uploadFailure(status: number, message: string) {
+	return fail(status, { file: null, message });
+}
+
+/**
+ * Stores a file pasted, dropped or picked in the editor, streamed like any upload, and answers
+ * what the editor needs to show it. Images stay under the image limit; the note shows them inline.
+ */
+export async function uploadFile({ request, locals }: RequestEvent) {
 	const { user } = requireUser(locals);
 	if (isUploadLimited(user.id)) {
-		return fail(429, { src: null, message: m.files_error_upload_rate() });
+		return uploadFailure(429, m.files_error_upload_rate());
 	}
-	const data = await request.formData();
-	const upload = data.get('image');
-	if (!(upload instanceof File)) {
-		return fail(400, { src: null, message: m.validation_file_empty() });
-	}
+	const maxBytes = getEnv().UPLOAD_MAX_BYTES;
+	let received: ReceivedUploads;
 	try {
-		const stored = await storeUpload(upload, { ownerModule: NOTES_MODULE, allowSvg: false });
-		return { src: `/files/${stored.id}`, message: '' };
+		received = await receiveUploads(request, {
+			ownerModule: NOTES_MODULE,
+			maxBytes,
+			maxFiles: 1,
+			accept: 'any'
+		});
 	} catch (cause) {
-		if (cause instanceof FileRejectedError) {
-			return fail(400, {
-				src: null,
-				message: fileRejectionMessage(cause.reason, {
-					allowSvg: false,
-					maxBytes: imageMaxBytes()
-				})
-			});
+		if (cause instanceof UploadFormatError) {
+			return uploadFailure(400, m.files_error_upload_broken());
 		}
 		throw cause;
 	}
+
+	const [rejected] = received.rejected;
+	if (rejected !== undefined) {
+		return uploadFailure(
+			400,
+			fileRejectionMessage(rejected.reason, { allowSvg: false, maxBytes })
+		);
+	}
+	const [stored] = received.files;
+	if (stored === undefined) {
+		return uploadFailure(400, m.validation_file_empty());
+	}
+	if (fileKind(stored.mimeType) === 'image' && stored.sizeBytes > imageMaxBytes()) {
+		await deleteUnreferencedFile(stored.id, []);
+		return uploadFailure(
+			400,
+			fileRejectionMessage('too_large', { allowSvg: false, maxBytes: imageMaxBytes() })
+		);
+	}
+	const file: AttachedFile = {
+		src: `/files/${stored.id}`,
+		name: stored.originalName,
+		sizeBytes: stored.sizeBytes,
+		mimeType: stored.mimeType
+	};
+	return { file, message: '' };
 }
 
 export const noteActions = {
@@ -204,7 +238,7 @@ export const noteActions = {
 		}
 	},
 
-	upload: uploadImage,
+	upload: uploadFile,
 
 	createToken: createNoteTokenAction,
 

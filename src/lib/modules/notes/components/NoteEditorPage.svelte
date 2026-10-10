@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import Dialog from '$lib/components/Dialog/Dialog.svelte';
 	import TrashIcon from '$lib/components/icons/TrashIcon.svelte';
+	import FilePicker from '$lib/modules/files/components/FilePicker.svelte';
 	import { SIDEBAR_DEPENDENCY } from '$lib/modules/registry';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale } from '$lib/paraglide/runtime.js';
@@ -27,7 +28,13 @@
 		type SaveStatus
 	} from '../draft.svelte';
 	import { NEW_NOTE_ID, NOTE_DEPENDENCY } from '../paths';
-	import type { NoteDetail, NoteEditorHost, NotePreview, NoteRevisionSummary } from '../types';
+	import type {
+		AttachedFile,
+		NoteDetail,
+		NoteEditorHost,
+		NotePreview,
+		NoteRevisionSummary
+	} from '../types';
 	import NoteEditor from './NoteEditor.svelte';
 
 	interface Props {
@@ -146,7 +153,19 @@
 		afterSave = afterSave.then(next, next);
 	}
 
-	async function upload(file: File): Promise<string | null> {
+	function isAttachedFile(value: unknown): value is AttachedFile {
+		return (
+			typeof value === 'object' &&
+			value !== null &&
+			'src' in value &&
+			typeof value.src === 'string' &&
+			'name' in value &&
+			'sizeBytes' in value &&
+			'mimeType' in value
+		);
+	}
+
+	async function upload(file: File): Promise<AttachedFile | null> {
 		if (file.size > uploadMaxBytes) {
 			notifications.fault(
 				m.validation_file_too_large({ max: formatMegabytes(uploadMaxBytes) })
@@ -154,15 +173,30 @@
 			return null;
 		}
 		try {
-			const result = await postAction(actionUrl(draft.id, 'upload'), { image: file });
-			if (result.type === 'success' && typeof result.data?.src === 'string') {
-				return result.data.src;
+			const result = await postAction(actionUrl(draft.id, 'upload'), { file });
+			if (result.type === 'success' && isAttachedFile(result.data?.file)) {
+				return result.data.file;
 			}
 			notifications.fault(actionMessage(result, m.notes_upload_failed()));
 		} catch {
 			notifications.fault(m.notes_upload_failed());
 		}
 		return null;
+	}
+
+	let pickerOpen = $state(false);
+	/** Puts the chosen file into the editor that asked for it. */
+	let insertPicked: ((file: AttachedFile) => void) | null = null;
+
+	function pickFile(insert: (file: AttachedFile) => void): void {
+		insertPicked = insert;
+		pickerOpen = true;
+	}
+
+	function onPicked(file: AttachedFile): void {
+		pickerOpen = false;
+		insertPicked?.(file);
+		insertPicked = null;
 	}
 
 	// A restored revision or a write from elsewhere arrives through `note`; it replaces the draft
@@ -406,6 +440,7 @@
 				content={preview.content}
 				editable={false}
 				label={m.notes_content_label()}
+				previewFileLinks
 			/>
 		{/key}
 	{:else}
@@ -431,6 +466,8 @@
 				onchange={(content) => draft.edit({ content })}
 				onblur={() => draft.flush()}
 				onupload={upload}
+				onpickfile={pickFile}
+				previewFileLinks
 			/>
 		{/key}
 	{/if}
@@ -452,6 +489,9 @@
 	</div>
 {/if}
 
+<Dialog bind:open={pickerOpen} id="notePickFile" title={m.editor_pick_file()}>
+	<FilePicker onpick={onPicked} />
+</Dialog>
 <Dialog bind:open={historyOpen} id="noteHistory" title={m.notes_history()}>
 	{#if revisions.length === 0}
 		<p class="history-empty">{m.notes_history_empty()}</p>

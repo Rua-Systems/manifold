@@ -42,6 +42,10 @@ Select a file to open its page:
 
 The page also lists the type, the size, when the file was added, and every place that shows it. Whether the browser plays a video depends on how the video was encoded.
 
+## In notes
+
+**Insert from Files** in the note editor puts a stored file into a note: an image inline, any other file as a link with its name and size. **Attach file** uploads a new one the same way. The note then uses the file, and its page lists the note. While reading the note, the link opens the file's page here. See [Notes](notes.md#images-and-files).
+
 ## Deleting
 
 **Delete** removes a file for good. A file in use cannot be deleted: its page lists the notes and services that show it, and once it is gone from all of them, it can be deleted. A note in the trash still uses its images until it is deleted for good.

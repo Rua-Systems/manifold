@@ -130,3 +130,42 @@ test('an image in a note is listed under Notes and cannot be deleted', async ({ 
 	await expect(page.getByRole('link', { name: title })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeDisabled();
 });
+
+test('a note takes a file from Files as a link that opens its page', async ({ page }) => {
+	const name = `${unique('handout')}.txt`;
+	await upload(page, name, 'text/plain', Buffer.from('handout text'));
+
+	const title = unique('Attached');
+	await page.goto('/notes/new', { waitUntil: 'networkidle' });
+	await page.getByLabel('Title', { exact: true }).fill(title);
+	const editor = page.getByRole('textbox', { name: 'Note content' });
+	await editor.click();
+	await page.getByRole('button', { name: 'Insert from Files' }).click();
+	const picker = page.getByRole('dialog', { name: 'Insert from Files' });
+	await picker.getByLabel('Search files by name').fill(name);
+	await picker.getByRole('button', { name: new RegExp(name) }).click();
+	await expect(picker).toBeHidden();
+	const link = editor.getByRole('link', { name: new RegExp(name) });
+	await expect(link).toBeVisible();
+	await expect(page.locator('.status > .current')).toHaveText('Saved');
+
+	await page.getByRole('button', { name: 'Edit', exact: true }).click();
+	await link.click();
+	await expect(page).toHaveURL(/\/files\/view\/[0-9a-f-]{36}$/);
+	await expect(page.locator('pre')).toContainText('handout text');
+	await expect(page.getByRole('link', { name: title })).toBeVisible();
+});
+
+test('a file attached in a note is uploaded and shows its name and size', async ({ page }) => {
+	await page.goto('/notes/new', { waitUntil: 'networkidle' });
+	await page.getByLabel('Title', { exact: true }).fill(unique('Plan'));
+	const editor = page.getByRole('textbox', { name: 'Note content' });
+	await editor.click();
+	const chooser = page.waitForEvent('filechooser');
+	await page.getByRole('button', { name: 'Attach file' }).click();
+	await (
+		await chooser
+	).setFiles({ name: 'plan.csv', mimeType: 'text/csv', buffer: Buffer.from('a;b\n1;2') });
+	await expect(editor.getByRole('link', { name: /^plan\.csv \(/ })).toBeVisible();
+	await expect(page.locator('.status > .current')).toHaveText('Saved');
+});

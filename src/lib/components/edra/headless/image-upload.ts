@@ -1,51 +1,45 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 
-export interface ImageUploadOptions {
-	/** Stores the file and resolves to its address, or null when the upload was refused. */
-	upload: (file: File) => Promise<string | null>;
+export interface FileUploadOptions {
+	/**
+	 * Stores the file and puts it into the document at `position`, or at the cursor for null;
+	 * the owner of the editor decides how, such as an image inline or a link to anything else.
+	 */
+	upload: (file: File, position: number | null) => Promise<void>;
 }
 
-function imageFiles(list: FileList | null | undefined): File[] {
-	return Array.from(list ?? []).filter((file) => file.type.startsWith('image/'));
+function filesOf(list: FileList | null | undefined): File[] {
+	return Array.from(list ?? []);
 }
 
 /**
- * Uploads images pasted or dropped into the editor and inserts them where they landed. Edra's
- * media placeholder only uploads from its own dialog, so this covers paste and drop.
+ * Uploads files pasted or dropped into the editor and puts them where they landed. Edra's media
+ * placeholder only uploads from its own dialog, so this covers paste and drop. The file name keeps
+ * its first purpose, images.
  */
-export const ImageUpload = Extension.create<ImageUploadOptions>({
-	name: 'imageUpload',
+export const FileUpload = Extension.create<FileUploadOptions>({
+	name: 'fileUpload',
 
 	addOptions() {
-		return { upload: async () => null };
+		return { upload: async () => {} };
 	},
 
 	addProseMirrorPlugins() {
-		const editor = this.editor;
 		const { upload } = this.options;
 
 		async function insert(files: File[], position: number | null): Promise<void> {
 			for (const file of files) {
-				const src = await upload(file);
-				if (src === null) {
-					continue;
-				}
-				const chain = editor.chain().focus();
-				if (position === null) {
-					chain.setImage({ src }).run();
-				} else {
-					chain.insertContentAt(position, { type: 'image', attrs: { src } }).run();
-				}
+				await upload(file, position);
 			}
 		}
 
 		return [
 			new Plugin({
-				key: new PluginKey('imageUpload'),
+				key: new PluginKey('fileUpload'),
 				props: {
 					handlePaste: (_view, event) => {
-						const files = imageFiles(event.clipboardData?.files);
+						const files = filesOf(event.clipboardData?.files);
 						if (files.length === 0) {
 							return false;
 						}
@@ -53,7 +47,7 @@ export const ImageUpload = Extension.create<ImageUploadOptions>({
 						return true;
 					},
 					handleDrop: (view, event) => {
-						const files = imageFiles(event.dataTransfer?.files);
+						const files = filesOf(event.dataTransfer?.files);
 						if (files.length === 0) {
 							return false;
 						}

@@ -15,14 +15,22 @@ export function isEmptyNoteContent(content: NoteContent): boolean {
 	);
 }
 
-/** Ids of the uploaded files the content shows as images, without duplicates. */
+/** Ids of the uploaded files the content shows, as images or as linked attachments, once each. */
 export function fileIdsInContent(content: NoteContent): string[] {
 	const ids = new Set<string>();
+	const add = (source: unknown): void => {
+		const id = fileIdFromSource(source);
+		if (id !== null) {
+			ids.add(id);
+		}
+	};
 	const visit = (node: NoteContent): void => {
 		if (node.type === 'image') {
-			const id = fileIdFromSource(node.attrs?.src);
-			if (id !== null) {
-				ids.add(id);
+			add(node.attrs?.src);
+		}
+		for (const mark of node.marks ?? []) {
+			if (mark.type === 'link') {
+				add(mark.attrs?.href);
 			}
 		}
 		for (const child of node.content ?? []) {

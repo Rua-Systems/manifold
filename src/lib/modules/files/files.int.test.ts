@@ -186,6 +186,36 @@ describe('files', () => {
 		expect(await getFileDetail(shown)).toBeNull();
 	});
 
+	it('are in use while a note links them as attachments', async () => {
+		const [report] = await uploadToFiles(null, new File(['%PDF-1.7 x'], 'report.pdf'));
+		const created = await createNote(
+			{
+				title: 'With an attachment',
+				content: {
+					type: 'doc',
+					content: [
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'report.pdf (10 B)',
+									marks: [{ type: 'link', attrs: { href: `/files/${report}` } }]
+								}
+							]
+						}
+					]
+				}
+			},
+			OWNER
+		);
+
+		expect((await getFileDetail(report))?.uses).toMatchObject([
+			{ module: 'notes', label: 'With an attachment', href: `/notes/${created.id}` }
+		]);
+		await expect(deleteFile(report)).rejects.toThrow(ValidationError);
+	});
+
 	it('are filtered by name, kind and use, and found by the search', async () => {
 		const [report] = await uploadToFiles(
 			null,

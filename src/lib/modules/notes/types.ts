@@ -21,6 +21,15 @@ export interface NoteDetail {
 /** Who wrote a revision: the owner, an API key, a note token or the app itself. */
 export type RevisionActorType = 'owner' | 'api_key' | 'note_token' | 'system';
 
+/** A stored file the editor puts into a note: an image inline, anything else as a link. */
+export interface AttachedFile {
+	/** `/files/<id>`. */
+	src: string;
+	name: string;
+	sizeBytes: number;
+	mimeType: string;
+}
+
 export interface NoteRevisionSummary {
 	version: number;
 	title: string;

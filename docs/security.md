@@ -78,7 +78,7 @@ See [Vault](vault.md) for using the vault.
 
 ## Content and uploads
 
-- Note content is checked on the server against the editor's schema. Unknown elements are refused, links may use only `http`, `https` or `mailto`, and images must be files uploaded to this Manifold. Raw HTML in Markdown is dropped.
+- Note content is checked on the server against the editor's schema. Unknown elements are refused, links may use only `http`, `https` or `mailto` or point to a file stored here (`/files/<id>`), and images must be files uploaded to this Manifold. Raw HTML in Markdown is dropped.
 - Service addresses must start with `http://` or `https://`, so a link in the sidebar cannot run a script. Manifold never fetches them itself.
 - Uploads are recognized from their content, never from the file name or the type the client claims. Note images must be PNG, JPEG, WebP or GIF images. Service icons may also be SVG, which must be UTF-8 and may not contain scripts, embedded documents, event handlers, entity declarations or references to other addresses; SVG is only ever shown as an image. API uploads may be any file: images, PDF, audio, video and text keep their type, and anything else is stored as `application/octet-stream` and only ever downloaded.
 - An upload may be as large as `UPLOAD_MAX_BYTES`, 100 MB unless changed, and is written to disk as it arrives. Note images and service icons stay at 10 MB at most. Other request bodies are limited to 5 MB, and a body sent in chunks without a length is refused.

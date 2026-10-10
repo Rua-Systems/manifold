@@ -16,7 +16,11 @@ const FILE_SOURCE = /^\/files\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-
 
 export const lowlight = createLowlight(common);
 
+/** Outside addresses with a safe scheme, and links to the app's own files, such as attachments. */
 export function isAllowedLink(url: string): boolean {
+	if (fileIdFromSource(url) !== null) {
+		return true;
+	}
 	try {
 		return LINK_PROTOCOLS.has(new URL(url).protocol);
 	} catch {
