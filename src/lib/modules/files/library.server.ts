@@ -185,26 +185,44 @@ export async function folderPath(id: string): Promise<FolderCrumb[]> {
 	return rows.map((row) => ({ id: row.id, name: row.name }));
 }
 
+/** How many folders and files each of these folders holds directly. */
+async function itemCounts(ids: string[]): Promise<Map<string, number>> {
+	const counts = new Map<string, number>();
+	if (ids.length === 0) {
+		return counts;
+	}
+	const [folders, files] = await Promise.all([
+		getDb()
+			.select({ id: fileFolder.parentId, total: count() })
+			.from(fileFolder)
+			.where(inArray(fileFolder.parentId, ids))
+			.groupBy(fileFolder.parentId),
+		getDb()
+			.select({ id: fileEntry.folderId, total: count() })
+			.from(fileEntry)
+			.where(inArray(fileEntry.folderId, ids))
+			.groupBy(fileEntry.folderId)
+	]);
+	for (const row of [...folders, ...files]) {
+		if (row.id !== null) {
+			counts.set(row.id, (counts.get(row.id) ?? 0) + row.total);
+		}
+	}
+	return counts;
+}
+
 async function childFolders(parentId: string | null): Promise<FolderSummary[]> {
 	let place = isNull(fileFolder.parentId);
 	if (parentId !== null) {
 		place = eq(fileFolder.parentId, parentId);
 	}
-	const itemCount = sql<number>`(
-		(select count(*) from file_folder child where child.parent_id = ${fileFolder.id})
-		+ (select count(*) from file_entry entry where entry.folder_id = ${fileFolder.id})
-	)::int`;
 	const rows = await getDb()
-		.select({
-			id: fileFolder.id,
-			name: fileFolder.name,
-			parentId: fileFolder.parentId,
-			itemCount
-		})
+		.select({ id: fileFolder.id, name: fileFolder.name, parentId: fileFolder.parentId })
 		.from(fileFolder)
 		.where(place)
 		.orderBy(asc(sql`lower(${fileFolder.name})`));
-	return rows.map((row) => ({ ...row, itemCount: Number(row.itemCount) }));
+	const counts = await itemCounts(rows.map((row) => row.id));
+	return rows.map((row) => ({ ...row, itemCount: counts.get(row.id) ?? 0 }));
 }
 
 /** A folder of the Files module, or its top level for null: its folders and its files. */

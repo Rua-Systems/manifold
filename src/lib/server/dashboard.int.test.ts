@@ -52,6 +52,7 @@ describe('dashboard', () => {
 			'services',
 			'notes',
 			'map',
+			'files',
 			'access',
 			'usage'
 		]);
