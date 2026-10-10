@@ -175,3 +175,33 @@ test('a file attached in a note is uploaded and shows its name and size', async 
 	await expect(editor.getByRole('link', { name: /^plan\.csv \(/ })).toBeVisible();
 	await expect(page.locator('.status > .current')).toHaveText('Saved');
 });
+
+test('an image is turned and saved as a new copy beside the original', async ({ page }) => {
+	const name = `${unique('dot')}.png`;
+	await upload(
+		page,
+		name,
+		'image/png',
+		Buffer.from(
+			'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+			'base64'
+		)
+	);
+	await row(page, name).locator('a.main').click();
+	const original = page.url();
+
+	await page.getByRole('button', { name: 'Edit image' }).click();
+	await expect(page.getByRole('button', { name: 'Save copy' })).toBeDisabled();
+	await page.getByRole('button', { name: 'Turn right' }).click();
+	await page.getByText('Black and white', { exact: true }).click();
+	await expect(page.getByRole('radio', { name: 'Black and white' })).toBeChecked();
+	await page.getByRole('button', { name: 'Save copy' }).click();
+
+	await expect(page).not.toHaveURL(original);
+	await expect(page).toHaveURL(/\/files\/view\/[0-9a-f-]{36}$/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+		`${name.slice(0, -4)} (edited).png`
+	);
+	await page.goto('/files', { waitUntil: 'networkidle' });
+	await expect(row(page, name.slice(0, -4))).toHaveCount(2);
+});

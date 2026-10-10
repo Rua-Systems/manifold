@@ -15,6 +15,7 @@
 	import { fileNameSchema } from '../schemas';
 	import type { FileDetail, FilesAction, FilesFormState, FolderSummary } from '../types';
 	import MoveForm from './MoveForm.svelte';
+	import ImageEditor from './ImageEditor.svelte';
 	import NameForm from './NameForm.svelte';
 	import PdfViewer from './PdfViewer.svelte';
 	import TextPreview from './TextPreview.svelte';
@@ -32,6 +33,10 @@
 	const notifications = getNotifications();
 	const locale = $derived(getLocale());
 
+	/** The types the image editor can read and write; SVG and others are not edited. */
+	const EDITABLE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+
+	let editing = $state(false);
 	let renameOpen = $state(false);
 	let moveOpen = $state(false);
 	let deleteOpen = $state(false);
@@ -85,6 +90,11 @@
 		<a class="primary" href={source} download={file.name} data-sveltekit-reload>
 			{m.files_download()}
 		</a>
+		{#if EDITABLE_TYPES.has(file.mimeType) && !editing}
+			<button type="button" class="quiet" onclick={() => (editing = true)}>
+				{m.files_edit_image()}
+			</button>
+		{/if}
 		{#if file.inFiles}
 			<button type="button" class="quiet" onclick={() => (renameOpen = true)}>
 				{m.files_rename()}
@@ -123,63 +133,67 @@
 			{/if}
 		</ol>
 	</nav>
-	<div class="layout">
-		<section class="preview" aria-label={m.files_preview()}>
-			{#if file.kind === 'image'}
-				<img src={source} alt={file.name} />
-			{:else if file.kind === 'pdf'}
-				<PdfViewer src={source} title={file.name} />
-			{:else if file.kind === 'audio'}
-				<audio controls preload="metadata" src={source}></audio>
-			{:else if file.kind === 'video'}
-				<!-- An uploaded video comes without a caption track to point to. -->
-				<!-- svelte-ignore a11y_media_has_caption -->
-				<video controls preload="metadata" src={source}></video>
-			{:else if file.kind === 'text'}
-				<TextPreview src={source} mimeType={file.mimeType} sizeBytes={file.sizeBytes} />
-			{:else}
-				<p class="none">{m.files_no_preview()}</p>
-			{/if}
-		</section>
-		<aside class="details" aria-label={m.files_details()}>
-			<dl>
-				<div>
-					<dt>{m.files_kind()}</dt>
-					<dd>{kindLabel(file.kind)} <code>{file.mimeType}</code></dd>
-				</div>
-				<div>
-					<dt>{m.files_size()}</dt>
-					<dd>{formatBytes(file.sizeBytes, locale)}</dd>
-				</div>
-				<div>
-					<dt>{m.files_uploaded_at()}</dt>
-					<dd>
-						<time datetime={file.createdAt.toISOString()}
-							>{dateFormat.format(file.createdAt)}</time
-						>
-					</dd>
-				</div>
-			</dl>
-			<h2>{m.files_uses()}</h2>
-			{#if file.uses.length === 0}
-				<p class="muted">{m.files_unused_note()}</p>
-			{:else}
-				<ul class="uses">
-					{#each file.uses as use, index (index)}
-						<li>
-							<a href={localizedHref(use.href as PathnameWithSearchOrHash)}
-								>{use.label}</a
+	{#if editing}
+		<ImageEditor {file} onclose={() => (editing = false)} />
+	{:else}
+		<div class="layout">
+			<section class="preview" aria-label={m.files_preview()}>
+				{#if file.kind === 'image'}
+					<img src={source} alt={file.name} />
+				{:else if file.kind === 'pdf'}
+					<PdfViewer src={source} title={file.name} />
+				{:else if file.kind === 'audio'}
+					<audio controls preload="metadata" src={source}></audio>
+				{:else if file.kind === 'video'}
+					<!-- An uploaded video comes without a caption track to point to. -->
+					<!-- svelte-ignore a11y_media_has_caption -->
+					<video controls preload="metadata" src={source}></video>
+				{:else if file.kind === 'text'}
+					<TextPreview src={source} mimeType={file.mimeType} sizeBytes={file.sizeBytes} />
+				{:else}
+					<p class="none">{m.files_no_preview()}</p>
+				{/if}
+			</section>
+			<aside class="details" aria-label={m.files_details()}>
+				<dl>
+					<div>
+						<dt>{m.files_kind()}</dt>
+						<dd>{kindLabel(file.kind)} <code>{file.mimeType}</code></dd>
+					</div>
+					<div>
+						<dt>{m.files_size()}</dt>
+						<dd>{formatBytes(file.sizeBytes, locale)}</dd>
+					</div>
+					<div>
+						<dt>{m.files_uploaded_at()}</dt>
+						<dd>
+							<time datetime={file.createdAt.toISOString()}
+								>{dateFormat.format(file.createdAt)}</time
 							>
-							{#if use.trashed}
-								<span class="trashed">{m.files_use_trashed()}</span>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-				<p class="muted">{m.files_in_use_hint()}</p>
-			{/if}
-		</aside>
-	</div>
+						</dd>
+					</div>
+				</dl>
+				<h2>{m.files_uses()}</h2>
+				{#if file.uses.length === 0}
+					<p class="muted">{m.files_unused_note()}</p>
+				{:else}
+					<ul class="uses">
+						{#each file.uses as use, index (index)}
+							<li>
+								<a href={localizedHref(use.href as PathnameWithSearchOrHash)}
+									>{use.label}</a
+								>
+								{#if use.trashed}
+									<span class="trashed">{m.files_use_trashed()}</span>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+					<p class="muted">{m.files_in_use_hint()}</p>
+				{/if}
+			</aside>
+		</div>
+	{/if}
 </PageShell>
 {#if file.inFiles}
 	<Dialog bind:open={renameOpen} id="fileRename" title={m.files_rename_file()}>
