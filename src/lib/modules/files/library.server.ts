@@ -4,6 +4,7 @@ import { getDb } from '$lib/server/db';
 import { file } from '$lib/server/db/schema';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
 import {
+	changeFileOwner,
 	deleteUnreferencedFile,
 	renameStoredFile,
 	unreferencedBy,
@@ -30,7 +31,7 @@ import {
 	type SQL
 } from 'drizzle-orm';
 import type { z } from 'zod';
-import { FILES_LIST_LIMIT } from './constants';
+import { FILES_LIST_LIMIT, FILES_MODULE } from './constants';
 import { sourceLabel, sourceRank } from './labels';
 import { fileEntry, fileFolder } from './schema.server';
 import { fileNameSchema, folderNameSchema } from './schemas';
@@ -288,6 +289,52 @@ function filterConditions(filter: FilesFilter): SQL[] {
 		conditions.push(...unreferencedBy(useReferences()));
 	}
 	return conditions;
+}
+
+export interface FilePageQuery {
+	/** Files in this folder of the Files module; `''` for its top level, undefined for anywhere. */
+	folderId?: string;
+	/** Files that this module keeps. */
+	owner?: string;
+	filter: FilesFilter;
+	limit: number;
+	/** The last file of the previous page. */
+	after?: { createdAt: Date; id: string };
+}
+
+/** A page of files, newest first, with one more than `limit` to tell whether more follow. */
+export async function listFilePage(query: FilePageQuery): Promise<FileSummary[]> {
+	const conditions = filterConditions(query.filter);
+	if (query.folderId === '') {
+		conditions.push(isNull(fileEntry.folderId), isNotNull(fileEntry.fileId));
+	} else if (query.folderId !== undefined) {
+		conditions.push(eq(fileEntry.folderId, query.folderId));
+	}
+	if (query.owner !== undefined) {
+		conditions.push(eq(file.ownerModule, query.owner));
+	}
+	if (query.after !== undefined) {
+		conditions.push(
+			sql`(${file.createdAt}, ${file.id}) < (${query.after.createdAt}, ${query.after.id})`
+		);
+	}
+	const rows = await getDb()
+		.select(fileColumns)
+		.from(file)
+		.leftJoin(fileEntry, eq(fileEntry.fileId, file.id))
+		.where(and(...conditions))
+		.orderBy(desc(file.createdAt), desc(file.id))
+		.limit(query.limit + 1);
+	return summaries(rows);
+}
+
+/** Hands stored files, such as API uploads, to the Files module, in a folder or at the top. */
+export async function adoptIntoFiles(fileIds: string[], folderId: string | null): Promise<void> {
+	if (folderId !== null) {
+		await requireFolder(folderId);
+	}
+	await changeFileOwner(fileIds, FILES_MODULE);
+	await keepUploads(fileIds, folderId);
 }
 
 /** Files from everywhere that match the filter. */

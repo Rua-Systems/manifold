@@ -1,3 +1,5 @@
+import { createFolder, keepUploads } from '$lib/modules/files/library.server';
+import { fileEntry, fileFolder } from '$lib/modules/files/schema.server';
 import { note } from '$lib/modules/notes/schema.server';
 import { service } from '$lib/modules/services/schema.server';
 import { vaultSecret } from '$lib/modules/vault/schema.server';
@@ -13,6 +15,7 @@ import { createApiKey } from '../api-keys';
 import { getDb } from '../db';
 import { purgeAuditEvents } from '../audit';
 import { auditEvent } from '../db/schema';
+import { receiveUploads } from '../files/upload-stream';
 import { handleMcpRequest, mcpTools } from './server';
 
 const ALL_SCOPES = [
@@ -23,6 +26,7 @@ const ALL_SCOPES = [
 	'services:read',
 	'services:write',
 	'vault:read',
+	'files:read',
 	'usage:read'
 ];
 
@@ -267,6 +271,45 @@ describe('MCP', () => {
 			title: 'Changed by an agent'
 		});
 		expect(updated.data).toMatchObject({ title: 'Changed by an agent', version: 2 });
+	});
+
+	it('lists files, reads their details and the content of text files', async () => {
+		await getDb().delete(fileEntry);
+		await getDb().delete(fileFolder);
+		const folder = await createFolder({ name: 'Agent files', parentId: null });
+		const form = new FormData();
+		form.append('file', new File(['line one, line two'], 'notes.txt'));
+		form.append('file', new File([new Uint8Array([0x50, 0x4b, 3, 4])], 'pack.zip'));
+		const received = await receiveUploads(
+			new Request('http://localhost/upload', { method: 'POST', body: form }),
+			{ ownerModule: 'files', maxBytes: 1024, maxFiles: 5, accept: 'any' }
+		);
+		await keepUploads(
+			received.files.map((item) => item.id),
+			folder.id
+		);
+		const [text, zip] = received.files;
+
+		const client = await connect(['files:read']);
+		const listed = await call(client, 'list_files', { folder_id: folder.id });
+		expect(listed.isError).toBe(false);
+		expect(
+			(listed.data as { data: { name: string }[] }).data.map((item) => item.name).sort()
+		).toEqual(['notes.txt', 'pack.zip']);
+		const details = await call(client, 'get_file', { id: text.id });
+		expect(details.data).toMatchObject({
+			kind: 'text',
+			in_files: true,
+			folder_id: folder.id,
+			uses: []
+		});
+		const read = await call(client, 'read_file_text', { id: text.id, max_bytes: 8 });
+		expect(read.data).toMatchObject({ text: 'line one', truncated: true });
+		expect((await call(client, 'read_file_text', { id: zip.id })).isError).toBe(true);
+		const folders = await call(client, 'list_file_folders', {});
+		expect(folders.data).toMatchObject({
+			data: [{ id: folder.id, name: 'Agent files', parent_id: null }]
+		});
 	});
 
 	it('reports usage to a key with usage:read', async () => {

@@ -504,7 +504,7 @@
 	"reset_success": "Password updated. You can log in now.",
 	"reset_title": "Reset Password",
 	"scope_files_read": "Read files",
-	"scope_files_write": "Upload files",
+	"scope_files_write": "Change files",
 	"scope_group_usage": "Usage",
 	"scope_map_read": "Read map features",
 	"scope_map_write": "Change map features",

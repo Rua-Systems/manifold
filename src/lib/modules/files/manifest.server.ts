@@ -3,15 +3,19 @@ import { getLocale } from '$lib/paraglide/runtime.js';
 import { measureRows } from '$lib/server/usage/measure';
 import { formatBytes } from '$lib/utils/format';
 import type { ServerModuleManifest } from '../types.server';
+import { filesApiRoutes } from './api.server';
 import { FILES_MODULE } from './constants';
 import { filesDashboard } from './dashboard.server';
 import { sourceLabel } from './labels';
 import { searchFiles } from './library.server';
+import { filesMcpTools } from './mcp.server';
 import { fileEntry, fileFolder } from './schema.server';
 
 export const filesServerManifest: ServerModuleManifest = {
 	id: FILES_MODULE,
 	fileReferences: [{ table: 'file_entry', column: 'file_id' }],
+	api: filesApiRoutes,
+	mcp: filesMcpTools,
 	search: {
 		type: 'file',
 		scope: 'files:read',

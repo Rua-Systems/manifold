@@ -90,6 +90,10 @@ The answer is a JSON-RPC result with the tools this key may use.
 | `create_map_feature`  | `map:write`      | Places a pin, line or polygon on the map and links it to an existing note or a new one.                   |
 | `update_map_feature`  | `map:write`      | Replaces the geometry of a feature, keeping its kind.                                                     |
 | `delete_map_feature`  | `map:write`      | Removes a feature from the map. Its note stays.                                                           |
+| `list_files`          | `files:read`     | Lists stored files, newest first, by folder, owner, name, kind or use.                                    |
+| `get_file`            | `files:read`     | Reads one file's details and the places that use it, without its content.                                 |
+| `read_file_text`      | `files:read`     | Reads the start of a text file, such as TXT, Markdown, CSV or JSON.                                       |
+| `list_file_folders`   | `files:read`     | Lists the folders of the Files module.                                                                    |
 | `list_vault_secrets`  | `vault:read`     | Lists vault entries by name, with address and description, never their values.                            |
 | `get_usage`           | `usage:read`     | Reports what the app keeps and the resources it uses, as on **Settings → Usage**.                         |
 
