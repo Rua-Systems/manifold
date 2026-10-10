@@ -201,7 +201,7 @@ describe('backup and restore', () => {
 		).rejects.toBeInstanceOf(BackupError);
 	});
 
-	it('refuses archives with foreign entries and leaves out uploads that are not images', async () => {
+	it('refuses archives with foreign entries and leaves out uploads that no record names', async () => {
 		const staged = path.join(work.dir, 'foreign');
 		await rm(staged, { recursive: true, force: true });
 		await mkdir(path.join(staged, 'uploads'), { recursive: true });
@@ -240,7 +240,7 @@ describe('backup and restore', () => {
 			migrationsDir: defaultMigrationsDirectory(),
 			force: true
 		});
-		expect(skipped).toEqual(['not-an-image']);
+		expect(skipped).toContain('not-an-image');
 		expect(await readdir(uploadDir)).not.toContain('not-an-image');
 	});
 
