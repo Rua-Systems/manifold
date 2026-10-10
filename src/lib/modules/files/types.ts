@@ -56,6 +56,17 @@ export interface FileDetail extends FileSummary {
 	location: FileLocation;
 }
 
+/** A file offered by the picker of the note editor. */
+export interface PickedFile {
+	id: string;
+	/** `/files/<id>`. */
+	src: string;
+	name: string;
+	sizeBytes: number;
+	mimeType: string;
+	kind: FileKind;
+}
+
 /** What the Files page shows: a folder (the top for null), the files of a module, or a filter. */
 export type FilesView =
 	| {
@@ -78,7 +89,9 @@ export type FilesAction =
 	| 'upload'
 	| 'renameFile'
 	| 'moveFile'
-	| 'deleteFile';
+	| 'deleteFile'
+	| 'browse'
+	| 'saveEdited';
 
 export interface FilesFormState {
 	action: FilesAction;
@@ -88,4 +101,8 @@ export interface FilesFormState {
 	/** For `upload`: the files kept, and those turned down with the reason. */
 	uploaded?: number;
 	rejected?: { name: string; message: string }[];
+	/** For `browse`: the files the note editor's picker offers. */
+	files?: PickedFile[];
+	/** For `saveEdited`: the new copy. */
+	id?: string;
 }

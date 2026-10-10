@@ -13,6 +13,9 @@ import { isFileUploadLimited } from '$lib/server/rate-limit';
 import { textValue } from '$lib/utils/validation';
 import { error, fail, type ActionFailure, type RequestEvent } from '@sveltejs/kit';
 import { FILES_MODULE, FILES_PER_REQUEST } from './constants';
+
+/** How many files the note editor's picker offers at once. */
+const PICKER_LIMIT = 40;
 import {
 	allFolders,
 	createFolder,
@@ -27,6 +30,7 @@ import {
 	listSources,
 	moveFiles,
 	moveFolder,
+	pickableFiles,
 	renameFile,
 	renameFolder
 } from './library.server';
@@ -243,6 +247,17 @@ export const filesActions = {
 			return filesFailure('moveFile', cause);
 		}
 		return done('moveFile', m.files_moved());
+	},
+
+	/** The files the note editor's picker offers: the newest, or those whose name matches. */
+	browse: async ({ request, locals }: RequestEvent) => {
+		requireUser(locals);
+		const data = await request.formData();
+		const state: FilesFormState = {
+			...done('browse', ''),
+			files: await pickableFiles(textValue(data, 'q').trim(), PICKER_LIMIT)
+		};
+		return state;
 	},
 
 	deleteFile: async ({ request, locals }: RequestEvent) => {

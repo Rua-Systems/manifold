@@ -42,6 +42,20 @@ Select a file to open its page:
 
 The page also lists the type, the size, when the file was added, and every place that shows it. Whether the browser plays a video depends on how the video was encoded.
 
+## Editing images
+
+**Edit image** on the page of a PNG, JPEG, WebP or GIF image opens a simple editor in the browser:
+
+- **Turn left** and **Turn right** by a quarter, and **Flip horizontally** or **Flip vertically**.
+- **Crop**: drag over the image to choose the part to keep, then **Apply crop**. **Undo crop** brings the whole image back; turning or flipping starts from the whole image again.
+- **Brightness**, **Contrast** and **Saturation**, from -100 to 100, and the filters **Black and white** and **Sepia**.
+
+**Save copy** keeps the result as a new file beside the original, named like `photo (edited).jpg`: in the same folder, or at the top of **Files** when a note or a service keeps the original. The original and every note that shows it stay as they are. A GIF is saved as a PNG of its first frame, and an edited image stays under the image limit of 10 MB. **Start over** drops the changes, and **Cancel** leaves the editor without saving.
+
+## In notes
+
+**Insert from Files** in the note editor puts a stored file into a note: an image inline, any other file as a link with its name and size. **Attach file** uploads a new one the same way. The note then uses the file, and its page lists the note. While reading the note, the link opens the file's page here. See [Notes](notes.md#images-and-files).
+
 ## Deleting
 
 **Delete** removes a file for good. A file in use cannot be deleted: its page lists the notes and services that show it, and once it is gone from all of them, it can be deleted. A note in the trash still uses its images until it is deleted for good.

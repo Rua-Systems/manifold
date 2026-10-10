@@ -127,6 +127,81 @@ test('an image in a note is listed under Notes and cannot be deleted', async ({ 
 	const image = page.locator('.items > .row', { hasText: 'In use' }).first();
 	await expect(image.getByRole('button', { name: /^Delete / })).toBeDisabled();
 	await image.locator('a.main').click();
-	await expect(page.getByRole('link', { name: title })).toBeVisible();
+	// The sidebar lists recent notes too, so the use is looked for in the details.
+	await expect(
+		page.getByRole('complementary', { name: 'Details' }).getByRole('link', { name: title })
+	).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeDisabled();
+});
+
+test('a note takes a file from Files as a link that opens its page', async ({ page }) => {
+	const name = `${unique('handout')}.txt`;
+	await upload(page, name, 'text/plain', Buffer.from('handout text'));
+
+	const title = unique('Attached');
+	await page.goto('/notes/new', { waitUntil: 'networkidle' });
+	await page.getByLabel('Title', { exact: true }).fill(title);
+	const editor = page.getByRole('textbox', { name: 'Note content' });
+	await editor.click();
+	await page.getByRole('button', { name: 'Insert from Files' }).click();
+	const picker = page.getByRole('dialog', { name: 'Insert from Files' });
+	await picker.getByLabel('Search files by name').fill(name);
+	await picker.getByRole('button', { name: new RegExp(name) }).click();
+	await expect(picker).toBeHidden();
+	const link = editor.getByRole('link', { name: new RegExp(name) });
+	await expect(link).toBeVisible();
+	await expect(page.locator('.status > .current')).toHaveText('Saved');
+
+	await page.getByRole('button', { name: 'Edit', exact: true }).click();
+	await link.click();
+	await expect(page).toHaveURL(/\/files\/view\/[0-9a-f-]{36}$/);
+	await expect(page.locator('pre')).toContainText('handout text');
+	// The sidebar lists recent notes too, so the use is looked for in the details.
+	await expect(
+		page.getByRole('complementary', { name: 'Details' }).getByRole('link', { name: title })
+	).toBeVisible();
+});
+
+test('a file attached in a note is uploaded and shows its name and size', async ({ page }) => {
+	await page.goto('/notes/new', { waitUntil: 'networkidle' });
+	await page.getByLabel('Title', { exact: true }).fill(unique('Plan'));
+	const editor = page.getByRole('textbox', { name: 'Note content' });
+	await editor.click();
+	const chooser = page.waitForEvent('filechooser');
+	await page.getByRole('button', { name: 'Attach file' }).click();
+	await (
+		await chooser
+	).setFiles({ name: 'plan.csv', mimeType: 'text/csv', buffer: Buffer.from('a;b\n1;2') });
+	await expect(editor.getByRole('link', { name: /^plan\.csv \(/ })).toBeVisible();
+	await expect(page.locator('.status > .current')).toHaveText('Saved');
+});
+
+test('an image is turned and saved as a new copy beside the original', async ({ page }) => {
+	const name = `${unique('dot')}.png`;
+	await upload(
+		page,
+		name,
+		'image/png',
+		Buffer.from(
+			'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+			'base64'
+		)
+	);
+	await row(page, name).locator('a.main').click();
+	const original = page.url();
+
+	await page.getByRole('button', { name: 'Edit image' }).click();
+	await expect(page.getByRole('button', { name: 'Save copy' })).toBeDisabled();
+	await page.getByRole('button', { name: 'Turn right' }).click();
+	await page.getByText('Black and white', { exact: true }).click();
+	await expect(page.getByRole('radio', { name: 'Black and white' })).toBeChecked();
+	await page.getByRole('button', { name: 'Save copy' }).click();
+
+	await expect(page).not.toHaveURL(original);
+	await expect(page).toHaveURL(/\/files\/view\/[0-9a-f-]{36}$/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+		`${name.slice(0, -4)} (edited).png`
+	);
+	await page.goto('/files', { waitUntil: 'networkidle' });
+	await expect(row(page, name.slice(0, -4))).toHaveCount(2);
 });

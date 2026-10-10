@@ -1,12 +1,21 @@
 import { m } from '$lib/paraglide/messages.js';
 import { localizeHref } from '$lib/paraglide/runtime.js';
 import { NotFoundError } from '$lib/server/errors';
+import { imageMaxBytes } from '$lib/server/files/files';
+import { fileRejectionMessage } from '$lib/server/files/messages';
+import {
+	receiveUploads,
+	UploadFormatError,
+	type ReceivedUploads
+} from '$lib/server/files/upload-stream';
 import { requireUser } from '$lib/server/guard';
+import { isFileUploadLimited } from '$lib/server/rate-limit';
 import { textValue } from '$lib/utils/validation';
-import { error, redirect, type RequestEvent } from '@sveltejs/kit';
-import { allFolders, deleteFile, getFileDetail } from './library.server';
+import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
+import { FILES_MODULE } from './constants';
+import { allFolders, deleteFile, getFileDetail, keepUploads } from './library.server';
 import { filesActions, filesFailure } from './page.server';
-import type { FileDetail } from './types';
+import type { FileDetail, FilesFormState } from './types';
 
 // Load and form actions behind /files/view/<id>, the page that shows one file.
 
@@ -30,7 +39,66 @@ export async function loadFilePreview(id: string) {
 	return { file: detail, folders: await allFolders(), back: locationHref(detail) };
 }
 
+function editFailure(status: number, message: string) {
+	const state: FilesFormState = { action: 'saveEdited', success: false, message, errors: {} };
+	return fail(status, state);
+}
+
+/**
+ * Keeps the copy the image editor made, beside the original: in its folder, or at the top of the
+ * Files module when another module keeps the original. The original stays as it is.
+ */
+async function saveEdited({ request, locals, params }: RequestEvent) {
+	const { user } = requireUser(locals);
+	if (isFileUploadLimited(user.id)) {
+		return editFailure(429, m.files_error_upload_rate());
+	}
+	const original = await getFileDetail(params.id ?? '');
+	if (original === null) {
+		return editFailure(404, m.files_error_missing());
+	}
+	let received: ReceivedUploads;
+	try {
+		received = await receiveUploads(request, {
+			ownerModule: FILES_MODULE,
+			maxBytes: imageMaxBytes(),
+			maxFiles: 1,
+			accept: 'image'
+		});
+	} catch (cause) {
+		if (cause instanceof UploadFormatError) {
+			return editFailure(400, m.files_error_upload_broken());
+		}
+		throw cause;
+	}
+	const [rejected] = received.rejected;
+	if (rejected !== undefined) {
+		return editFailure(
+			400,
+			fileRejectionMessage(rejected.reason, { allowSvg: false, maxBytes: imageMaxBytes() })
+		);
+	}
+	const [copy] = received.files;
+	if (copy === undefined) {
+		return editFailure(400, m.validation_file_empty());
+	}
+	let folderId: string | null = null;
+	if (original.inFiles) {
+		folderId = original.folderId;
+	}
+	await keepUploads([copy.id], folderId);
+	const state: FilesFormState = {
+		action: 'saveEdited',
+		success: true,
+		message: m.files_edited_saved(),
+		errors: {},
+		id: copy.id
+	};
+	return state;
+}
+
 export const filePreviewActions = {
+	saveEdited,
 	renameFile: filesActions.renameFile,
 	moveFile: filesActions.moveFile,
 

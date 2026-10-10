@@ -1,6 +1,8 @@
 <script lang="ts">
+	import FolderOpenIcon from '@lucide/svelte/icons/folder-open';
 	import ImageIcon from '@lucide/svelte/icons/image';
 	import Link2 from '@lucide/svelte/icons/link-2';
+	import PaperclipIcon from '@lucide/svelte/icons/paperclip';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getEditor, useEditorTransaction } from '../tiptap/index.ts';
 	import { COMMAND_GROUPS, type EditorCommand } from './commands';
@@ -12,10 +14,14 @@
 		 * it the toolbar has no image button, for editors that cannot upload.
 		 */
 		onimage?: () => void;
+		/** Opens the file picker for any file, which the owner of the editor attaches. */
+		onattach?: () => void;
+		/** Opens a choice of the files already stored, for editors that can show them. */
+		onpickfile?: () => void;
 		isAllowedLink: (url: string) => boolean;
 	}
 
-	let { onimage, isAllowedLink }: Props = $props();
+	let { onimage, onattach, onpickfile, isAllowedLink }: Props = $props();
 
 	const editor = getEditor();
 	const transaction = useEditorTransaction(editor);
@@ -93,6 +99,30 @@
 				onclick={onimage}
 			>
 				<ImageIcon size={17} />
+			</button>
+		{/if}
+		{#if onattach !== undefined}
+			<button
+				type="button"
+				class="tool"
+				aria-label={m.editor_attach()}
+				title={m.editor_attach()}
+				onmousedown={keepSelection}
+				onclick={onattach}
+			>
+				<PaperclipIcon size={17} />
+			</button>
+		{/if}
+		{#if onpickfile !== undefined}
+			<button
+				type="button"
+				class="tool"
+				aria-label={m.editor_pick_file()}
+				title={m.editor_pick_file()}
+				onmousedown={keepSelection}
+				onclick={onpickfile}
+			>
+				<FolderOpenIcon size={17} />
 			</button>
 		{/if}
 	</div>

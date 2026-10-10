@@ -44,14 +44,18 @@ The toolbar above the text holds every kind of content a note can have. Hover ov
 
 The toolbar is a single row. Where it does not fit, as in the note panel of the map or on phones, it scrolls sideways.
 
-## Images
+## Images and files
 
 Add an image with **Insert image**, by pasting it, or by dragging the file into the text. The image is uploaded right away and appears where you inserted it.
 
+Any other file goes into a note the same way: **Attach file** in the toolbar, pasting or dragging uploads it, and the note shows a link with its name and size, such as **report.pdf (1.2 MB)**. **Insert from Files** offers the files already stored in [Files](files.md), newest first, with a search by name; an image from there appears in the text, any other file as such a link. Files may be as large as `UPLOAD_MAX_BYTES`, 100 MB unless changed.
+
+While you read a note, a file link opens the file's page in **Files**, with its preview; `Ctrl`-clicking it opens the file itself in a new tab. On a [shared note](#sharing-a-note), the link opens or downloads the file for the visitor, and a PDF is downloaded.
+
 - PNG, JPEG, WebP and GIF images of up to 10 MB, or `UPLOAD_MAX_BYTES` when it is smaller, are accepted. The format is recognised from the content of the file, never from its name. SVG is not accepted in notes.
 - Every image must be uploaded to Manifold. A note that shows an image from another site cannot be saved and reports **Images must be uploaded to this instance.**
-- Images are served only to you while you are signed in, and to API keys with the `files:read` scope.
-- An image stays stored as long as the note or any version in its history shows it, so restoring an old version brings its images back. Once nothing shows it any more, the daily housekeeping deletes it, at the earliest a day after it was uploaded.
+- Images and files are served only to you while you are signed in, to API keys with the `files:read` scope, and to the note tokens of the notes that show them.
+- A file stays stored as long as the note or any version in its history shows it, so restoring an old version brings its images and links back, and [Files](files.md) will not delete it meanwhile. Once nothing shows a file uploaded in a note any more, the daily housekeeping deletes it, at the earliest a day after it was uploaded; a file kept in Files stays.
 
 A whole note, with its structure, may be up to 2 MB.
 

@@ -42,6 +42,7 @@ import type {
 	FilesSort,
 	FolderCrumb,
 	FolderSummary,
+	PickedFile,
 	SourceSummary
 } from './types';
 
@@ -139,14 +140,18 @@ async function summaries(rows: FileRow[]): Promise<FileSummary[]> {
 	}));
 }
 
-async function selectFiles(where: SQL | undefined, sort: FilesSort): Promise<FileRow[]> {
+async function selectFiles(
+	where: SQL | undefined,
+	sort: FilesSort,
+	limit = FILES_LIST_LIMIT
+): Promise<FileRow[]> {
 	return getDb()
 		.select(fileColumns)
 		.from(file)
 		.leftJoin(fileEntry, eq(fileEntry.fileId, file.id))
 		.where(where)
 		.orderBy(...orderFor(sort))
-		.limit(FILES_LIST_LIMIT);
+		.limit(limit);
 }
 
 export async function getFolder(id: string): Promise<FolderSummary | null> {
@@ -335,6 +340,23 @@ export async function adoptIntoFiles(fileIds: string[], folderId: string | null)
 	}
 	await changeFileOwner(fileIds, FILES_MODULE);
 	await keepUploads(fileIds, folderId);
+}
+
+/** The newest files whose name contains `query`, without their uses, for the editor's picker. */
+export async function pickableFiles(query: string, limit: number): Promise<PickedFile[]> {
+	const rows = await selectFiles(
+		and(...filterConditions({ query, kind: 'all', unused: false })),
+		'newest',
+		limit
+	);
+	return rows.map((row) => ({
+		id: row.id,
+		src: `/files/${row.id}`,
+		name: row.name,
+		sizeBytes: row.sizeBytes,
+		mimeType: row.mimeType,
+		kind: fileKind(row.mimeType)
+	}));
 }
 
 /** Files from everywhere that match the filter. */

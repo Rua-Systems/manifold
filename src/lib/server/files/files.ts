@@ -1,4 +1,4 @@
-import { DOWNLOAD_TYPE, isPreviewable } from '$lib/utils/file-kind';
+import { DOWNLOAD_TYPE, fileKind, isPreviewable } from '$lib/utils/file-kind';
 import { isUuid } from '$lib/utils/uuid';
 import { and, eq, inArray, lt, sql, type SQL } from 'drizzle-orm';
 import { createHash, randomUUID } from 'node:crypto';
@@ -173,6 +173,14 @@ export async function serveFile(stored: StoredFile, request: Request): Promise<R
 	let disposition: 'inline' | 'attachment' = 'inline';
 	if (!isPreviewable(stored.mimeType)) {
 		type = DOWNLOAD_TYPE;
+		disposition = 'attachment';
+	}
+	// Browsers will not show a PDF under the sandboxing policy, so one opened as a page, such as a
+	// link in a shared note, is downloaded instead; pdf.js fetches it inline.
+	if (
+		fileKind(stored.mimeType) === 'pdf' &&
+		request.headers.get('sec-fetch-dest') === 'document'
+	) {
 		disposition = 'attachment';
 	}
 	const headers: Record<string, string> = {

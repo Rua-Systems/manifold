@@ -50,18 +50,25 @@ describe('validateNoteContent', () => {
 		);
 	});
 
-	it('only allows http, https and mailto links', () => {
+	it('only allows http, https and mailto links, and links to stored files', () => {
 		const withLink = (href: string) =>
 			doc(paragraph(text('link', [{ type: 'link', attrs: { href } }])));
 
 		for (const href of [
 			'https://example.com',
 			'http://example.com/a',
-			'mailto:a@example.com'
+			'mailto:a@example.com',
+			`/files/${FILE_ID}`
 		]) {
 			expect(() => validateNoteContent(withLink(href))).not.toThrow();
 		}
-		for (const href of ['javascript:alert(1)', 'data:text/html,x', '/relative', 'ftp://x']) {
+		for (const href of [
+			'javascript:alert(1)',
+			'data:text/html,x',
+			'/relative',
+			'/files/not-a-file',
+			'ftp://x'
+		]) {
 			expect(() => validateNoteContent(withLink(href))).toThrow(ValidationError);
 		}
 	});
@@ -106,6 +113,20 @@ describe('content helpers', () => {
 		expect(fileIdsInContent(content)).toEqual([FILE_ID]);
 	});
 
+	it('finds the stored files a link points to, as attachments', () => {
+		const other = '1a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+		const content = doc(
+			paragraph(
+				text('report.pdf (1 MB)', [{ type: 'link', attrs: { href: `/files/${other}` } }]),
+				text(' and '),
+				text('a site', [{ type: 'link', attrs: { href: 'https://example.com' } }])
+			),
+			{ type: 'image', attrs: { src: `/files/${FILE_ID}` } }
+		);
+
+		expect(fileIdsInContent(content).sort()).toEqual([FILE_ID, other].sort());
+	});
+
 	it('tells an empty note from one with any content', () => {
 		expect(isEmptyNoteContent(emptyNoteContent())).toBe(true);
 		expect(isEmptyNoteContent(doc())).toBe(true);
@@ -133,7 +154,8 @@ describe('Markdown conversion', () => {
 		blockquote: '> quoted',
 		'horizontal rule': 'above\n\n---\n\nbelow',
 		table: '| a   | b   |\n| --- | --- |\n| 1   | 2   |',
-		image: `![](/files/${FILE_ID})`
+		image: `![](/files/${FILE_ID})`,
+		'file link': `[report.pdf (12 KB)](/files/${FILE_ID})`
 	};
 
 	for (const [name, markdown] of Object.entries(samples)) {

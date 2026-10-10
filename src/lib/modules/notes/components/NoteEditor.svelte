@@ -1,16 +1,21 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import CodeBlock from '$lib/components/edra/headless/CodeBlock.svelte';
-	import { ImageUpload } from '$lib/components/edra/headless/image-upload';
+	import { FileUpload } from '$lib/components/edra/headless/image-upload';
 	import LinkMenu from '$lib/components/edra/headless/LinkMenu.svelte';
 	import TableMenu from '$lib/components/edra/headless/TableMenu.svelte';
 	import Toolbar from '$lib/components/edra/headless/Toolbar.svelte';
 	import { SvelteNodeViewRenderer, Tiptap, useEditor } from '$lib/components/edra/tiptap';
 	import { m } from '$lib/paraglide/messages.js';
-	import { Node as TiptapNode, type AnyExtension } from '@tiptap/core';
+	import { getLocale } from '$lib/paraglide/runtime.js';
+	import { formatBytes } from '$lib/utils/format';
+	import { localizedHref } from '$lib/utils/navigation';
+	import { Node as TiptapNode, type AnyExtension, type JSONContent } from '@tiptap/core';
 	import { Placeholder } from '@tiptap/extensions';
 	import { untrack } from 'svelte';
 	import type { NoteContent } from '../content';
-	import { isAllowedLink, noteExtensions } from '../extensions';
+	import { fileIdFromSource, isAllowedLink, noteExtensions } from '../extensions';
+	import type { AttachedFile } from '../types';
 
 	interface Props {
 		content: NoteContent;
@@ -19,21 +24,79 @@
 		editable?: boolean;
 		onchange?: (content: NoteContent) => void;
 		onblur?: () => void;
-		/** Stores an image and resolves to its address, or null when it was refused. */
-		onupload?: (file: File) => Promise<string | null>;
+		/** Stores a file and resolves to what the note shows of it, or null when it was refused. */
+		onupload?: (file: File) => Promise<AttachedFile | null>;
+		/** Lets the owner choose a stored file, then hands it to `insert`. */
+		onpickfile?: (insert: (file: AttachedFile) => void) => void;
+		/** Links to files open the file's page in the app while reading; for the signed in owner. */
+		previewFileLinks?: boolean;
 	}
 
-	let { content, label, editable = true, onchange, onblur, onupload }: Props = $props();
+	let {
+		content,
+		label,
+		editable = true,
+		onchange,
+		onblur,
+		onupload,
+		onpickfile,
+		previewFileLinks = false
+	}: Props = $props();
 
 	const IMAGE_TYPES = 'image/png,image/jpeg,image/gif,image/webp';
+	/** Images a note shows inline. SVG stays a link: notes never take it as an image. */
+	const INLINE_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 
-	let fileInput: HTMLInputElement | undefined = $state();
+	let imageInput: HTMLInputElement | undefined = $state();
+	let attachInput: HTMLInputElement | undefined = $state();
 
-	async function upload(file: File): Promise<string | null> {
-		if (onupload === undefined) {
-			return null;
+	/** Puts a stored file into the note: an image inline, anything else as a link with its size. */
+	function place(file: AttachedFile, position: number | null): void {
+		let inserted: JSONContent | JSONContent[] = { type: 'image', attrs: { src: file.src } };
+		if (!INLINE_TYPES.has(file.mimeType)) {
+			inserted = [
+				{
+					type: 'text',
+					text: `${file.name} (${formatBytes(file.sizeBytes, getLocale())})`,
+					marks: [{ type: 'link', attrs: { href: file.src } }]
+				},
+				{ type: 'text', text: ' ' }
+			];
 		}
-		return onupload(file);
+		const chain = editor?.chain().focus();
+		if (position === null) {
+			chain?.insertContent(inserted).run();
+		} else {
+			chain?.insertContentAt(position, inserted).run();
+		}
+	}
+
+	async function upload(file: File, position: number | null): Promise<void> {
+		if (onupload === undefined) {
+			return;
+		}
+		const attached = await onupload(file);
+		if (attached !== null) {
+			place(attached, position);
+		}
+	}
+
+	/** Reading, a link to a stored file opens its page, unless the reader asks for a new tab. */
+	function openFileLink(event: MouseEvent): boolean {
+		if (!previewFileLinks || editor?.isEditable !== false) {
+			return false;
+		}
+		if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey) {
+			return false;
+		}
+		const anchor = (event.target as Element | null)?.closest('a');
+		const id = fileIdFromSource(anchor?.getAttribute('href'));
+		if (id === null) {
+			return false;
+		}
+		event.preventDefault();
+		void goto(localizedHref(`/files/view/${id}`));
+		return true;
 	}
 
 	/** Same schema as the server; only the code block gets Edra's view on top. */
@@ -48,7 +111,7 @@
 		extensions: [
 			...noteExtensions().map(withNodeViews),
 			Placeholder.configure({ placeholder: m.notes_placeholder() }),
-			ImageUpload.configure({ upload })
+			FileUpload.configure({ upload })
 		],
 		content: untrack(() => content),
 		editable: untrack(() => editable),
@@ -58,7 +121,10 @@
 				'aria-multiline': 'true',
 				'aria-readonly': String(!editable),
 				role: 'textbox'
-			})
+			}),
+			handleDOMEvents: {
+				click: (_view, event) => openFileLink(event)
+			}
 		},
 		onUpdate: ({ editor: current }) => onchange?.(current.getJSON()),
 		onBlur: () => onblur?.()
@@ -70,16 +136,13 @@
 		editor?.setEditable(editable, false);
 	});
 
-	async function pickImage(): Promise<void> {
-		const files = Array.from(fileInput?.files ?? []);
-		if (fileInput !== undefined) {
-			fileInput.value = '';
+	async function uploadPicked(input: HTMLInputElement | undefined): Promise<void> {
+		const files = Array.from(input?.files ?? []);
+		if (input !== undefined) {
+			input.value = '';
 		}
 		for (const file of files) {
-			const src = await upload(file);
-			if (src !== null) {
-				editor?.chain().focus().setImage({ src }).run();
-			}
+			await upload(file, null);
 		}
 	}
 </script>
@@ -90,7 +153,11 @@
 			{#if editable}
 				<div class="toolbar">
 					<Toolbar
-						onimage={onupload === undefined ? undefined : () => fileInput?.click()}
+						onimage={onupload === undefined ? undefined : () => imageInput?.click()}
+						onattach={onupload === undefined ? undefined : () => attachInput?.click()}
+						onpickfile={onpickfile === undefined
+							? undefined
+							: () => onpickfile((file) => place(file, null))}
 						{isAllowedLink}
 					/>
 				</div>
@@ -105,13 +172,22 @@
 	{/if}
 	{#if editable && onupload !== undefined}
 		<input
-			bind:this={fileInput}
+			bind:this={imageInput}
 			type="file"
 			accept={IMAGE_TYPES}
 			class="visually-hidden"
 			tabindex="-1"
 			aria-hidden="true"
-			onchange={pickImage}
+			onchange={() => uploadPicked(imageInput)}
+		/>
+		<input
+			bind:this={attachInput}
+			type="file"
+			multiple
+			class="visually-hidden"
+			tabindex="-1"
+			aria-hidden="true"
+			onchange={() => uploadPicked(attachInput)}
 		/>
 	{/if}
 </div>
@@ -181,6 +257,27 @@
 			:global(a) {
 				color: clr.$accentColor;
 				text-underline-offset: 0.2em;
+			}
+
+			// A link to a stored file reads as an attachment, with a paperclip in the text colour.
+			:global(a[href^='/files/']) {
+				padding: 0.05rem 0.4rem 0.05rem 0.3rem;
+				text-decoration: none;
+				background-color: clr.$accentWashColor;
+				border: 1px solid clr.$borderSubtleColor;
+				border-radius: vars.$radius;
+
+				&::before {
+					content: '';
+					display: inline-block;
+					width: 0.85em;
+					height: 0.85em;
+					margin-right: 0.3em;
+					vertical-align: -0.1em;
+					background-color: currentColor;
+					mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551'/%3E%3C/svg%3E")
+						center / contain no-repeat;
+				}
 			}
 
 			:global(code) {
