@@ -287,7 +287,7 @@ async function restore(env: Env, source: string | undefined, force: boolean): Pr
 	}
 	if (skipped.length > 0) {
 		console.log(
-			`Left out ${skipped.length} uploaded file(s) that are not images Manifold accepts.`
+			`Left out ${skipped.length} uploaded file(s) that no file record of the backup names.`
 		);
 	}
 	console.log(

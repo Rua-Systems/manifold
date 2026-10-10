@@ -1,6 +1,6 @@
 import { getDb } from '$lib/server/db';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { FileRejectedError, storeUpload } from '$lib/server/files/files';
+import { FileRejectedError, imageMaxBytes, storeUpload } from '$lib/server/files/files';
 import { fileRejectionMessage } from '$lib/server/files/messages';
 import { isUuid } from '$lib/utils/uuid';
 import { fieldErrors } from '$lib/utils/validation';
@@ -36,7 +36,12 @@ async function storeIcon(icon: File): Promise<string> {
 		return stored.id;
 	} catch (error) {
 		if (error instanceof FileRejectedError) {
-			throw new ValidationError({ icon: fileRejectionMessage(error.reason, true) });
+			throw new ValidationError({
+				icon: fileRejectionMessage(error.reason, {
+					allowSvg: true,
+					maxBytes: imageMaxBytes()
+				})
+			});
 		}
 		throw error;
 	}

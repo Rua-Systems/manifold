@@ -132,7 +132,7 @@ Restart the app. The vault opens only with the ENCRYPTION_KEY it was written wit
 2. It reads the manifest and refuses archives from a newer version of Manifold.
 3. It refuses a database with tables unless `--force` is given. With `--force`, it drops every schema of the database except PostgreSQL's own, with all tables, data and extensions in them.
 4. It restores the dump with `pg_restore`, which stops at the first error.
-5. With `--force`, it deletes every file in the upload folder. It then copies the uploaded files of the archive into it, after checking each one like a new upload: a file that is not an image Manifold accepts is left out, and the command says how many it left out.
+5. With `--force`, it deletes every file in the upload folder. It then copies the uploaded files of the archive into it. Only files that a restored file record names are copied: anything else is left out, and the command says how many it left out.
 6. It applies the migrations that are newer than the backup, lists them, and records `data.restore` in the audit log.
 
 Restore only archives that you made yourself: the database dump is applied as it is, with the rights of the database account. Nothing is changed until the archive has passed the checks of the first three steps, so a refused archive leaves the installation as it was. If a forced restore fails after that, the database may be incomplete: fix the cause and run the restore again with `--force`.

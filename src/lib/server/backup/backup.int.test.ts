@@ -17,6 +17,7 @@ import { getDb, getSql } from '../db';
 import { defaultMigrationsDirectory } from '../db/migrate';
 import { getEnv } from '../env';
 import { storeUpload } from '../files/files';
+import { receiveUploads } from '../files/upload-stream';
 import { uploadDirectory } from '../files/storage';
 import { restoreBackup, writeBackup } from './backup';
 import { BackupError } from './pg-tools';
@@ -24,6 +25,7 @@ import { BackupError } from './pg-tools';
 // A backup of manifold_test restored into a fresh database of its own.
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+const PDF = new TextEncoder().encode('%PDF-1.7 backed up');
 
 const work = { dir: '', archive: '', database: '', url: '' };
 
@@ -73,6 +75,14 @@ describe('backup and restore', () => {
 		const stored = await storeUpload(new File([new Uint8Array(PNG)], 'dot.png'), {
 			ownerModule: 'notes'
 		});
+		const form = new FormData();
+		form.set('file', new File([PDF], 'scan.pdf'));
+		const [document] = (
+			await receiveUploads(
+				new Request('http://localhost/upload', { method: 'POST', body: form }),
+				{ ownerModule: 'api', maxBytes: 1024, maxFiles: 1, accept: 'any' }
+			)
+		).files;
 		const created = await createNote(
 			{
 				title: 'Backed up',
@@ -125,6 +135,9 @@ describe('backup and restore', () => {
 
 		const bytes = await readFile(path.join(restoredUploads, stored.storageKey));
 		expect(new Uint8Array(bytes)).toEqual(PNG);
+		// Any type comes back, as long as a file record names it.
+		const pdf = await readFile(path.join(restoredUploads, document.storageKey));
+		expect(new Uint8Array(pdf)).toEqual(PDF);
 
 		// Clean up the shared test database.
 		await getDb().delete(note);

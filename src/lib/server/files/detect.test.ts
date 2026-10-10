@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectImageType } from './detect';
+import { detectFileType, detectImageType, isSvgDocument, startsLikeSvg } from './detect';
 
 const bytes = (...values: number[]) => new Uint8Array(values);
 const text = (value: string) => new TextEncoder().encode(value);
@@ -68,5 +68,68 @@ describe('detectImageType', () => {
 		expect(
 			detectImageType(bytes(0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x41, 0x56, 0x49), options)
 		).toBeNull();
+	});
+});
+
+const ascii = (value: string) => Array.from(value, (character) => character.charCodeAt(0));
+const ftyp = (brand: string) => bytes(0, 0, 0, 24, ...ascii('ftyp'), ...ascii(brand), 0, 0, 2, 0);
+
+describe('detectFileType', () => {
+	it('recognises images, PDF, audio and video by their signature, whatever the name', () => {
+		expect(detectFileType(PNG, 'photo.txt')).toBe('image/png');
+		expect(detectFileType(text('%PDF-1.7'), 'scan')).toBe('application/pdf');
+		expect(detectFileType(bytes(...ascii('ID3'), 4, 0), 'song.bin')).toBe('audio/mpeg');
+		expect(detectFileType(bytes(0xff, 0xfb, 0x90, 0x64), 'frame')).toBe('audio/mpeg');
+		expect(detectFileType(bytes(...ascii('RIFF'), 1, 2, 3, 4, ...ascii('WAVEfmt ')), 'a')).toBe(
+			'audio/wav'
+		);
+		expect(detectFileType(bytes(...ascii('OggS'), 0, 2), 'a')).toBe('audio/ogg');
+		expect(detectFileType(bytes(...ascii('fLaC'), 0), 'a')).toBe('audio/flac');
+		expect(detectFileType(ftyp('M4A '), 'a')).toBe('audio/mp4');
+		expect(detectFileType(ftyp('isom'), 'a')).toBe('video/mp4');
+		expect(detectFileType(ftyp('qt  '), 'a')).toBe('video/quicktime');
+		expect(
+			detectFileType(
+				bytes(0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x82, 0x84, ...ascii('webm')),
+				'a'
+			)
+		).toBe('video/webm');
+	});
+
+	it('takes text only with a known extension and UTF-8 content', () => {
+		expect(detectFileType(text('plain words'), 'read.me.TXT')).toBe('text/plain');
+		expect(detectFileType(text('# Title'), 'notes.md')).toBe('text/markdown');
+		expect(detectFileType(text('a,b'), 'table.csv')).toBe('text/csv');
+		expect(detectFileType(text('{"a":1}'), 'data.json')).toBe('application/json');
+		expect(detectFileType(text('çağ ğüş'), 'tr.txt')).toBe('text/plain');
+
+		expect(detectFileType(text('plain words'), 'script.sh')).toBe('application/octet-stream');
+		expect(detectFileType(bytes(0x61, 0, 0x62), 'nul.txt')).toBe('application/octet-stream');
+		expect(detectFileType(bytes(0xc3, 0x28), 'broken.txt')).toBe('application/octet-stream');
+	});
+
+	it('keeps a head cut inside a character as text', () => {
+		const word = text('ş');
+		expect(detectFileType(word.subarray(0, 1), 'cut.txt')).toBe('text/plain');
+	});
+
+	it('stores everything else as a download', () => {
+		expect(detectFileType(bytes(0x50, 0x4b, 3, 4), 'archive.zip')).toBe(
+			'application/octet-stream'
+		);
+		expect(detectFileType(text('<html><script>x()</script>'), 'page.html')).toBe(
+			'application/octet-stream'
+		);
+		expect(detectFileType(SVG, 'icon.svg')).toBe('application/octet-stream');
+		expect(detectFileType(bytes(), 'empty')).toBe('application/octet-stream');
+	});
+});
+
+describe('SVG in uploads', () => {
+	it('spots an SVG start and checks the whole document', () => {
+		expect(startsLikeSvg(SVG)).toBe(true);
+		expect(startsLikeSvg(text('<html></html>'))).toBe(false);
+		expect(isSvgDocument(SVG)).toBe(true);
+		expect(isSvgDocument(text('<svg><script>x()</script></svg>'))).toBe(false);
 	});
 });

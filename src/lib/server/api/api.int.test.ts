@@ -451,10 +451,48 @@ describe('services and files', () => {
 		const fetched = await call('GET', `/files/${String(file.id)}`, everything);
 		expect(fetched.status).toBe(200);
 		expect(fetched.headers.get('content-type')).toBe('image/png');
+		expect(fetched.headers.get('accept-ranges')).toBe('bytes');
+		expect(new Uint8Array(await fetched.arrayBuffer())).toEqual(new Uint8Array(PNG));
+	});
 
+	it('keeps any file, typed by its content, and serves unknown ones as downloads', async () => {
 		const text = new FormData();
 		text.set('file', new File([new TextEncoder().encode('hello')], 'note.txt'));
-		expect((await call('POST', '/files', everything, text)).status).toBe(422);
+		const note = await json(await call('POST', '/files', everything, text));
+		expect(note).toMatchObject({ mime_type: 'text/plain', name: 'note.txt', size: 5 });
+
+		const archive = new FormData();
+		archive.set('file', new File([new Uint8Array([0x50, 0x4b, 3, 4, 9, 9])], 'notes.zip'));
+		const zip = await json(await call('POST', '/files', everything, archive));
+		expect(zip).toMatchObject({ mime_type: 'application/octet-stream' });
+		const download = await call('GET', `/files/${String(zip.id)}`, everything);
+		expect(download.headers.get('content-type')).toBe('application/octet-stream');
+		expect(download.headers.get('content-disposition')).toMatch(/^attachment;/);
+
+		const empty = new FormData();
+		empty.set('file', new File([], 'empty.bin'));
+		expect((await call('POST', '/files', everything, empty)).status).toBe(422);
+		expect((await call('POST', '/files', everything, { file: 'x' })).status).toBe(400);
+	});
+
+	it('answers a range of a file with 206', async () => {
+		const form = new FormData();
+		form.set('file', new File([new TextEncoder().encode('0123456789')], 'digits.txt'));
+		const file = await json(await call('POST', '/files', everything, form));
+
+		const ranged = (range: string) =>
+			handleApiRequest(
+				new Request(`${ORIGIN}/api/v1/files/${String(file.id)}`, {
+					headers: { authorization: `Bearer ${everything}`, range }
+				}),
+				{ origin: { ip: '10.9.9.9', userAgent: 'vitest' } }
+			);
+		const middle = await ranged('bytes=2-5');
+		expect(middle.status).toBe(206);
+		expect(middle.headers.get('content-range')).toBe('bytes 2-5/10');
+		expect(await middle.text()).toBe('2345');
+		expect(await (await ranged('bytes=-3')).text()).toBe('789');
+		expect((await ranged('bytes=20-')).status).toBe(416);
 	});
 });
 

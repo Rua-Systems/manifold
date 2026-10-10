@@ -48,7 +48,7 @@ The toolbar is a single row. Where it does not fit, as in the note panel of the 
 
 Add an image with **Insert image**, by pasting it, or by dragging the file into the text. The image is uploaded right away and appears where you inserted it.
 
-- PNG, JPEG, WebP and GIF images of up to `UPLOAD_MAX_BYTES`, 10 MB by default, are accepted. The format is recognised from the content of the file, never from its name. SVG is not accepted in notes.
+- PNG, JPEG, WebP and GIF images of up to 10 MB, or `UPLOAD_MAX_BYTES` when it is smaller, are accepted. The format is recognised from the content of the file, never from its name. SVG is not accepted in notes.
 - Every image must be uploaded to Manifold. A note that shows an image from another site cannot be saved and reports **Images must be uploaded to this instance.**
 - Images are served only to you while you are signed in, and to API keys with the `files:read` scope.
 - An image stays stored as long as the note or any version in its history shows it, so restoring an old version brings its images back. Once nothing shows it any more, the daily housekeeping deletes it, at the earliest a day after it was uploaded.

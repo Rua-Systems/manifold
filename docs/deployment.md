@@ -34,7 +34,7 @@ The app container runs as an unprivileged user with a read-only root filesystem,
 3. `MANIFOLD_VERSION` names a release or a minor line, not `latest`.
 4. The proxy serves only TLS 1.2 and 1.3 with a publicly trusted certificate.
 5. `ADDRESS_HEADER` and `XFF_DEPTH` match your proxy, and port 3000 is not reachable from the internet.
-6. The proxy accepts request bodies of at least `UPLOAD_MAX_BYTES` plus 256 KB, for example 11 MB with the default limit.
+6. The proxy accepts request bodies of at least `UPLOAD_MAX_BYTES` plus 256 KB, for example 101 MB with the default limit.
 7. `OWNER_PASSWORD` is removed from the environment after the first sign-in.
 8. The owner has turned on two-factor authentication under **Settings → Security**.
 9. Backups run regularly and are copied off the server, see [Backups and restores](backups.md).
@@ -106,7 +106,7 @@ server {
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
     ssl_prefer_server_ciphers off;
 
-    client_max_body_size 11m;
+    client_max_body_size 101m;
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -117,7 +117,7 @@ server {
 }
 ```
 
-Nginx accepts only 1 MB request bodies by default. Manifold accepts uploads of `UPLOAD_MAX_BYTES` plus 256 KB for the other form fields, and other request bodies of up to 5 MB, so `client_max_body_size 11m` fits the default limit of 10 MB. Raise it together with `UPLOAD_MAX_BYTES`.
+Nginx accepts only 1 MB request bodies by default. Manifold accepts uploads of `UPLOAD_MAX_BYTES` plus 256 KB for the other form fields, and other request bodies of up to 5 MB, so `client_max_body_size 101m` fits the default limit of 100 MB. Raise it together with `UPLOAD_MAX_BYTES`.
 
 ### Coolify
 

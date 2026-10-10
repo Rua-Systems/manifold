@@ -108,7 +108,7 @@ Migrations run on every start, each in its own transaction. When one of them can
 - **`The backup comes from a newer Manifold (migration 0012, this one knows 0011). Update first.`**: update this installation to at least the version that made the backup, then restore it.
 - **`The archive cannot be read.`**: the path is wrong, or the file is damaged or not a `.tar.gz` archive. Paths are inside the container: copy the archive into `/data/backups` first.
 - **`The archive holds entries that are not part of a Manifold backup.`**: the archive contains files, folders or links that Manifold never writes. Use an archive that Manifold wrote, unchanged.
-- **`Left out ... uploaded file(s) that are not images Manifold accepts.`**: some files in the archive's `uploads` folder are not images Manifold would accept today; they were not copied. Notes and services that used them show a missing image.
+- **`Left out ... uploaded file(s) that no file record of the backup names.`**: some files in the archive's `uploads` folder belong to no record of the backup; they were not copied. A backup that Manifold wrote has none, so the archive was changed after it was written.
 - **`pg_restore failed:`** followed by the reason: the restore stopped at the first error. With `--force`, the database may now be incomplete; fix the cause and run the restore again.
 
 [Backups and restores](backups.md) lists every message. Nothing is changed when an archive is refused.
@@ -138,6 +138,6 @@ Each key may make `API_RATE_LIMIT_PER_MINUTE` requests per minute, 120 by defaul
 
 ## Uploads fail
 
-- **"The file is larger than 10 MB."**: the limit is `UPLOAD_MAX_BYTES`, in bytes. Raise it and run `docker compose up -d`.
+- **"The file is larger than 100 MB."**: the limit is `UPLOAD_MAX_BYTES`, in bytes. Raise it and run `docker compose up -d`. Note images and service icons stay at 10 MB at most.
 - **A `413` error page from the reverse proxy**: the proxy has a smaller limit than the app. Raise it, for example with `client_max_body_size` in Nginx, see [Deployment](deployment.md).
 - **"Use a PNG, JPEG, WebP or GIF image."**: Manifold checks the content of the file, not its name. Service icons may also be SVG images.

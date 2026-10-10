@@ -1,6 +1,6 @@
 import type { FieldErrors } from '$lib/types/validation';
 import { ConflictError, NotFoundError, ValidationError } from '../errors';
-import { FileRejectedError } from '../files/files';
+import { FileRejectedError, type FileRejection } from '../files/files';
 
 // Every API error has the same body: `{ "error": { "code", "message", ... } }`. Messages are for
 // developers and stay in English.
@@ -47,15 +47,20 @@ export function apiErrorFrom(cause: unknown): ApiError | null {
 		});
 	}
 	if (cause instanceof FileRejectedError) {
-		if (cause.reason === 'too_large') {
-			return new ApiError(413, 'file_too_large', 'The file is larger than the upload limit.');
-		}
-		if (cause.reason === 'empty') {
-			return new ApiError(422, 'file_empty', 'The file is empty.');
-		}
-		return new ApiError(422, 'file_type', 'Only PNG, JPEG, WebP and GIF images are accepted.');
+		return fileRejectedError(cause.reason);
 	}
 	return null;
+}
+
+/** The API's answer to an upload that was turned down. */
+export function fileRejectedError(reason: FileRejection): ApiError {
+	if (reason === 'too_large') {
+		return new ApiError(413, 'file_too_large', 'The file is larger than the upload limit.');
+	}
+	if (reason === 'empty') {
+		return new ApiError(422, 'file_empty', 'The file is empty.');
+	}
+	return new ApiError(422, 'file_type', 'This type of file is not accepted here.');
 }
 
 export function errorBody(error: ApiError): { error: Record<string, unknown> } {

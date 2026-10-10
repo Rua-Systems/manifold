@@ -5,7 +5,7 @@ import {
 } from '$lib/modules/notes/tokens.server';
 import { authenticateCredential } from '$lib/server/api/credentials';
 import { getEnv } from '$lib/server/env';
-import { fileResponse, findFile, readFileBytes } from '$lib/server/files/files';
+import { findFile, serveFile } from '$lib/server/files/files';
 import { logSecurityEvent } from '$lib/server/log';
 import { consumeApiRequest } from '$lib/server/rate-limit';
 import { error } from '@sveltejs/kit';
@@ -78,9 +78,9 @@ export const GET: RequestHandler = async ({
 	if (stored === null) {
 		error(404);
 	}
-	const bytes = await readFileBytes(stored);
-	if (bytes === null) {
+	const response = await serveFile(stored, request);
+	if (response === null) {
 		error(404);
 	}
-	return fileResponse(stored, bytes);
+	return response;
 };

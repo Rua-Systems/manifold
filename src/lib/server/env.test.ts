@@ -21,7 +21,7 @@ describe('parseEnv', () => {
 		expect(env.MAP_TILE_URL).toContain('tile.openstreetmap.org');
 		expect(env.MAP_DEFAULT_CENTER).toEqual([0, 20]);
 		expect(env.UPLOAD_DIR).toBe('/data/uploads');
-		expect(env.UPLOAD_MAX_BYTES).toBe(10 * 1024 * 1024);
+		expect(env.UPLOAD_MAX_BYTES).toBe(100 * 1024 * 1024);
 		expect(env.TRASH_RETENTION_DAYS).toBe(30);
 		expect(env.AUDIT_RETENTION_DAYS).toBe(180);
 		expect(env.API_RATE_LIMIT_PER_MINUTE).toBe(120);

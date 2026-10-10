@@ -113,12 +113,12 @@ The default template is `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Browse
 
 ## Uploads and retention
 
-| Variable               | Default            | Purpose                                                    |
-| ---------------------- | ------------------ | ---------------------------------------------------------- |
-| `UPLOAD_DIR`           | `/data/uploads`    | Folder of the uploaded files. Set by the image; keep it.   |
-| `UPLOAD_MAX_BYTES`     | `10485760` (10 MB) | Largest accepted upload, in bytes.                         |
-| `TRASH_RETENTION_DAYS` | `30`               | Days a trashed note is kept before it is deleted for good. |
-| `AUDIT_RETENTION_DAYS` | `180`              | Days audit events are kept.                                |
+| Variable               | Default              | Purpose                                                                                 |
+| ---------------------- | -------------------- | --------------------------------------------------------------------------------------- |
+| `UPLOAD_DIR`           | `/data/uploads`      | Folder of the uploaded files. Set by the image; keep it.                                |
+| `UPLOAD_MAX_BYTES`     | `104857600` (100 MB) | Largest accepted upload, in bytes. Note images and service icons stay at 10 MB at most. |
+| `TRASH_RETENTION_DAYS` | `30`                 | Days a trashed note is kept before it is deleted for good.                              |
+| `AUDIT_RETENTION_DAYS` | `180`                | Days audit events are kept.                                                             |
 
 `docker-compose.yml` does not pass `UPLOAD_DIR` on; the image sets it to the `uploads` folder of the `/data` volume. Backups written by the command line without a path go to the `backups` folder next to it, `/data/backups`.
 

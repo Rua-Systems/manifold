@@ -1,5 +1,5 @@
 import { m } from '$lib/paraglide/messages.js';
-import { getEnv } from '$lib/server/env';
+import { imageMaxBytes } from '$lib/server/files/files';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
 import { requireUser } from '$lib/server/guard';
 import { textValue } from '$lib/utils/validation';
@@ -61,7 +61,7 @@ export async function loadServicesPage() {
 			iconSrc: serviceIconSource(item),
 			initial: serviceInitial(item.alias)
 		})),
-		uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES
+		uploadMaxBytes: imageMaxBytes()
 	};
 }
 
