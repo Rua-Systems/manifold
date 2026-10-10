@@ -28,6 +28,7 @@ export const RATE_LIMITS = {
 	stepUp: { max: 5, windowMs: MINUTE },
 	failedCredentialCheck: { max: 5, windowMs: MINUTE },
 	upload: { max: 30, windowMs: MINUTE },
+	fileUpload: { max: 120, windowMs: MINUTE },
 	openSharedNote: { max: 10, windowMs: MINUTE }
 } satisfies Record<string, RateLimit>;
 
@@ -118,6 +119,18 @@ export function isUploadLimited(userId: string, now = Date.now()): boolean {
 	const limited = limiter.hit(`upload:${userId}`, RATE_LIMITS.upload, now);
 	if (limited) {
 		logSecurityEvent('rate_limited', { bucket: 'upload', userId });
+	}
+	return limited;
+}
+
+/**
+ * Counts one upload on the Files page for the account. Each file is a request of its own, so a
+ * folder dropped at once needs more room than pasting into a note.
+ */
+export function isFileUploadLimited(userId: string, now = Date.now()): boolean {
+	const limited = limiter.hit(`fileUpload:${userId}`, RATE_LIMITS.fileUpload, now);
+	if (limited) {
+		logSecurityEvent('rate_limited', { bucket: 'fileUpload', userId });
 	}
 	return limited;
 }

@@ -219,3 +219,32 @@ export async function purgeUnreferencedFiles(
 	}
 	return deleted.length;
 }
+
+/**
+ * Deletes one file unless one of `references` points to it, in one statement, so a reference
+ * created meanwhile keeps the file. Answers whether it was deleted.
+ */
+export async function deleteUnreferencedFile(
+	id: string,
+	references: FileReference[]
+): Promise<boolean> {
+	const deleted = await getDb()
+		.delete(file)
+		.where(and(eq(file.id, id), ...unreferenced(references)))
+		.returning({ storageKey: file.storageKey });
+
+	for (const row of deleted) {
+		await removeStoredFile(row.storageKey);
+	}
+	return deleted.length > 0;
+}
+
+/** Gives a file a new display name, cleaned like the name of an upload. */
+export async function renameStoredFile(id: string, name: string): Promise<StoredFile | null> {
+	const [row] = await getDb()
+		.update(file)
+		.set({ originalName: cleanName(name), updatedAt: new Date() })
+		.where(eq(file.id, id))
+		.returning();
+	return row ?? null;
+}

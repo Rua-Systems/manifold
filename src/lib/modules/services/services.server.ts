@@ -6,7 +6,8 @@ import { isUuid } from '$lib/utils/uuid';
 import { fieldErrors } from '$lib/utils/validation';
 import { m } from '$lib/paraglide/messages.js';
 import { containsPattern } from '$lib/server/search-query';
-import { asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import type { FileUse } from '$lib/types/files';
+import { asc, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { service } from './schema.server';
 import { serviceSchema, type ServiceInput } from './schemas';
 import type { MoveDirection, Service } from './types';
@@ -206,4 +207,27 @@ export async function searchServices(
 		.orderBy(desc(score), asc(service.position))
 		.limit(limit);
 	return rows.map((row) => ({ ...row, score: Number(row.score) }));
+}
+
+/** The services that show these files as their icon, for the Files page. */
+export async function serviceFileUses(fileIds: string[]): Promise<FileUse[]> {
+	const rows = await getDb()
+		.select({ fileId: service.iconFileId, alias: service.alias })
+		.from(service)
+		.where(inArray(service.iconFileId, fileIds))
+		.orderBy(asc(service.position));
+	return rows.flatMap((row) => {
+		if (row.fileId === null) {
+			return [];
+		}
+		return [
+			{
+				fileId: row.fileId,
+				module: SERVICES_MODULE,
+				label: row.alias,
+				href: '/services',
+				trashed: false
+			}
+		];
+	});
 }

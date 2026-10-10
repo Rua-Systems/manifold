@@ -5,6 +5,7 @@ import type { HousekeepingTask } from '$lib/server/housekeeping';
 import type { McpTool } from '$lib/server/mcp/types';
 import type { SearchProvider } from '$lib/server/search';
 import type { DashboardCard } from '$lib/types/dashboard';
+import type { FileUse } from '$lib/types/files';
 import type { UsageItem } from '$lib/types/usage';
 import type { SidebarGroup } from './types';
 
@@ -14,6 +15,8 @@ export interface ServerModuleManifest {
 	sidebarGroup?: () => Promise<SidebarGroup>;
 	/** Columns that point at `file.id`, so housekeeping keeps those files. */
 	fileReferences?: FileReference[];
+	/** The places of the module that show these files, named and linked for the Files page. */
+	fileUses?: (fileIds: string[]) => Promise<FileUse[]>;
 	housekeeping?: HousekeepingTask[];
 	/** REST routes under /api/v1. */
 	api?: ApiRoute[];

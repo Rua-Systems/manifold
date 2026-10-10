@@ -5,7 +5,12 @@ import type { ServerModuleManifest } from '../types.server';
 import { servicesApiRoutes } from './api.server';
 import { servicesMcpTools } from './mcp.server';
 import { service } from './schema.server';
-import { listServices, searchServices, SERVICES_MODULE } from './services.server';
+import {
+	listServices,
+	searchServices,
+	serviceFileUses,
+	SERVICES_MODULE
+} from './services.server';
 import type { Service } from './types';
 
 export function serviceIconSource(item: Service): string | null {
@@ -44,6 +49,7 @@ export const servicesServerManifest: ServerModuleManifest = {
 		};
 	},
 	fileReferences: [{ table: 'service', column: 'icon_file_id' }],
+	fileUses: serviceFileUses,
 	api: servicesApiRoutes,
 	mcp: servicesMcpTools,
 	search: {

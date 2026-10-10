@@ -3,6 +3,7 @@ import type { FileReference } from '$lib/server/files/files';
 import type { McpTool } from '$lib/server/mcp/types';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
 import type { DashboardCard } from '$lib/types/dashboard';
+import type { FileUse } from '$lib/types/files';
 import type { UsageItem } from '$lib/types/usage';
 import { MODULES } from './registry';
 import { notesServerManifest } from './notes/manifest.server';
@@ -36,6 +37,17 @@ export async function loadSidebar(): Promise<SidebarData> {
 
 export function fileReferences(): FileReference[] {
 	return SERVER_MODULES.flatMap((module) => module.fileReferences ?? []);
+}
+
+/** Where every module shows these files, for the Files page. */
+export async function moduleFileUses(fileIds: string[]): Promise<FileUse[]> {
+	if (fileIds.length === 0) {
+		return [];
+	}
+	const found = await Promise.all(
+		SERVER_MODULES.map((module) => module.fileUses?.(fileIds) ?? Promise.resolve([]))
+	);
+	return found.flat();
 }
 
 export function moduleHousekeeping(): HousekeepingTask[] {
