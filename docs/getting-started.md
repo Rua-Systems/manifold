@@ -21,7 +21,7 @@ The features you work with come as modules. A module has its own page, its own e
 | Map Notes | `/notes/map` | Pins, lines and polygons on a map, each linked to a note. Map Notes is part of the Notes module.  |
 | Vault     | `/vault`     | Passwords and keys, encrypted in the database and shown only after you confirm your identity.     |
 
-After signing in you land on the [Dashboard](dashboard.md), which sums up the modules, access and usage on one page. [Services](services.md), [Notes](notes.md), [Map Notes](map-notes.md) and [Vault](vault.md) describe each module.
+After signing in you land on the [Dashboard](dashboard.md), which sums up the modules, access and usage on one page. [Services](services.md), [Notes](notes.md), [Map Notes](map-notes.md), [Files](files.md) and [Vault](vault.md) describe each module.
 
 ## The sidebar and the account menu
 
@@ -29,7 +29,7 @@ The sidebar lists **Search**, **Dashboard**, the modules and **Settings**. **Ser
 
 ## Search and the command palette
 
-One search covers your notes, your services and the names of your vault entries. The command palette opens with `Ctrl+K`, or `Cmd+K` on a Mac, from every page you see while signed in, and with **Search** at the top of the sidebar. Type to narrow its entries: pages to go to, actions such as switching the theme or the language, your services, and from the second character on, search results from every module. The page at `/search` runs the same search without JavaScript. [Search and the command palette](search.md) has the details.
+One search covers your notes, your services, the names of your files and the names of your vault entries. The command palette opens with `Ctrl+K`, or `Cmd+K` on a Mac, from every page you see while signed in, and with **Search** at the top of the sidebar. Type to narrow its entries: pages to go to, actions such as switching the theme or the language, your services, and from the second character on, search results from every module. The page at `/search` runs the same search without JavaScript. [Search and the command palette](search.md) has the details.
 
 ## Settings
 

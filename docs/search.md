@@ -1,6 +1,6 @@
 # Search and the command palette
 
-One search covers your notes, your services and the names of your vault entries. You reach it through the command palette, which also moves you between pages and runs common actions, and through a search page of its own.
+One search covers your notes, your services, the names of your files and the names of your vault entries. You reach it through the command palette, which also moves you between pages and runs common actions, and through a search page of its own.
 
 ## What is searched
 
@@ -8,6 +8,7 @@ One search covers your notes, your services and the names of your vault entries.
 | -------- | -------------------------------------------------------------- | -------------------------------- |
 | Notes    | The title and the text of every note outside the trash         | The note                         |
 | Services | The alias and the address                                      | The service itself, in a new tab |
+| Files    | The name of every file, wherever it is kept                    | The page of the file             |
 | Vault    | The name and the service address, never the value or the notes | The Vault page                   |
 
 Pins, lines and polygons on the map have no text of their own; you find them through the notes they belong to. Notes in the trash are left out.
@@ -20,7 +21,7 @@ A note matches when one of these is true:
 - Its title contains what you typed, anywhere and in any case.
 - Its title, or one of the words in it, looks like what you typed, which catches small typing mistakes. `gardn` finds "Weekly planning for the garden project".
 
-Services match when their alias or address contains what you typed or looks like it, and vault entries when their name or service address contains it or their name looks like it. Here too, a single word that looks like what you typed is enough.
+Services match when their alias or address contains what you typed or looks like it, files when their name contains it or looks like it, and vault entries when their name or service address contains it or their name looks like it. Here too, a single word that looks like what you typed is enough.
 
 - Upper and lower case never matter.
 - For the first rule only letters and digits count; punctuation and other signs separate words, and up to eight words are used.

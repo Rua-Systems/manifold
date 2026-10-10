@@ -7,7 +7,13 @@ import { mapApiRoutes } from './map/api.server';
 import { basemapApiRoutes } from './map/basemaps.api.server';
 import { mapMcpTools } from './map/mcp.server';
 import { notesMcpTools } from './mcp.server';
-import { listNotes, NOTES_MODULE, purgeTrashedNotes, searchNotes } from './notes.server';
+import {
+	listNotes,
+	noteFileUses,
+	NOTES_MODULE,
+	purgeTrashedNotes,
+	searchNotes
+} from './notes.server';
 import { notesDashboard } from './dashboard.server';
 import { noteTokenCredentials } from './tokens.server';
 import { notesUsage } from './usage.server';
@@ -37,6 +43,7 @@ export const notesServerManifest: ServerModuleManifest = {
 		};
 	},
 	fileReferences: [{ table: 'note_file', column: 'file_id' }],
+	fileUses: noteFileUses,
 	api: [...notesApiRoutes, ...mapApiRoutes, ...basemapApiRoutes],
 	mcp: [...notesMcpTools, ...mapMcpTools],
 	search: {

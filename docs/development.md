@@ -55,7 +55,7 @@ npm run dev
 src/
   hooks.server.ts          startup and the request pipeline: sessions, origin check, body limits, headers
   routes/
-    (app)/                 signed-in pages: services, notes, map, vault, search, settings, step-up
+    (app)/                 signed-in pages: services, notes, map, files, vault, search, settings, step-up
     login/                 sign-in, forgot-password/ and logout/
     api/v1/                the REST API, one route that hands every request to the router
     mcp/                   the MCP server
@@ -98,7 +98,7 @@ On every start, `hooks.server.ts` validates the environment (`src/lib/server/env
 
 ## Modules
 
-Every feature is a module under `src/lib/modules/<id>/`: `services`, `notes` (with Map Notes in `notes/map/`) and `vault`. The core lives in `src/lib/server/`, `src/lib/components/` and `src/routes/`.
+Every feature is a module under `src/lib/modules/<id>/`: `services`, `notes` (with Map Notes in `notes/map/`), `files` and `vault`. The core lives in `src/lib/server/`, `src/lib/components/` and `src/routes/`.
 
 A module has two manifests:
 

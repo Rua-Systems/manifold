@@ -98,6 +98,7 @@ See [Vault](vault.md) for using the vault.
 | REST, MCP and file requests with a key          | API key         | `API_RATE_LIMIT_PER_MINUTE`, 120 per minute      |
 | Image uploads from the editor                   | Account         | 30 per minute                                    |
 | Data exports                                    | Installation    | One at a time                                    |
+| Uploads on the Files page                       | Account         | 120 per minute                                   |
 | Upload size                                     | Request         | `UPLOAD_MAX_BYTES`, 100 MB; images 10 MB at most |
 | Other request bodies                            | Request         | 5 MB                                             |
 | Map feature                                     | Feature         | 10,000 points                                    |

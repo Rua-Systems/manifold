@@ -11,7 +11,7 @@
 	// no hole opens beside a short card. The cards are kept in reading order, so the keyboard and a
 	// screen reader meet them in the order they are seen. A card of a new module comes after them,
 	// one column wide, until the layout gives it a place.
-	const PLACES = ['notes', 'access', 'map', 'usage', 'services'];
+	const PLACES = ['notes', 'access', 'map', 'usage', 'files', 'services'];
 
 	function place(card: Card): number {
 		const index = PLACES.indexOf(card.id);
@@ -52,13 +52,15 @@
 		gap: 0.75rem;
 	}
 
-	// Two columns: the two long cards side by side, the short ones under them, services across.
+	// Two columns: the two long cards side by side, the short ones under them, files and services
+	// across.
 	@container (min-width: 36rem) {
 		.cards {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			grid-template-areas:
 				'notes access'
 				'map usage'
+				'files files'
 				'services services';
 		}
 
@@ -78,6 +80,10 @@
 			grid-area: usage;
 		}
 
+		.cell[data-card='files'] {
+			grid-area: files;
+		}
+
 		.cell[data-card='services'] {
 			grid-area: services;
 		}
@@ -90,6 +96,7 @@
 			grid-template-areas:
 				'notes access map'
 				'notes access usage'
+				'files files files'
 				'services services services';
 		}
 	}

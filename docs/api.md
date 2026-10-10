@@ -1,6 +1,6 @@
 # REST API
 
-The REST API under `/api/v1` gives scripts and other applications access to your services, notes, map features, uploaded images, the names in your vault and the usage report. It speaks JSON with snake_case field names, authenticates every request with an API key and is described in OpenAPI 3.1 at `/api/v1/openapi.json`. AI agents use the same keys through the [MCP server](mcp.md).
+The REST API under `/api/v1` gives scripts and other applications access to your services, notes, map features, uploaded files, the names in your vault and the usage report. It speaks JSON with snake_case field names, authenticates every request with an API key and is described in OpenAPI 3.1 at `/api/v1/openapi.json`. AI agents use the same keys through the [MCP server](mcp.md).
 
 ## API keys
 
@@ -40,7 +40,7 @@ The box is not ticked by default: a key without a copy exists nowhere but in the
 
 ### Scopes
 
-Each module has its own scopes, and uploaded files and the usage report have theirs:
+Each module has its own scopes, and the usage report has its own:
 
 | Scope            | Label in the form                   | Allows                                                                                   |
 | ---------------- | ----------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -51,8 +51,8 @@ Each module has its own scopes, and uploaded files and the usage report have the
 | `map:read`       | **Read map features**               | Listing and reading map features.                                                        |
 | `map:write`      | **Change map features**             | Adding, changing and deleting map features, and creating a note together with a feature. |
 | `vault:read`     | **Read vault names (never values)** | Listing and reading the name, address and description of vault entries.                  |
-| `files:read`     | **Read files**                      | Downloading uploaded files.                                                              |
-| `files:write`    | **Upload files**                    | Uploading images.                                                                        |
+| `files:read`     | **Read files**                      | Listing files and folders, reading their details and text, and downloading files.        |
+| `files:write`    | **Change files**                    | Uploading files, renaming, moving and deleting them, and managing folders.               |
 | `usage:read`     | **Read the usage report**           | Reading the usage report: counts and sizes, the database, the disk and the server.       |
 
 - A write scope does not include the read scope. A key with only `notes:write` can create and change notes, but it cannot list or read them.
@@ -118,8 +118,17 @@ Always use an `https` address: a key sent over plain HTTP crosses the network in
 | `DELETE` | `/api/v1/map/basemaps/{id}`                      | `map:write`      | Delete a basemap.                                                 |
 | `GET`    | `/api/v1/vault/secrets`                          | `vault:read`     | Vault entries by name, without their values, paged.               |
 | `GET`    | `/api/v1/vault/secrets/{id}`                     | `vault:read`     | One entry's name, address and description.                        |
-| `POST`   | `/api/v1/files`                                  | `files:write`    | Upload a file.                                                    |
+| `GET`    | `/api/v1/files`                                  | `files:read`     | Files, newest first, paged; by folder, owner, name, kind or use.  |
+| `POST`   | `/api/v1/files`                                  | `files:write`    | Upload a file, into a folder of the Files module when asked.      |
 | `GET`    | `/api/v1/files/{id}`                             | `files:read`     | Download a file.                                                  |
+| `GET`    | `/api/v1/files/{id}/metadata`                    | `files:read`     | A file without its content, with where it is used.                |
+| `GET`    | `/api/v1/files/{id}/text`                        | `files:read`     | The start of a text file as a string.                             |
+| `PATCH`  | `/api/v1/files/{id}`                             | `files:write`    | Rename a file of the Files module or move it to another folder.   |
+| `DELETE` | `/api/v1/files/{id}`                             | `files:write`    | Delete a file that nothing uses.                                  |
+| `GET`    | `/api/v1/file-folders`                           | `files:read`     | Every folder of the Files module.                                 |
+| `POST`   | `/api/v1/file-folders`                           | `files:write`    | Create a folder.                                                  |
+| `PATCH`  | `/api/v1/file-folders/{id}`                      | `files:write`    | Rename a folder or move it.                                       |
+| `DELETE` | `/api/v1/file-folders/{id}`                      | `files:write`    | Delete an empty folder.                                           |
 | `GET`    | `/api/v1/usage`                                  | `usage:read`     | The usage report, measured now.                                   |
 
 A method that a path does not accept is answered with `405 method_not_allowed` and an `Allow` header that lists the accepted methods. An unknown path is answered with `404 not_found`.
@@ -286,11 +295,11 @@ Basemaps are the tile sources added under **Settings → Map**. The **Standard**
 
 `GET /api/v1/search` searches notes, services and vault entry names at once, with the same ranking as the search in the app:
 
-| Parameter | Meaning                                                                  |
-| --------- | ------------------------------------------------------------------------ |
-| `q`       | The words to find, up to 200 characters. Required.                       |
-| `types`   | Comma-separated types: `note`, `service` or `secret`. All when left out. |
-| `limit`   | Hits, 20 by default and at most 50.                                      |
+| Parameter | Meaning                                                                          |
+| --------- | -------------------------------------------------------------------------------- |
+| `q`       | The words to find, up to 200 characters. Required.                               |
+| `types`   | Comma-separated types: `note`, `service`, `file` or `secret`. All when left out. |
+| `limit`   | Hits, 20 by default and at most 50.                                              |
 
 ```bash
 curl -H "Authorization: Bearer mfd_your_key" "https://manifold.example.com/api/v1/search?q=grafana&types=note,service"
@@ -315,7 +324,7 @@ Hits are sorted best first, with a `score` from 0 to 1. `link` is a path in the 
 
 ## Files
 
-`POST /api/v1/files` uploads one image as `multipart/form-data` in the field `file`:
+`POST /api/v1/files` uploads one file as `multipart/form-data` in the field `file`. With a `folder_id` field, a folder id or `root` for the top level, the [Files](files.md) module keeps the file there:
 
 ```json
 {
@@ -324,14 +333,28 @@ Hits are sorted best first, with a `score` from 0 to 1. `link` is a path in the 
   "mime_type": "image/png",
   "size": 48213,
   "url": "/files/9b2c1f10-58d1-4a7e-9a8c-2a3e3c7f1b11",
-  "created_at": "2026-09-30T08:15:00.000Z"
+  "created_at": "2026-09-30T08:15:00.000Z",
+  "kind": "image",
+  "owner": "files",
+  "in_files": true,
+  "folder_id": "4f0e6c2a-1d3b-4c55-9b0e-8a7d6c5b4a39",
+  "uses": []
 }
 ```
 
 - Manifold accepts any file and recognizes its type from the content, never from the file name or the type the client sends: PNG, JPEG, WebP, GIF and safe SVG images, PDF, MP3, WAV, OGG, FLAC and M4A audio, MP4, WebM and QuickTime video, and, with a `.txt`, `.log`, `.md`, `.csv` or `.json` name and UTF-8 content, text. Any other file is stored as `application/octet-stream` and always sent as a download. An empty file is refused with `422 file_empty`.
 - A file may be as large as `UPLOAD_MAX_BYTES`, 100 MB unless changed, see [Configuration](configuration.md). A larger file is refused with `413 file_too_large`. The upload is written to disk as it arrives, so a large file never sits in memory.
 - `GET /api/v1/files/{id}` answers the file with its type, inline for the types above and as a download for any other. It answers a `Range` header with `206` and that part, as players seeking in audio and video ask. The address in `url` works with the same key too, as long as it has `files:read`, and for you in the browser while you are signed in.
-- A file that no note and no service refers to is deleted by the daily housekeeping once it is a day old, so use an upload in a note soon after.
+- Without `folder_id` the file is a loose upload with the owner `api`: a file that no note and no service refers to is deleted by the daily housekeeping once it is a day old, so use it in a note soon after, or keep it in the Files module.
+- `kind` is one of `image`, `pdf`, `audio`, `video`, `text` and `other`. `owner` is the module that keeps the file, and `uses` lists the places that show it, each with `module`, `label`, `link` and `trashed`.
+
+The Files module's files and folders:
+
+- `GET /api/v1/files` lists every stored file, newest first and paged. `folder_id` keeps the files of one folder of the Files module, `root` those at its top level; `owner` keeps the files a module keeps (`files`, `notes`, `services` or `api`); `q` matches part of the name, `kind` one kind, and `unused=true` keeps the files that nothing uses.
+- `GET /api/v1/files/{id}/metadata` answers a file without its content. `GET /api/v1/files/{id}/text` answers the start of a file of kind `text` as `text`, up to `max_bytes` (100 KB unless given, at most 1 MB), with `truncated` when the file goes on; any other kind is answered with `422 not_text`.
+- `PATCH /api/v1/files/{id}` takes `name`, `folder_id` or both; `folder_id` null moves the file to the top level. Only files that the Files module keeps can be changed; others answer `422`.
+- `DELETE /api/v1/files/{id}` deletes a file for good. A file in use is refused with `422` until nothing shows it.
+- `/api/v1/file-folders` lists, creates, renames, moves and deletes folders. A name has up to 100 characters, no slashes, and is unique within its folder whatever its case; `parent_id` null puts a folder at the top. A folder cannot move into itself or a folder inside it, and only an empty folder can be deleted.
 
 ## Usage
 

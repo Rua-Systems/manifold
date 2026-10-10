@@ -1,6 +1,6 @@
 import { DOWNLOAD_TYPE, isPreviewable } from '$lib/utils/file-kind';
 import { isUuid } from '$lib/utils/uuid';
-import { and, eq, lt, sql, type SQL } from 'drizzle-orm';
+import { and, eq, inArray, lt, sql, type SQL } from 'drizzle-orm';
 import { createHash, randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { getDb } from '../db';
@@ -135,6 +135,22 @@ export async function readFileBytes(stored: StoredFile): Promise<Buffer | null> 
 	}
 }
 
+/** The first `maxBytes` of a stored file, without reading the rest; null when it is missing. */
+export async function readFileStart(stored: StoredFile, maxBytes: number): Promise<Buffer | null> {
+	const size = await storedFileSize(stored.storageKey);
+	if (size === null) {
+		return null;
+	}
+	if (size === 0) {
+		return Buffer.alloc(0);
+	}
+	const chunks: Buffer[] = [];
+	for await (const chunk of openStoredFile(stored.storageKey, 0, Math.min(size, maxBytes) - 1)) {
+		chunks.push(chunk as Buffer);
+	}
+	return Buffer.concat(chunks);
+}
+
 /** `Content-Disposition` with an ASCII fallback and the full name encoded per RFC 5987. */
 export function contentDisposition(name: string, disposition: 'inline' | 'attachment'): string {
 	const ascii = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
@@ -193,7 +209,8 @@ export async function serveFile(stored: StoredFile, request: Request): Promise<R
 	return new Response(body, { status, headers });
 }
 
-function unreferenced(references: FileReference[]): SQL[] {
+/** Conditions that hold for a file no column of `references` points to. */
+export function unreferencedBy(references: FileReference[]): SQL[] {
 	return references.map(
 		(reference) =>
 			sql`not exists (select 1 from ${sql.identifier(reference.table)} where ${sql.identifier(reference.table)}.${sql.identifier(reference.column)} = ${file.id})`
@@ -211,11 +228,51 @@ export async function purgeUnreferencedFiles(
 	const cutoff = new Date(now.getTime() - ORPHAN_AGE_MS);
 	const deleted = await getDb()
 		.delete(file)
-		.where(and(lt(file.createdAt, cutoff), ...unreferenced(references)))
+		.where(and(lt(file.createdAt, cutoff), ...unreferencedBy(references)))
 		.returning({ storageKey: file.storageKey });
 
 	for (const row of deleted) {
 		await removeStoredFile(row.storageKey);
 	}
 	return deleted.length;
+}
+
+/**
+ * Deletes one file unless one of `references` points to it, in one statement, so a reference
+ * created meanwhile keeps the file. Answers whether it was deleted.
+ */
+export async function deleteUnreferencedFile(
+	id: string,
+	references: FileReference[]
+): Promise<boolean> {
+	const deleted = await getDb()
+		.delete(file)
+		.where(and(eq(file.id, id), ...unreferencedBy(references)))
+		.returning({ storageKey: file.storageKey });
+
+	for (const row of deleted) {
+		await removeStoredFile(row.storageKey);
+	}
+	return deleted.length > 0;
+}
+
+/** Hands files over to another module, such as an API upload that the Files module keeps. */
+export async function changeFileOwner(ids: string[], ownerModule: string): Promise<void> {
+	if (ids.length === 0) {
+		return;
+	}
+	await getDb()
+		.update(file)
+		.set({ ownerModule, updatedAt: new Date() })
+		.where(inArray(file.id, ids));
+}
+
+/** Gives a file a new display name, cleaned like the name of an upload. */
+export async function renameStoredFile(id: string, name: string): Promise<StoredFile | null> {
+	const [row] = await getDb()
+		.update(file)
+		.set({ originalName: cleanName(name), updatedAt: new Date() })
+		.where(eq(file.id, id))
+		.returning();
+	return row ?? null;
 }

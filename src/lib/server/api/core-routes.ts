@@ -1,34 +1,8 @@
 import { z } from 'zod';
-import { getEnv } from '../env';
-import { API_FILE_OWNER, findFile, serveFile, type StoredFile } from '../files/files';
-import { receiveUploads, UploadFormatError, type ReceivedUploads } from '../files/upload-stream';
 import { search, SEARCH_LIMIT_MAX } from '../search';
-import { ApiError, fileRejectedError } from './errors';
 import { defineRoute, type ApiRoute } from './types';
 
-// Routes of the core rather than of a module: the key itself and uploaded files.
-
-const idParams = z.object({ id: z.string().meta({ description: 'The file id.' }) });
-
-const fileResource = z.object({
-	id: z.string(),
-	name: z.string(),
-	mime_type: z.string(),
-	size: z.number().int(),
-	url: z.string().meta({ description: 'Where the file is served; use it as an image `src`.' }),
-	created_at: z.string()
-});
-
-function toFileResource(stored: StoredFile): z.output<typeof fileResource> {
-	return {
-		id: stored.id,
-		name: stored.originalName,
-		mime_type: stored.mimeType,
-		size: stored.sizeBytes,
-		url: `/files/${stored.id}`,
-		created_at: stored.createdAt.toISOString()
-	};
-}
+// Routes of the core rather than of a module: the search and the key itself.
 
 export const CORE_ROUTES: ApiRoute[] = [
 	defineRoute({
@@ -125,70 +99,5 @@ export const CORE_ROUTES: ApiRoute[] = [
 				note: key.note ?? null
 			}
 		})
-	}),
-	defineRoute({
-		method: 'POST',
-		path: '/files',
-		scope: 'files:write',
-		tag: 'files',
-		summary: 'Upload a file',
-		description:
-			'Any file up to `UPLOAD_MAX_BYTES`. Images, PDF, audio, video and text are recognised from the content and get their type; anything else is stored as `application/octet-stream` and always downloaded. A file nothing refers to, such as an image in a note, is deleted after a day.',
-		multipart: { field: 'file', description: 'The file.' },
-		response: { status: 201, description: 'The stored file.', schema: fileResource },
-		audit: 'file.create',
-		handler: async ({ request }) => {
-			let received: ReceivedUploads;
-			try {
-				received = await receiveUploads(request, {
-					ownerModule: API_FILE_OWNER,
-					maxBytes: getEnv().UPLOAD_MAX_BYTES,
-					maxFiles: 1,
-					accept: 'any'
-				});
-			} catch (cause) {
-				if (cause instanceof UploadFormatError) {
-					throw new ApiError(
-						400,
-						'invalid_request',
-						'Send the file as multipart/form-data.'
-					);
-				}
-				throw cause;
-			}
-			const [rejected] = received.rejected;
-			if (rejected !== undefined) {
-				throw fileRejectedError(rejected.reason);
-			}
-			const [stored] = received.files;
-			if (stored === undefined) {
-				throw new ApiError(400, 'invalid_request', 'The form needs a "file" field.');
-			}
-			return {
-				status: 201,
-				body: toFileResource(stored),
-				target: { type: 'file', id: stored.id }
-			};
-		}
-	}),
-	defineRoute({
-		method: 'GET',
-		path: '/files/{id}',
-		scope: 'files:read',
-		tag: 'files',
-		summary: 'Download a file',
-		params: idParams,
-		response: { status: 200, description: 'The file.', contentType: '*/*' },
-		handler: async ({ params, request }) => {
-			const stored = await findFile(params.id);
-			let response: Response | null = null;
-			if (stored !== null) {
-				response = await serveFile(stored, request);
-			}
-			if (response === null) {
-				throw new ApiError(404, 'not_found', 'File was not found.');
-			}
-			return { response };
-		}
 	})
 ];

@@ -3,10 +3,12 @@ import type { Actor } from '$lib/server/actor';
 import { getDb } from '$lib/server/db';
 import { file } from '$lib/server/db/schema';
 import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
+import type { FileUse } from '$lib/types/files';
 import { isUuid } from '$lib/utils/uuid';
 import { fieldErrors } from '$lib/utils/validation';
 import {
 	and,
+	asc,
 	desc,
 	eq,
 	ilike,
@@ -550,4 +552,32 @@ export async function countNotes(): Promise<number> {
 		.from(note)
 		.where(isNull(note.deletedAt));
 	return row.total;
+}
+
+/** The notes that show these files, including notes in the trash, for the Files page. */
+export async function noteFileUses(fileIds: string[]): Promise<FileUse[]> {
+	const rows = await getDb()
+		.select({
+			fileId: noteFile.fileId,
+			id: note.id,
+			title: note.title,
+			deletedAt: note.deletedAt
+		})
+		.from(noteFile)
+		.innerJoin(note, eq(note.id, noteFile.noteId))
+		.where(inArray(noteFile.fileId, fileIds))
+		.orderBy(asc(note.title));
+	return rows.map((row) => {
+		let href = `/notes/${row.id}`;
+		if (row.deletedAt !== null) {
+			href = '/notes/trash';
+		}
+		return {
+			fileId: row.fileId,
+			module: NOTES_MODULE,
+			label: row.title || m.notes_untitled(),
+			href,
+			trashed: row.deletedAt !== null
+		};
+	});
 }
