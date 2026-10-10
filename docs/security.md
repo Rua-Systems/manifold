@@ -80,27 +80,27 @@ See [Vault](vault.md) for using the vault.
 
 - Note content is checked on the server against the editor's schema. Unknown elements are refused, links may use only `http`, `https` or `mailto`, and images must be files uploaded to this Manifold. Raw HTML in Markdown is dropped.
 - Service addresses must start with `http://` or `https://`, so a link in the sidebar cannot run a script. Manifold never fetches them itself.
-- Uploads are recognized from their content, never from the file name or the type the client claims. Note images and API uploads must be PNG, JPEG, WebP or GIF images. Service icons may also be SVG, which must be UTF-8 and may not contain scripts, embedded documents, event handlers, entity declarations or references to other addresses; SVG is only ever shown as an image.
-- An upload may be as large as `UPLOAD_MAX_BYTES`, 10 MB unless changed. Other request bodies are limited to 5 MB, and a body sent in chunks without a length is refused.
-- Files are stored under random names in `UPLOAD_DIR`. They are served only to the signed-in owner and to keys with `files:read`, with their exact type, `X-Content-Type-Options: nosniff`, a sandboxing Content Security Policy and an inline disposition, so a file never runs as a page. They are not scanned for viruses: only images are accepted, and they are never run.
+- Uploads are recognized from their content, never from the file name or the type the client claims. Note images must be PNG, JPEG, WebP or GIF images. Service icons may also be SVG, which must be UTF-8 and may not contain scripts, embedded documents, event handlers, entity declarations or references to other addresses; SVG is only ever shown as an image. API uploads may be any file: images, PDF, audio, video and text keep their type, and anything else is stored as `application/octet-stream` and only ever downloaded.
+- An upload may be as large as `UPLOAD_MAX_BYTES`, 100 MB unless changed, and is written to disk as it arrives. Note images and service icons stay at 10 MB at most. Other request bodies are limited to 5 MB, and a body sent in chunks without a length is refused.
+- Files are stored under random names in `UPLOAD_DIR`. They are served only to the signed-in owner and to keys with `files:read`, with their exact type, `X-Content-Type-Options: nosniff`, and a sandboxing Content Security Policy, so a file never runs as a page. Files with a preview are sent inline, every other file as a download. Manifold never runs or decodes a stored file, and it does not scan files for viruses: scan a file before you open it on your computer.
 - A file that nothing refers to any more is deleted by the daily housekeeping.
-- A restore accepts only the files a Manifold backup contains, and checks the restored uploads like new ones; see [Backups and restores](backups.md). Restore only archives you made: the database dump is applied as it is.
+- A restore accepts only the files a Manifold backup contains, and copies only the uploads that the restored records name; see [Backups and restores](backups.md). Restore only archives you made: the database dump is applied as it is.
 
 ## Limits
 
-| Limit                                           | Scope           | Value                                       |
-| ----------------------------------------------- | --------------- | ------------------------------------------- |
-| Sign-in attempts (password, codes, resets)      | Client address  | 5 per minute                                |
-| Requests for emailed codes                      | Client address  | 3 per minute                                |
-| Identity confirmations                          | Client address  | 5 per minute                                |
-| Wrong passwords or codes in a signed-in session | Account         | 5 per minute, then refused until it is over |
-| Second step of a sign-in                        | Sign-in attempt | 5 wrong codes, locked 15 minutes after 10   |
-| REST, MCP and file requests with a key          | API key         | `API_RATE_LIMIT_PER_MINUTE`, 120 per minute |
-| Image uploads from the editor                   | Account         | 30 per minute                               |
-| Data exports                                    | Installation    | One at a time                               |
-| Upload size                                     | Request         | `UPLOAD_MAX_BYTES`, 10 MB                   |
-| Other request bodies                            | Request         | 5 MB                                        |
-| Map feature                                     | Feature         | 10,000 points                               |
+| Limit                                           | Scope           | Value                                            |
+| ----------------------------------------------- | --------------- | ------------------------------------------------ |
+| Sign-in attempts (password, codes, resets)      | Client address  | 5 per minute                                     |
+| Requests for emailed codes                      | Client address  | 3 per minute                                     |
+| Identity confirmations                          | Client address  | 5 per minute                                     |
+| Wrong passwords or codes in a signed-in session | Account         | 5 per minute, then refused until it is over      |
+| Second step of a sign-in                        | Sign-in attempt | 5 wrong codes, locked 15 minutes after 10        |
+| REST, MCP and file requests with a key          | API key         | `API_RATE_LIMIT_PER_MINUTE`, 120 per minute      |
+| Image uploads from the editor                   | Account         | 30 per minute                                    |
+| Data exports                                    | Installation    | One at a time                                    |
+| Upload size                                     | Request         | `UPLOAD_MAX_BYTES`, 100 MB; images 10 MB at most |
+| Other request bodies                            | Request         | 5 MB                                             |
+| Map feature                                     | Feature         | 10,000 points                                    |
 
 The number of notes, files, vault entries and keys is bounded only by the disk. The limits live in the app's memory, so they start over when the app restarts; run one app container per database, as [Deployment](deployment.md) explains.
 

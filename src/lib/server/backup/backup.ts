@@ -7,7 +7,6 @@ import { extract, list } from 'tar';
 import { readMigrations, runMigrations } from '../db/migrate';
 import { BackupError, dumpDatabase, restoreDatabase } from './pg-tools';
 import { writeTarGz, type TarEntry } from './tar';
-import { detectImageType } from '../files/detect';
 
 // Backups: one .tar.gz with a pg_dump custom format dump, the uploaded files and a manifest.
 // Environment values, ENCRYPTION_KEY above all, are never part of it.
@@ -201,7 +200,7 @@ async function checkArchiveSize(archive: string, work: string): Promise<void> {
 export interface RestoreResult {
 	manifest: BackupManifest;
 	applied: string[];
-	/** Files in the archive's uploads that are not images Manifold accepts; left out. */
+	/** Files in the archive's uploads that no file record of the backup names; left out. */
 	skipped: string[];
 }
 
@@ -267,15 +266,24 @@ export async function restoreBackup(
 		} catch {
 			// A backup without uploads.
 		}
+		// Only files the restored records name come back, so an edited archive cannot place other
+		// files there; any type is fine, since uploads may be of any type.
+		const recorded = new Set<string>();
+		const [table] = await sql<{ present: boolean }[]>`
+			select to_regclass('public.file') is not null as present
+		`;
+		if (table?.present === true) {
+			for (const row of await sql<{ storage_key: string }[]>`select storage_key from file`) {
+				recorded.add(row.storage_key);
+			}
+		}
 		const skipped: string[] = [];
 		for (const name of names) {
-			const source = path.join(restoredUploads, name);
-			// Checked like a fresh upload, so an edited archive cannot place other files there.
-			if (detectImageType(await readFile(source), { allowSvg: true }) === null) {
+			if (!recorded.has(name)) {
 				skipped.push(name);
 				continue;
 			}
-			await copyFile(source, path.join(options.uploadDir, name));
+			await copyFile(path.join(restoredUploads, name), path.join(options.uploadDir, name));
 		}
 
 		const applied = await runMigrations(sql, options.migrationsDir);

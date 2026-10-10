@@ -18,7 +18,7 @@ A new service goes to the end of the list. **New Service** in the command palett
 
 ## Icons
 
-An icon may be a PNG, JPEG, WebP, GIF or SVG image of up to `UPLOAD_MAX_BYTES`, 10 MB by default. The format is recognised from the content of the file, never from its name, so a renamed file that is not an image is refused. The dialog shows a preview as soon as you pick a file. A service without an icon shows the first letter of its alias instead.
+An icon may be a PNG, JPEG, WebP, GIF or SVG image of up to 10 MB, or `UPLOAD_MAX_BYTES` when it is smaller. The format is recognised from the content of the file, never from its name, so a renamed file that is not an image is refused. The dialog shows a preview as soon as you pick a file. A service without an icon shows the first letter of its alias instead.
 
 To change an icon, edit the service and pick a new file; **Remove the icon** takes it away. An icon file that no service uses any more is deleted by the daily housekeeping, at the earliest a day after it was uploaded.
 

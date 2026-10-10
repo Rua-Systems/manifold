@@ -118,7 +118,7 @@ Always use an `https` address: a key sent over plain HTTP crosses the network in
 | `DELETE` | `/api/v1/map/basemaps/{id}`                      | `map:write`      | Delete a basemap.                                                 |
 | `GET`    | `/api/v1/vault/secrets`                          | `vault:read`     | Vault entries by name, without their values, paged.               |
 | `GET`    | `/api/v1/vault/secrets/{id}`                     | `vault:read`     | One entry's name, address and description.                        |
-| `POST`   | `/api/v1/files`                                  | `files:write`    | Upload an image.                                                  |
+| `POST`   | `/api/v1/files`                                  | `files:write`    | Upload a file.                                                    |
 | `GET`    | `/api/v1/files/{id}`                             | `files:read`     | Download a file.                                                  |
 | `GET`    | `/api/v1/usage`                                  | `usage:read`     | The usage report, measured now.                                   |
 
@@ -328,9 +328,9 @@ Hits are sorted best first, with a `score` from 0 to 1. `link` is a path in the 
 }
 ```
 
-- Manifold accepts PNG, JPEG, WebP and GIF images and recognizes them from their content, never from the file name or the type the client sends. Anything else, SVG included, is refused with `422 file_type`, and an empty file with `422 file_empty`.
-- A file may be as large as `UPLOAD_MAX_BYTES`, 10 MB unless changed, see [Configuration](configuration.md). A larger file is refused with `413 file_too_large`.
-- `GET /api/v1/files/{id}` answers the file with its image type. The address in `url` works with the same key too, as long as it has `files:read`, and for you in the browser while you are signed in.
+- Manifold accepts any file and recognizes its type from the content, never from the file name or the type the client sends: PNG, JPEG, WebP, GIF and safe SVG images, PDF, MP3, WAV, OGG, FLAC and M4A audio, MP4, WebM and QuickTime video, and, with a `.txt`, `.log`, `.md`, `.csv` or `.json` name and UTF-8 content, text. Any other file is stored as `application/octet-stream` and always sent as a download. An empty file is refused with `422 file_empty`.
+- A file may be as large as `UPLOAD_MAX_BYTES`, 100 MB unless changed, see [Configuration](configuration.md). A larger file is refused with `413 file_too_large`. The upload is written to disk as it arrives, so a large file never sits in memory.
+- `GET /api/v1/files/{id}` answers the file with its type, inline for the types above and as a download for any other. It answers a `Range` header with `206` and that part, as players seeking in audio and video ask. The address in `url` works with the same key too, as long as it has `files:read`, and for you in the browser while you are signed in.
 - A file that no note and no service refers to is deleted by the daily housekeeping once it is a day old, so use an upload in a note soon after.
 
 ## Usage
@@ -375,7 +375,7 @@ Some errors add a field:
 | 413    | `payload_too_large`  | The body is larger than 5 MB, or an upload is larger than the upload limit.                |
 | 413    | `file_too_large`     | The file is larger than `UPLOAD_MAX_BYTES`.                                                |
 | 422    | `validation_failed`  | The input has the right form but was not accepted, such as a geometry that crosses itself. |
-| 422    | `file_type`          | The upload is not a PNG, JPEG, WebP or GIF image.                                          |
+| 422    | `file_type`          | The route accepts only some types of file, and this is not one of them.                    |
 | 422    | `file_empty`         | The upload is empty.                                                                       |
 | 429    | `rate_limited`       | The key used up its requests for the current minute.                                       |
 | 500    | `internal_error`     | An unexpected error. It is logged on the server.                                           |

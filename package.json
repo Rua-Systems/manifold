@@ -34,6 +34,7 @@
 		"sbom": "npm sbom --sbom-format cyclonedx --sbom-type application --omit dev"
 	},
 	"dependencies": {
+		"@fastify/busboy": "^3.2.2",
 		"@fontsource/space-mono": "^5.3.0",
 		"@lucide/svelte": "^1.52.0",
 		"@modelcontextprotocol/sdk": "^1.32.0",

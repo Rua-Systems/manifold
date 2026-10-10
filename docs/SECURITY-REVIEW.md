@@ -45,7 +45,7 @@ Input, files and business limits:
 1. Missing bounds were added: passwords at most 1,024 characters on input, email addresses 254, service and vault addresses 2,048, the step-up code 32, the TOTP setup address 1,024, note and revision versions at most 2,147,483,647 (400 instead of 500), and real calendar days for the API key expiry and the audit filter (`isCalendarDate` in `src/lib/schemas/rules.ts`; V2.2.1, V1.4.2).
 2. Editor image uploads are limited to 30 per minute per account, only one export runs at a time (429 otherwise), and `/files/<id>` requests with an API key count against the key's rate limit (V2.4.1, V15.2.2).
 3. SVG service icons must be valid UTF-8 and may not contain `script`, `foreignObject`, `iframe`, `embed`, `object`, `handler`, `audio` or `video` elements, `on*` attributes, entity declarations, or `href` and `url()` references other than `#fragments` and `data:image` values (`src/lib/server/files/detect.ts`; V1.3.4).
-4. A restore accepts only `manifest.json`, `database.dump` and `uploads/<name>` as regular files and stops on anything else; restored uploads are checked like new ones, and files that are not accepted images are left out and reported. Before unpacking, the archive's entries are counted and their sizes added up, and an archive with more than a million entries or more bytes than the free space is refused (`restoreBackup` and `checkArchiveSize` in `src/lib/server/backup/backup.ts`; V5.1.1, V5.2.2, V5.2.3).
+4. A restore accepts only `manifest.json`, `database.dump` and `uploads/<name>` as regular files and stops on anything else; only the uploads that the restored `file` records name are copied, and the others are left out and reported. Before unpacking, the archive's entries are counted and their sizes added up, and an archive with more than a million entries or more bytes than the free space is refused (`restoreBackup` and `checkArchiveSize` in `src/lib/server/backup/backup.ts`; V5.1.1, V5.2.2, V5.2.3).
 
 Cryptography, communication and operations:
 
@@ -168,7 +168,7 @@ Limits (V2.1.3):
 | REST, MCP and file requests with a key          | API key         | `API_RATE_LIMIT_PER_MINUTE`, 120 per minute by default       |
 | Image uploads from the editor                   | Account         | 30 per minute                                                |
 | Data exports                                    | Installation    | One at a time                                                |
-| Upload size                                     | Request         | `UPLOAD_MAX_BYTES`, 10 MB by default                         |
+| Upload size                                     | Request         | `UPLOAD_MAX_BYTES`, 100 MB by default; images 10 MB at most  |
 | Other request bodies                            | Request         | 5 MB; a chunked body without a length is refused             |
 | Trash and audit log                             | Installation    | `TRASH_RETENTION_DAYS` (30) and `AUDIT_RETENTION_DAYS` (180) |
 
@@ -178,15 +178,15 @@ The number of notes, files, vault entries and keys is bounded only by the disk. 
 
 Uploads (note images, service icons and `POST /api/v1/files`):
 
-- Accepted: PNG, JPEG, WebP and GIF, recognized by their magic bytes; service icons may also be SVG. File names and the type the client claims are ignored.
+- Note images: PNG, JPEG, WebP and GIF, recognized by their magic bytes; service icons may also be SVG. API uploads: any file. Its type comes from its magic bytes (images, PDF, audio, video), or from a text extension together with UTF-8 content without NUL bytes; SVG is checked whole like an icon. Any other file is stored as `application/octet-stream`. File names and the type the client claims are never trusted.
 - SVG icons must be valid UTF-8 and may not contain scripts, embedded documents, event handlers, entity declarations or references to other addresses.
-- At most `UPLOAD_MAX_BYTES` per file, checked before the body is read (`checkBodySize`) and again when storing (`storeUpload`). Images are never decoded on the server.
-- Files are stored under generated UUIDs in `UPLOAD_DIR` and served only by `/files/<id>` and `GET /api/v1/files/{id}`, to the owner and to keys with `files:read`, with the detected type, `nosniff`, `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` and `Content-Disposition: inline` with a cleaned file name. Files that nothing refers to any more are deleted by the daily housekeeping.
+- At most `UPLOAD_MAX_BYTES` per file, checked before the body is read (`checkBodySize`) and again while it streams to disk (`receiveUploads` in src/lib/server/files/upload-stream.ts, a parser limit that stops the file and removes it); images stay under 10 MB (`imageMaxBytes`). Files are never decoded or run on the server.
+- Files are stored under generated UUIDs in `UPLOAD_DIR` and served only by `/files/<id>` and `GET /api/v1/files/{id}`, to the owner and to keys with `files:read`, with the detected type, `nosniff`, `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` and a cleaned file name: `Content-Disposition: inline` for images, PDF, audio, video and text, and `attachment` with `application/octet-stream` for anything else (`serveFile`). Single byte ranges are answered with `206`. Files that nothing refers to any more are deleted by the daily housekeeping.
 
 Restore archives (command line only):
 
 - `.tar.gz` files that may hold only `manifest.json`, `database.dump` and `uploads/<name>` as regular files; any other entry, a link or a folder of its own included, stops the restore before the database is touched. node-tar runs in strict mode, which strips absolute paths and refuses `..`.
-- Restored uploads are checked like new uploads, and files that are not accepted images are left out and reported.
+- Only restored uploads whose names the restored `file` records hold are copied; the others are left out and reported.
 - Archives from newer versions of Manifold are refused. The dump is applied as it is, so the documentation asks operators to restore only archives they made.
 
 ## Cryptography

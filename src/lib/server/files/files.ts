@@ -1,14 +1,26 @@
+import { DOWNLOAD_TYPE, isPreviewable } from '$lib/utils/file-kind';
 import { isUuid } from '$lib/utils/uuid';
 import { and, eq, lt, sql, type SQL } from 'drizzle-orm';
 import { createHash, randomUUID } from 'node:crypto';
+import { Readable } from 'node:stream';
 import { getDb } from '../db';
 import { file } from '../db/schema';
 import { getEnv } from '../env';
 import { detectImageType } from './detect';
-import { readStoredFile, removeStoredFile, writeStoredFile } from './storage';
+import { requestedRange } from './range';
+import {
+	openStoredFile,
+	readStoredFile,
+	removeStoredFile,
+	storedFileSize,
+	writeStoredFile
+} from './storage';
 import { logSecurityEvent } from '../log';
 
 const ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** Images, such as those in notes and service icons, stay small even when uploads may be large. */
+const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 
 /** Files uploaded through the API belong to no module until a note or service refers to them. */
 export const API_FILE_OWNER = 'api';
@@ -48,13 +60,18 @@ export interface UploadOptions {
 	allowSvg?: boolean;
 }
 
+/** The largest image accepted: `UPLOAD_MAX_BYTES`, but never more than 10 MB. */
+export function imageMaxBytes(): number {
+	return Math.min(getEnv().UPLOAD_MAX_BYTES, IMAGE_MAX_BYTES);
+}
+
 function isPrintable(character: string): boolean {
 	const code = character.codePointAt(0) ?? 0;
 	return code >= 0x20 && code !== 0x7f;
 }
 
 /** Keeps the display name only: no directories, no control characters, a bounded length. */
-function cleanName(name: string): string {
+export function cleanName(name: string): string {
 	const base = name.split(/[\\/]/).pop() ?? '';
 	const trimmed = Array.from(base).filter(isPrintable).join('').trim();
 	if (trimmed.length === 0) {
@@ -63,12 +80,12 @@ function cleanName(name: string): string {
 	return trimmed.slice(0, MAX_NAME_LENGTH);
 }
 
-/** Validates an upload by its content, stores it under a generated key and records it. */
+/** Validates an image by its content, stores it under a generated key and records it. */
 export async function storeUpload(upload: File, options: UploadOptions): Promise<StoredFile> {
 	if (upload.size === 0) {
 		throw new FileRejectedError('empty');
 	}
-	if (upload.size > getEnv().UPLOAD_MAX_BYTES) {
+	if (upload.size > imageMaxBytes()) {
 		throw new FileRejectedError('too_large');
 	}
 
@@ -119,27 +136,61 @@ export async function readFileBytes(stored: StoredFile): Promise<Buffer | null> 
 }
 
 /** `Content-Disposition` with an ASCII fallback and the full name encoded per RFC 5987. */
-export function contentDisposition(name: string): string {
+export function contentDisposition(name: string, disposition: 'inline' | 'attachment'): string {
 	const ascii = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
-	return `inline; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`;
+	return `${disposition}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`;
 }
 
 /**
- * Serves stored bytes so they can never run as a document: exact type, no sniffing, a sandboxing
- * CSP, and an inline disposition. SVG is only ever shown through <img>, where scripts do not run.
+ * Serves a stored file so it can never run as a document: exact type, no sniffing and a sandboxing
+ * CSP. A file with a preview is shown inline and can be fetched in ranges, which audio and video
+ * need to seek; any other file is a download. SVG is only ever shown through <img>, where scripts
+ * do not run. Null when the bytes are missing.
  */
-export function fileResponse(stored: StoredFile, bytes: Uint8Array): Response {
-	return new Response(new Uint8Array(bytes), {
-		headers: {
-			'Content-Type': stored.mimeType,
-			'Content-Length': String(bytes.byteLength),
-			'X-Content-Type-Options': 'nosniff',
-			'Content-Security-Policy':
-				"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; sandbox",
-			'Cache-Control': 'private, max-age=31536000, immutable',
-			'Content-Disposition': contentDisposition(stored.originalName)
-		}
-	});
+export async function serveFile(stored: StoredFile, request: Request): Promise<Response | null> {
+	const size = await storedFileSize(stored.storageKey);
+	if (size === null) {
+		return null;
+	}
+
+	let type = stored.mimeType;
+	let disposition: 'inline' | 'attachment' = 'inline';
+	if (!isPreviewable(stored.mimeType)) {
+		type = DOWNLOAD_TYPE;
+		disposition = 'attachment';
+	}
+	const headers: Record<string, string> = {
+		'Content-Type': type,
+		'X-Content-Type-Options': 'nosniff',
+		'Content-Security-Policy':
+			"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; sandbox",
+		'Cache-Control': 'private, max-age=31536000, immutable',
+		'Content-Disposition': contentDisposition(stored.originalName, disposition),
+		'Accept-Ranges': 'bytes'
+	};
+
+	const range = requestedRange(request.headers.get('range'), size);
+	if (range === 'unsatisfiable') {
+		headers['Content-Range'] = `bytes */${size}`;
+		return new Response(null, { status: 416, headers });
+	}
+	let start = 0;
+	let end = size - 1;
+	let status = 200;
+	if (range !== null) {
+		start = range.start;
+		end = range.end;
+		status = 206;
+		headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
+	}
+	headers['Content-Length'] = String(end - start + 1);
+
+	// SvelteKit answers HEAD with the GET handler and drops the body, which would leave the file open.
+	if (request.method === 'HEAD') {
+		return new Response(null, { status, headers });
+	}
+	const body = Readable.toWeb(openStoredFile(stored.storageKey, start, end)) as ReadableStream;
+	return new Response(body, { status, headers });
 }
 
 function unreferenced(references: FileReference[]): SQL[] {

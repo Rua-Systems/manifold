@@ -3,7 +3,7 @@ import { localizeHref } from '$lib/paraglide/runtime.js';
 import { ownerActor } from '$lib/server/actor';
 import { getEnv } from '$lib/server/env';
 import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { FileRejectedError, storeUpload } from '$lib/server/files/files';
+import { FileRejectedError, imageMaxBytes, storeUpload } from '$lib/server/files/files';
 import { fileRejectionMessage } from '$lib/server/files/messages';
 import { requireUser } from '$lib/server/guard';
 import { textValue } from '$lib/utils/validation';
@@ -111,7 +111,7 @@ export async function loadNoteData(id: string, revision: number | null) {
  * turns into a saved one, so the editor is not rebuilt under the owner's cursor.
  */
 export async function loadNotePage(id: string, url: URL) {
-	const shared = { map: await mapConfig(), uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES };
+	const shared = { map: await mapConfig(), uploadMaxBytes: imageMaxBytes() };
 	if (id === NEW_NOTE_ID) {
 		return {
 			note: null,
@@ -151,7 +151,13 @@ export async function uploadImage({ request, locals }: RequestEvent) {
 		return { src: `/files/${stored.id}`, message: '' };
 	} catch (cause) {
 		if (cause instanceof FileRejectedError) {
-			return fail(400, { src: null, message: fileRejectionMessage(cause.reason, false) });
+			return fail(400, {
+				src: null,
+				message: fileRejectionMessage(cause.reason, {
+					allowSvg: false,
+					maxBytes: imageMaxBytes()
+				})
+			});
 		}
 		throw cause;
 	}

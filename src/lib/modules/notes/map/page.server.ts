@@ -1,7 +1,7 @@
 import { m } from '$lib/paraglide/messages.js';
 import { ownerActor } from '$lib/server/actor';
-import { getEnv } from '$lib/server/env';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
+import { imageMaxBytes } from '$lib/server/files/files';
 import { requireUser } from '$lib/server/guard';
 import { isUuid } from '$lib/utils/uuid';
 import { textValue } from '$lib/utils/validation';
@@ -54,7 +54,7 @@ export async function loadMapPage(url: URL) {
 		attachNote,
 		focusNoteId: focus !== null && isUuid(focus) ? focus : null,
 		map,
-		uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES
+		uploadMaxBytes: imageMaxBytes()
 	};
 }
 
