@@ -90,7 +90,8 @@ export type FilesAction =
 	| 'renameFile'
 	| 'moveFile'
 	| 'deleteFile'
-	| 'browse';
+	| 'browse'
+	| 'saveEdited';
 
 export interface FilesFormState {
 	action: FilesAction;
@@ -102,4 +103,6 @@ export interface FilesFormState {
 	rejected?: { name: string; message: string }[];
 	/** For `browse`: the files the note editor's picker offers. */
 	files?: PickedFile[];
+	/** For `saveEdited`: the new copy. */
+	id?: string;
 }
