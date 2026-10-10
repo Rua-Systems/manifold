@@ -48,6 +48,10 @@ The page also lists the type, the size, when the file was added, and every place
 
 Files that the Files page does not keep and that nothing uses any more, such as an image removed from every note, are deleted by the daily housekeeping once they are a day old, as before.
 
+## Through the API and MCP
+
+The [REST API](api.md#files) lists, uploads, renames, moves and deletes files and manages folders with the `files:read` and `files:write` scopes; an upload with a `folder_id` lands in the Files module. Over [MCP](mcp.md), agents with `files:read` list files and folders, read a file's details and read text files; they cannot change files.
+
 ## Safety
 
 Files are sent with their exact type and a policy that keeps them from running as a page. Only the types above are shown in the browser; any other file is always sent as a download and never opened by Manifold. Manifold does not scan files for viruses, so treat a downloaded file like any other from the internet. [Security](security.md#content-and-uploads) has the details.

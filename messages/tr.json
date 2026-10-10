@@ -504,7 +504,7 @@
 	"reset_success": "Şifre güncellendi. Artık giriş yapabilirsiniz.",
 	"reset_title": "Şifre Sıfırlama",
 	"scope_files_read": "Dosyaları okuma",
-	"scope_files_write": "Dosya yükleme",
+	"scope_files_write": "Dosyaları değiştirme",
 	"scope_group_usage": "Kullanım",
 	"scope_map_read": "Harita öğelerini okuma",
 	"scope_map_write": "Harita öğelerini değiştirme",

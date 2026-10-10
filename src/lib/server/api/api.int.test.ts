@@ -1,3 +1,5 @@
+import { fileEntry, fileFolder } from '$lib/modules/files/schema.server';
+import { createNote, trashNote } from '$lib/modules/notes/notes.server';
 import { allScopeIds } from '$lib/modules/scopes';
 import { mapBasemap, note } from '$lib/modules/notes/schema.server';
 import { service } from '$lib/modules/services/schema.server';
@@ -7,6 +9,7 @@ import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '../api-ke
 import { getDb } from '../db';
 import { purgeAuditEvents } from '../audit';
 import { apiKey, auditEvent } from '../db/schema';
+import { ownerActor } from '../actor';
 import { NotFoundError } from '../errors';
 import { handleApiRequest } from './router';
 import { apiRoutes, openApiDocument } from './routes';
@@ -493,6 +496,122 @@ describe('services and files', () => {
 		expect(await middle.text()).toBe('2345');
 		expect(await (await ranged('bytes=-3')).text()).toBe('789');
 		expect((await ranged('bytes=20-')).status).toBe(416);
+	});
+});
+
+describe('the Files module', () => {
+	beforeEach(async () => {
+		await getDb().delete(fileEntry);
+		await getDb().delete(fileFolder);
+	});
+
+	async function upload(name: string, text: string, folder?: string) {
+		const form = new FormData();
+		if (folder !== undefined) {
+			form.set('folder_id', folder);
+		}
+		form.set('file', new File([new TextEncoder().encode(text)], name));
+		return call('POST', '/files', everything, form);
+	}
+
+	it('keeps an upload in a folder, renames, moves and lists it', async () => {
+		const folder = await json(
+			await call('POST', '/file-folders', everything, { name: 'Docs' })
+		);
+		expect(folder).toMatchObject({ name: 'Docs', parent_id: null });
+
+		const kept = await json(await upload('a.txt', 'alpha', String(folder.id)));
+		expect(kept).toMatchObject({ owner: 'files', in_files: true, folder_id: folder.id });
+		const loose = await json(await upload('b.txt', 'beta'));
+		expect(loose).toMatchObject({ owner: 'api', in_files: false, folder_id: null });
+
+		const inFolder = await json(
+			await call('GET', `/files?folder_id=${String(folder.id)}`, everything)
+		);
+		expect((inFolder.data as { name: string }[]).map((item) => item.name)).toEqual(['a.txt']);
+
+		const changed = await call('PATCH', `/files/${String(kept.id)}`, everything, {
+			name: 'renamed.txt',
+			folder_id: null
+		});
+		expect(await json(changed)).toMatchObject({ name: 'renamed.txt', folder_id: null });
+		const top = await json(await call('GET', '/files?folder_id=root', everything));
+		expect((top.data as { name: string }[]).map((item) => item.name)).toEqual(['renamed.txt']);
+		expect(
+			(await call('PATCH', `/files/${String(loose.id)}`, everything, { name: 'x.txt' }))
+				.status
+		).toBe(422);
+
+		const text = await json(await call('GET', `/files/${String(kept.id)}/text`, everything));
+		expect(text).toMatchObject({ text: 'alpha', truncated: false });
+	});
+
+	it('refuses to delete a file in use or a folder with something inside', async () => {
+		const folder = await json(
+			await call('POST', '/file-folders', everything, { name: 'Full' })
+		);
+		const kept = await json(await upload('photo.png', 'not really a png', String(folder.id)));
+		expect(
+			(await call('DELETE', `/file-folders/${String(folder.id)}`, everything)).status
+		).toBe(422);
+
+		const shown = await createNote(
+			{
+				title: 'Links the file',
+				content: {
+					type: 'doc',
+					content: [{ type: 'image', attrs: { src: `/files/${String(kept.id)}` } }]
+				}
+			},
+			ownerActor('owner-1')
+		);
+		const metadata = await json(
+			await call('GET', `/files/${String(kept.id)}/metadata`, everything)
+		);
+		expect(metadata.uses).toEqual([
+			{ module: 'notes', label: 'Links the file', link: `/notes/${shown.id}`, trashed: false }
+		]);
+		expect((await call('DELETE', `/files/${String(kept.id)}`, everything)).status).toBe(422);
+		await trashNote(shown.id);
+		const trashed = await json(
+			await call('GET', `/files/${String(kept.id)}/metadata`, everything)
+		);
+		expect(trashed.uses).toMatchObject([{ trashed: true }]);
+		await getDb().delete(note);
+
+		expect((await call('DELETE', `/files/${String(kept.id)}`, everything)).status).toBe(204);
+		expect(
+			(await call('DELETE', `/file-folders/${String(folder.id)}`, everything)).status
+		).toBe(204);
+		expect((await call('GET', `/files/${String(kept.id)}/metadata`, everything)).status).toBe(
+			404
+		);
+	});
+
+	it('moves folders but never into themselves', async () => {
+		const outer = await json(
+			await call('POST', '/file-folders', everything, { name: 'Outer' })
+		);
+		const inner = await json(
+			await call('POST', '/file-folders', everything, { name: 'Inner', parent_id: outer.id })
+		);
+		expect(
+			(
+				await call('PATCH', `/file-folders/${String(outer.id)}`, everything, {
+					parent_id: inner.id
+				})
+			).status
+		).toBe(422);
+		const moved = await call('PATCH', `/file-folders/${String(inner.id)}`, everything, {
+			parent_id: null,
+			name: 'Moved'
+		});
+		expect(await json(moved)).toMatchObject({ name: 'Moved', parent_id: null });
+		const all = await json(await call('GET', '/file-folders', everything));
+		expect((all.data as { name: string }[]).map((item) => item.name)).toEqual([
+			'Moved',
+			'Outer'
+		]);
 	});
 });
 
