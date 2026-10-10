@@ -2,6 +2,29 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.6.0 - 2026-10-10
+
+Manifold gets a Files module: every stored file in one place, in folders, with previews, uploads of any type and simple image editing, and notes take any file. This release adds a database migration, which runs on start; take a backup before you update. `UPLOAD_MAX_BYTES` now defaults to 100 MB, so a reverse proxy in front of Manifold has to accept request bodies of 101 MB, such as `client_max_body_size 101m` in Nginx. A minor line such as `0.5` does not move to 0.6 by itself, so set `MANIFOLD_VERSION` to `0.6` or `0.6.0`.
+
+### Added
+
+- **Files:** **Files** in the sidebar lists every stored file. Your uploads sit in nested folders, and the files that notes, services and the API keep are listed as read-only sources. Upload with **Upload** or by dropping files on the list or on a folder, each file with its progress. Rename, move by dialog or by dragging, and delete. Filter all files by name, type and **Unused only**, and sort them by date, name or size. A file in use cannot be deleted; its page lists the notes and services that show it. See [Files](docs/files.md).
+- **Previews:** images; PDF page by page, drawn in the browser by pdf.js; audio and video with seeking; text, CSV as a table and JSON indented. Any other file is only downloaded.
+- **Image editing:** **Edit image** turns, flips and crops PNG, JPEG, WebP and GIF images and changes their brightness, contrast and saturation, or makes them black and white or sepia. The result is saved as a copy beside the original, which stays as it is.
+- **Files in notes:** **Attach file**, pasting or dropping puts any file into a note; images show inline, other files as a link with their name and size. **Insert from Files** picks a stored file. While reading, a file link opens the file's page. See [Notes](docs/notes.md#images-and-files).
+- **REST API:** `GET /api/v1/files` lists files by folder, owner, name, kind or use. `GET /api/v1/files/{id}/metadata` and `GET /api/v1/files/{id}/text` read a file's details and the start of a text file. `PATCH` and `DELETE /api/v1/files/{id}` rename, move and delete. `/api/v1/file-folders` manages folders, and an upload with a `folder_id` field lands in the Files module.
+- **MCP:** `list_files`, `get_file`, `read_file_text` and `list_file_folders`, with `files:read`.
+- The search and the command palette find files by name, the dashboard has a **Files** card, and the usage report counts folders and the files of the Files module.
+
+### Changed
+
+- Uploads may be any type and are written to disk as they arrive. `UPLOAD_MAX_BYTES` defaults to 100 MB, while note images and service icons stay at 10 MB at most. Images, PDF, audio, video and text are recognised from their content; any other file is stored as `application/octet-stream` and always sent as a download.
+- Files are streamed from disk and answer `Range` requests with `206`. Only the types with a preview are sent inline, and a PDF opened directly as a page is downloaded.
+- `POST /api/v1/files` accepts any file. File resources gain `kind`, `owner`, `in_files`, `folder_id` and `uses`.
+- `files:read` and `files:write` belong to the Files module now, with the same ids. `files:write` is labelled **Change files**.
+- Notes may link to files stored in Manifold (`/files/<id>`); such a link keeps the file in use.
+- A restore copies the uploads that the restored file records name, of any type, instead of images only.
+
 ## 0.5.1 - 2026-10-08
 
 The dashboard gets a fixed layout, framed buttons get a frosted backing, and focus mode works while reading. There are no database or configuration changes; a minor line such as `0.5` picks this release up by itself.
