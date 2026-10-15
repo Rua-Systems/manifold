@@ -2,6 +2,15 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.8.1 - 2026-10-16
+
+Two interface fixes: the scope labels of the API key form stay inside their cards, and the editor toolbar wraps instead of scrolling for mouse users. There are no database or configuration changes; a minor line such as `0.8` picks this release up by itself.
+
+### Fixed
+
+- **API key form:** in **Settings → API Keys**, each scope's label and id stack and wrap, so the long labels of data sources, longest in Turkish, no longer run past their card or squeeze into a narrow column.
+- **Editor toolbar:** with a mouse, the toolbar fits the note page in one row again, with its groups closer together. Where it does not fit, as beside a wide sidebar or in the note panel of the map, its last groups move to a second row instead of scrolling sideways. Touch screens keep the scrolling row. See [Notes](docs/notes.md#the-editor).
+
 ## 0.8.0 - 2026-10-15
 
 A new **AI Memory** module keeps what you and your AI agents share: memories in categories, with global tags, pins and a history that names every writer, and saved prompts that MCP clients offer as commands. Global **tags** arrive in **Settings → Tags**. This release adds three database migrations, which run on start; take a backup before you update. A minor line such as `0.7` does not move to 0.8 by itself, so set `MANIFOLD_VERSION` to `0.8` or `0.8.0`.
