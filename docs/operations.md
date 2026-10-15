@@ -117,7 +117,7 @@ Both `owner:reset-password` and `owner:disable-2fa` sign out every session, incl
 
 ## Rotating the vault key
 
-`ENCRYPTION_KEY` encrypts the values in the [vault](vault.md). Replace it right away when it may have leaked:
+`ENCRYPTION_KEY` encrypts the values in the [vault](vault.md) and the secrets of [data sources](data-sources.md). Replace it right away when it may have leaked:
 
 1. Create a new key of 32 random bytes:
 
@@ -125,13 +125,13 @@ Both `owner:reset-password` and `owner:disable-2fa` sign out every session, incl
    openssl rand -base64 32
    ```
 
-2. Encrypt the vault again with the new key. The command takes the key from `NEW_ENCRYPTION_KEY` when that variable is set, and otherwise asks for it:
+2. Encrypt the vault and the data sources again with the new key. The command takes the key from `NEW_ENCRYPTION_KEY` when that variable is set, and otherwise asks for it:
 
    ```bash
    docker compose exec app node cli.js vault:rotate-key
    ```
 
-   Every value is decrypted with the current key and encrypted with the new one in a single transaction, so the vault is never half rotated. The command reports how many values it encrypted again. If the current key cannot open every value, it stops with `The current ENCRYPTION_KEY does not open every value. Nothing was changed.`
+   Every value is decrypted with the current key and encrypted with the new one in a single transaction, so nothing is ever half rotated. The command reports how many vault values and data sources it encrypted again. If the current key cannot open every value, it stops with `The current ENCRYPTION_KEY does not open every value. Nothing was changed.`
 
 3. Set `ENCRYPTION_KEY` to the new key in `.env`, or in Coolify's environment settings, and recreate the app container so it reads the new value:
 

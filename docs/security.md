@@ -76,6 +76,14 @@ See [REST API](api.md) and [MCP server](mcp.md) for the details.
 
 See [Vault](vault.md) for using the vault.
 
+## Data sources
+
+- The passwords, tokens and keys of a data source are encrypted together, like vault values: AES-256-GCM under `ENCRYPTION_KEY`, a random IV, and the source's id authenticated with them. The settings without secrets, such as host names and user names, are stored in the open.
+- Revealing or copying secrets in the app, and changing or removing one, needs a recent identity confirmation. Every reveal, copy, change, delete and test is recorded in the audit log, never with a secret.
+- Through the API and MCP, `datasources:read` never sees a secret; only `datasources:secrets` reads them, each read audited.
+- A connection test connects from the server to where the owner pointed the source. It reads only, follows no redirects and gives up after a few seconds. A key with `datasources:write` can therefore make the server open connections to hosts it can reach, so give that scope only to scripts you trust.
+- SSH tunnels pin the host key of the SSH server on the first successful test and refuse a different key afterwards.
+
 ## Content and uploads
 
 - Note content is checked on the server against the editor's schema. Unknown elements are refused, links may use only `http`, `https` or `mailto` or point to a file stored here (`/files/<id>`), and images must be files uploaded to this Manifold. Raw HTML in Markdown is dropped.
@@ -161,9 +169,9 @@ Managing the two secrets:
 
 - **Creating:** generate both with `openssl rand -base64 32` when you install Manifold, and never reuse them elsewhere.
 - **Storing:** they live only in the environment, or in files named by `BETTER_AUTH_SECRET_FILE` and `ENCRYPTION_KEY_FILE`, such as Docker secrets. Keep copies in a password manager, apart from the backups: backups contain neither.
-- **Rotating `ENCRYPTION_KEY`:** `node cli.js vault:rotate-key` encrypts every value again with the new key; then set the new key and restart.
+- **Rotating `ENCRYPTION_KEY`:** `node cli.js vault:rotate-key` encrypts every vault value and the secrets of every data source again with the new key, in one transaction; then set the new key and restart.
 - **Rotating `BETTER_AUTH_SECRET`:** turn two-factor authentication off, set the new secret and restart, which signs everyone out, then set up two-factor authentication again. [Operations](operations.md) describes both procedures.
-- **Losing them:** without `ENCRYPTION_KEY` the vault values cannot be recovered; without `BETTER_AUTH_SECRET`, turn two-factor authentication off with `owner:disable-2fa` and sign in again.
+- **Losing them:** without `ENCRYPTION_KEY` the vault values and the secrets of data sources cannot be recovered; without `BETTER_AUTH_SECRET`, turn two-factor authentication off with `owner:disable-2fa` and sign in again.
 
 ## Data
 

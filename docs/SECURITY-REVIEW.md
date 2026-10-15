@@ -126,7 +126,7 @@ Manifold has a single owner, so there are no roles and no objects of other users
 | Note token (since 0.5.0)  | `/shared` for its note; `GET /api/v1/me`, `GET` and, with edit access, `PATCH /api/v1/notes/{id}` of its note; `get_note` and `update_note` on its note; `/files/<id>` of the images its note shows | `assertNoteGrant` in `src/lib/server/api/credentials.ts` for routes and tools marked `noteToken`, `noteTokenMaySee` for the tool list, `noteShowsFile` in `src/routes/files/[id]/+server.ts`     |
 | Operator                  | The command line inside the container                                                                                                                                                               | Shell access to the server                                                                                                                                                                       |
 
-Scopes are per module (`services`, `notes`, `map`, `vault`, `files`) and a write scope does not include the read scope. Data and field-level rules (V8.1.2):
+Scopes are per module (`services`, `notes`, `map`, `vault`, `files`, `datasources`) and a write scope does not include the read scope; `datasources:secrets` alone reads the secrets of data sources. Data and field-level rules (V8.1.2):
 
 - `vault:read` sees names, addresses and descriptions only; no route and no MCP tool returns or accepts a vault value.
 - `map:read` sees the title of the note a feature is linked to; `map:write` may create that note together with the feature and may link a feature to any note outside the trash.

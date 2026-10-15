@@ -98,7 +98,7 @@ On every start, `hooks.server.ts` validates the environment (`src/lib/server/env
 
 ## Modules
 
-Every feature is a module under `src/lib/modules/<id>/`: `services`, `notes` (with Map Notes in `notes/map/`), `files` and `vault`. The core lives in `src/lib/server/`, `src/lib/components/` and `src/routes/`.
+Every feature is a module under `src/lib/modules/<id>/`: `services`, `notes` (with Map Notes in `notes/map/`), `files`, `datasources` and `vault`. The core lives in `src/lib/server/`, `src/lib/components/` and `src/routes/`.
 
 A module has two manifests:
 

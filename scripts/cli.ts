@@ -2,7 +2,8 @@ import { connect, type Connection } from '$lib/server/db';
 import { defaultMigrationsDirectory, MigrationError, runMigrations } from '$lib/server/db/migrate';
 import { EnvError, parseEnv, type Env } from '$lib/server/env';
 import { parseVaultKey, VaultKeyError } from '$lib/modules/vault/crypto.server';
-import { rotateVaultKey } from '$lib/modules/vault/rotation.server';
+import { reencryptDataSources } from '$lib/modules/datasources/rotation.server';
+import { reencryptVaultSecrets } from '$lib/modules/vault/rotation.server';
 import { recordAudit } from '$lib/server/audit';
 import { restoreBackup, writeBackup } from '$lib/server/backup/backup';
 import { BackupError } from '$lib/server/backup/pg-tools';
@@ -29,8 +30,8 @@ Commands:
   owner:show              Print the owner's username and email.
   owner:reset-password    Set a new owner password and sign out every session.
   owner:disable-2fa       Turn two factor authentication off and sign out every session.
-  vault:rotate-key        Re-encrypt the vault with a new ENCRYPTION_KEY, taken from
-                          NEW_ENCRYPTION_KEY or asked for.
+  vault:rotate-key        Re-encrypt the vault and the secrets of data sources with a new
+                          ENCRYPTION_KEY, taken from NEW_ENCRYPTION_KEY or asked for.
   backup [path]           Write a backup archive: database, uploaded files and a manifest,
                           by default to backups/ next to the upload folder (/data/backups).
                           ENCRYPTION_KEY is not in it; keep that key safe separately.
@@ -189,20 +190,32 @@ async function rotateKey(connection: Connection, currentKey: string): Promise<vo
 		throw new VaultKeyError('The new key is the current one. Nothing was changed.');
 	}
 
-	const { count, keyVersion } = await rotateVaultKey(connection.db, oldKey, newKey);
+	// The vault and the data sources share the key, so they move to the new one together.
+	const { vault, sources } = await connection.db.transaction(async (tx) => ({
+		vault: await reencryptVaultSecrets(tx, oldKey, newKey),
+		sources: await reencryptDataSources(tx, oldKey, newKey)
+	}));
 	await recordAudit(
 		{
 			actor: CLI_ACTOR,
 			action: 'vault.rotate_key',
-			metadata: { count, key_version: keyVersion }
+			metadata: {
+				count: vault.count,
+				key_version: vault.keyVersion,
+				data_source_count: sources.count
+			}
 		},
 		connection.db
 	);
-	console.log(`Re-encrypted ${count} value(s) with the new key (key version ${keyVersion}).`);
+	console.log(
+		`Re-encrypted ${vault.count} vault value(s) (key version ${vault.keyVersion}) and the secrets of ${sources.count} data source(s) with the new key.`
+	);
 	console.log('Now:');
 	console.log('  1. Set ENCRYPTION_KEY to the new key where the app reads it (.env or Coolify).');
 	console.log('  2. Restart the app.');
-	console.log('Until the restart the running app holds the old key and cannot read the vault.');
+	console.log(
+		'Until the restart the running app holds the old key and cannot read the vault or the secrets of data sources.'
+	);
 	console.log('Keep the old key until the restart is done, then discard it.');
 }
 

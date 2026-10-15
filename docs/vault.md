@@ -65,7 +65,7 @@ Values are encrypted with AES-256-GCM under `ENCRYPTION_KEY`, 32 random bytes in
 
 ## Rotating the key
 
-`node cli.js vault:rotate-key` encrypts every value again with a new key. It takes the new key from `NEW_ENCRYPTION_KEY`, or asks for it without showing what you type.
+`node cli.js vault:rotate-key` encrypts every value again with a new key, together with the secrets of [data sources](data-sources.md). It takes the new key from `NEW_ENCRYPTION_KEY`, or asks for it without showing what you type.
 
 1. Run the command. It decrypts every value with the current key and encrypts it with the new one in a single transaction: if the current key cannot open every value, nothing changes.
 2. Set `ENCRYPTION_KEY` to the new key where the app reads it.
