@@ -30,7 +30,8 @@ async function addCategory(page: Page, name: string, parent: string | null): Pro
 	const dialog = page.getByRole('dialog');
 	await dialog.getByLabel('Name').fill(name);
 	await dialog.getByRole('button', { name: 'Add Category' }).click();
-	await expect(page.getByText('Category added.')).toBeVisible();
+	// The notice of an earlier category may still be showing, so the newest one is checked.
+	await expect(page.getByText('Category added.').last()).toBeVisible();
 	await expect(dialog).toBeHidden();
 }
 
