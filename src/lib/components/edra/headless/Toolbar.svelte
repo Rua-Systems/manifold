@@ -136,7 +136,8 @@
 	@use '../../../../styles/forms' as forms;
 	@use '../../../../styles/variables' as vars;
 
-	// One scrolling row everywhere: wrapped rows push the text down, most of all in the map panel.
+	// Touch screens keep one row that scrolls sideways: wrapped rows of touch sized buttons would
+	// push the text down, most of all in the map panel.
 	.toolbar {
 		display: flex;
 		gap: 0.6rem;
@@ -166,11 +167,18 @@
 		}
 	}
 
-	// A mouse needs neither touch sized buttons nor a hidden scrollbar: smaller buttons fit
-	// the note page in one row, and a thin scrollbar shows that narrower panels hold more.
+	// A mouse needs no touch sized buttons: smaller buttons and tighter groups fit the note page in
+	// one row, and where the row does not fit, such as beside a wide sidebar or in the map panel,
+	// whole groups move to a second row rather than scroll out of sight.
 	@media (pointer: fine) {
 		.toolbar {
-			scrollbar-width: thin;
+			flex-wrap: wrap;
+			gap: 0.3rem 0.4rem;
+			overflow-x: visible;
+		}
+
+		.group:not(:last-child) {
+			padding-right: 0.4rem;
 		}
 
 		.tool {

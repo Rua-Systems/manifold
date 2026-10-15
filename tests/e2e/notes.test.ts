@@ -351,6 +351,25 @@ test('the editor toolbar keeps its buttons in one row', async ({ page, isMobile 
 	}
 });
 
+test('with a mouse the toolbar wraps instead of scrolling where it does not fit', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'Touch screens scroll the toolbar sideways.');
+	await page.setViewportSize({ width: 1000, height: 800 });
+	await page.goto('/notes/new', { waitUntil: 'networkidle' });
+	await editor(page).click();
+	await page.keyboard.press('ControlOrMeta+b');
+	await page.keyboard.press('ControlOrMeta+i');
+	await page.keyboard.type('Bold and italic');
+
+	const toolbar = page.getByRole('toolbar', { name: 'Formatting' });
+	await expect(toolbar.getByRole('button', { name: 'Bold' })).toHaveClass(/active/);
+	const overflow = await toolbar.evaluate((element) => element.scrollWidth - element.clientWidth);
+	expect(overflow).toBeLessThanOrEqual(0);
+	await expect(toolbar.getByRole('button', { name: 'Insert image' })).toBeInViewport();
+});
+
 test('links only accept http, https and mailto', async ({ page }) => {
 	await page.goto('/notes/new', { waitUntil: 'networkidle' });
 	await editor(page).click();
