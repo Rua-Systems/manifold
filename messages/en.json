@@ -673,6 +673,8 @@
 	"sidebar_group_expand": "Expand {group}",
 	"sidebar_label": "Sections",
 	"sidebar_open": "Open navigation",
+	"sidebar_resize": "Sidebar width",
+	"sidebar_resize_hint": "Drag to change the width, double-click to reset it",
 	"step_up_confirm": "Confirm",
 	"step_up_confirmed": "Confirmed. Sensitive actions are open for ten minutes.",
 	"step_up_lead": "Enter your password to continue. You will not be asked again for ten minutes.",

@@ -108,6 +108,8 @@ Two preferences are stored with your account under **Settings → Profile** and 
 - **Language for mails**: the language of security notices, such as the new sign in notice, and of mails Manifold sends while you are not using the app. **As in the address**, the default, sets none, and notices then use the language of the page the action came from. Mails that answer something you do, such as a sign in code, always use the language of the page you are on.
 - **Default theme**: the theme of a browser that has no theme of its own, once you are signed in on it. **As the device prefers** follows the light or dark setting of the device.
 
+The width of the sidebar is stored with your account too, so every browser opens it as wide; see [The sidebar and the account menu](getting-started.md#the-sidebar-and-the-account-menu).
+
 Other choices belong to the address or to the browser:
 
 - The **Language** of the interface follows the address, `/tr` for Turkish; switch it in the account menu.

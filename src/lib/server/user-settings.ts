@@ -4,15 +4,20 @@ import { eq } from 'drizzle-orm';
 import { getDb, type Database } from './db';
 import { user, userSetting } from './db/schema';
 
-// The owner's preferences: the locale for security notices and mails sent outside a request, and
-// the theme a browser without its own choice starts with. Null means "not chosen".
+// The owner's preferences: the locale for security notices and mails sent outside a request, the
+// theme a browser without its own choice starts with, and the width the sidebar was dragged to.
+// Null means "not chosen".
 
 export interface UserSettings {
 	locale: Locale | null;
 	theme: Theme | null;
+	sidebarWidth: number | null;
 }
 
-const EMPTY: UserSettings = { locale: null, theme: null };
+/** The preferences of the Settings page; the sidebar width is saved on its own. */
+export type ChosenSettings = Pick<UserSettings, 'locale' | 'theme'>;
+
+const EMPTY: UserSettings = { locale: null, theme: null, sidebarWidth: null };
 
 // One owner, read on every page: the settings are kept in memory and replaced on every save.
 const cache = new Map<string, UserSettings>();
@@ -26,7 +31,11 @@ export async function getUserSettings(
 		return cached;
 	}
 	const [row] = await db
-		.select({ locale: userSetting.locale, theme: userSetting.theme })
+		.select({
+			locale: userSetting.locale,
+			theme: userSetting.theme,
+			sidebarWidth: userSetting.sidebarWidth
+		})
 		.from(userSetting)
 		.where(eq(userSetting.userId, userId))
 		.limit(1);
@@ -35,13 +44,25 @@ export async function getUserSettings(
 	return settings;
 }
 
-export async function saveUserSettings(userId: string, settings: UserSettings): Promise<void> {
+export async function saveUserSettings(userId: string, settings: ChosenSettings): Promise<void> {
+	const current = await getUserSettings(userId);
 	const now = new Date();
 	await getDb()
 		.insert(userSetting)
 		.values({ userId, ...settings, createdAt: now, updatedAt: now })
 		.onConflictDoUpdate({ target: userSetting.userId, set: { ...settings, updatedAt: now } });
-	cache.set(userId, settings);
+	cache.set(userId, { ...current, ...settings });
+}
+
+/** Keeps the width the sidebar was dragged to; null goes back to the default width. */
+export async function saveSidebarWidth(userId: string, sidebarWidth: number | null): Promise<void> {
+	const current = await getUserSettings(userId);
+	const now = new Date();
+	await getDb()
+		.insert(userSetting)
+		.values({ userId, sidebarWidth, createdAt: now, updatedAt: now })
+		.onConflictDoUpdate({ target: userSetting.userId, set: { sidebarWidth, updatedAt: now } });
+	cache.set(userId, { ...current, sidebarWidth });
 }
 
 /** The locale the owner chose for mails, or null when none was chosen. */

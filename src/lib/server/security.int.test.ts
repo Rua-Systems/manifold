@@ -8,7 +8,12 @@ import { auditEvent, session, twoFactor, user, userSetting } from './db/schema';
 import { disableOwnerTwoFactor, findOwner } from './owner';
 import { listSessions, revokeOtherSessions, revokeSession } from './sessions';
 import { isSteppedUp, recordStepUp, STEP_UP_WINDOW_MS } from './step-up';
-import { getUserSettings, preferredLocale, saveUserSettings } from './user-settings';
+import {
+	getUserSettings,
+	preferredLocale,
+	saveSidebarWidth,
+	saveUserSettings
+} from './user-settings';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -180,11 +185,19 @@ describe('sessions', () => {
 
 describe('user settings', () => {
 	it('stores the preferred locale and default theme', async () => {
-		expect(await getUserSettings(ownerId)).toEqual({ locale: null, theme: null });
+		expect(await getUserSettings(ownerId)).toEqual({
+			locale: null,
+			theme: null,
+			sidebarWidth: null
+		});
 		expect(await preferredLocale()).toBe('en');
 
 		await saveUserSettings(ownerId, { locale: 'tr', theme: 'dark' });
-		expect(await getUserSettings(ownerId)).toEqual({ locale: 'tr', theme: 'dark' });
+		expect(await getUserSettings(ownerId)).toEqual({
+			locale: 'tr',
+			theme: 'dark',
+			sidebarWidth: null
+		});
 		expect(await preferredLocale()).toBe('tr');
 
 		await saveUserSettings(ownerId, { locale: null, theme: 'light' });
@@ -193,6 +206,38 @@ describe('user settings', () => {
 			.from(userSetting)
 			.where(eq(userSetting.userId, ownerId));
 		expect(row).toMatchObject({ locale: null, theme: 'light' });
+	});
+
+	it('keeps the sidebar width apart from the other preferences', async () => {
+		await saveUserSettings(ownerId, { locale: 'tr', theme: 'dark' });
+		await saveSidebarWidth(ownerId, 360);
+		expect(await getUserSettings(ownerId)).toEqual({
+			locale: 'tr',
+			theme: 'dark',
+			sidebarWidth: 360
+		});
+
+		// Saving the Settings page leaves the width alone, and the other way round.
+		await saveUserSettings(ownerId, { locale: 'en', theme: null });
+		await saveSidebarWidth(ownerId, 420);
+		const [row] = await getDb()
+			.select()
+			.from(userSetting)
+			.where(eq(userSetting.userId, ownerId));
+		expect(row).toMatchObject({ locale: 'en', theme: null, sidebarWidth: 420 });
+
+		await saveSidebarWidth(ownerId, null);
+		expect((await getUserSettings(ownerId)).sidebarWidth).toBeNull();
+	});
+
+	it('refuses a sidebar width outside the limits in the database too', async () => {
+		await saveSidebarWidth(ownerId, 300);
+		await expect(
+			getDb()
+				.update(userSetting)
+				.set({ sidebarWidth: 120 })
+				.where(eq(userSetting.userId, ownerId))
+		).rejects.toThrow();
 	});
 });
 

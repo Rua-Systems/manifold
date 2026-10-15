@@ -18,6 +18,12 @@
 	import type { SearchHit } from '$lib/types/search';
 	import { postAction } from '$lib/utils/actions';
 	import { currentMarker, localizedHref } from '$lib/utils/navigation';
+	import {
+		SIDEBAR_DEFAULT_WIDTH,
+		SIDEBAR_MAX_WIDTH,
+		SIDEBAR_MIN_WIDTH,
+		SIDEBAR_WIDTH_STEP
+	} from '$lib/utils/sidebar-width';
 	import { fade } from 'svelte/transition';
 
 	interface Props {
@@ -150,6 +156,77 @@
 		return m.sidebar_group_expand({ group: module.label() });
 	}
 
+	let aside: HTMLElement | undefined = $state();
+	/**
+	 * Where a drag of the edge started: the pointer, the width shown and the width kept at that
+	 * moment.
+	 */
+	let dragStart: { x: number; width: number; kept: number | null } | null = null;
+	/** Arrow keys save once they stop, not on every press. */
+	const KEY_SAVE_DELAY = 400;
+	let keySaveTimer: ReturnType<typeof setTimeout> | undefined;
+
+	const shownWidth = $derived(sidebar.width ?? SIDEBAR_DEFAULT_WIDTH);
+
+	function onResizeStart(event: PointerEvent): void {
+		if (event.button !== 0 || aside === undefined) {
+			return;
+		}
+		// No text selection while dragging, and the pointer stays with the edge beyond the sidebar.
+		event.preventDefault();
+		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+		dragStart = {
+			x: event.clientX,
+			width: aside.getBoundingClientRect().width,
+			kept: sidebar.width
+		};
+		sidebar.resizing = true;
+	}
+
+	function onResizeMove(event: PointerEvent): void {
+		if (dragStart === null) {
+			return;
+		}
+		sidebar.setWidth(dragStart.width + event.clientX - dragStart.x);
+	}
+
+	function onResizeEnd(): void {
+		if (dragStart === null) {
+			return;
+		}
+		// A click without a move, such as each half of a double click, changes nothing to save.
+		const changed = sidebar.width !== dragStart.kept;
+		dragStart = null;
+		sidebar.resizing = false;
+		if (changed) {
+			void sidebar.saveWidth();
+		}
+	}
+
+	function onResizeKeydown(event: KeyboardEvent): void {
+		let width: number;
+		if (event.key === 'ArrowLeft') {
+			width = shownWidth - SIDEBAR_WIDTH_STEP;
+		} else if (event.key === 'ArrowRight') {
+			width = shownWidth + SIDEBAR_WIDTH_STEP;
+		} else if (event.key === 'Home') {
+			width = SIDEBAR_MIN_WIDTH;
+		} else if (event.key === 'End') {
+			width = SIDEBAR_MAX_WIDTH;
+		} else {
+			return;
+		}
+		event.preventDefault();
+		sidebar.setWidth(width);
+		clearTimeout(keySaveTimer);
+		keySaveTimer = setTimeout(() => void sidebar.saveWidth(), KEY_SAVE_DELAY);
+	}
+
+	function onResizeReset(): void {
+		sidebar.resetWidth();
+		void sidebar.saveWidth();
+	}
+
 	function onWindowKeydown(event: KeyboardEvent): void {
 		if (event.key === 'Escape' && sidebar.drawerOpen) {
 			sidebar.closeDrawer();
@@ -209,6 +286,9 @@
 	class="sidebar"
 	class:expanded={sidebar.expanded}
 	class:open={sidebar.drawerOpen}
+	class:resizing={sidebar.resizing}
+	style:--sidebarWidth={sidebar.width === null ? undefined : `${sidebar.width}px`}
+	bind:this={aside}
 >
 	<div class="header">
 		<p class="organization" title={organizationName}>{organizationName}</p>
@@ -359,6 +439,30 @@
 			<ManifoldLogo />
 		</span>
 	</div>
+	{#if sidebar.expanded}
+		<!-- A focusable separator is the ARIA window splitter, a widget that moves with the arrow
+			keys, Home and End; Svelte counts every separator as static. -->
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+		<div
+			class="resize"
+			role="separator"
+			tabindex="0"
+			aria-label={m.sidebar_resize()}
+			aria-controls="appSidebar"
+			aria-orientation="vertical"
+			aria-valuemin={SIDEBAR_MIN_WIDTH}
+			aria-valuemax={SIDEBAR_MAX_WIDTH}
+			aria-valuenow={shownWidth}
+			title={m.sidebar_resize_hint()}
+			onpointerdown={onResizeStart}
+			onpointermove={onResizeMove}
+			onpointerup={onResizeEnd}
+			onpointercancel={onResizeEnd}
+			onlostpointercapture={onResizeEnd}
+			onkeydown={onResizeKeydown}
+			ondblclick={onResizeReset}
+		></div>
+	{/if}
 </aside>
 
 <style lang="scss">
@@ -388,8 +492,48 @@
 		transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1);
 
 		&.expanded {
-			width: 16rem;
+			width: var(--sidebarWidth, 16rem);
 		}
+
+		// The width follows the pointer while the edge is dragged.
+		&.resizing {
+			transition: none;
+		}
+	}
+
+	.resize {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 2;
+		width: 0.6rem;
+		cursor: col-resize;
+		touch-action: none;
+
+		&::after {
+			position: absolute;
+			top: 0;
+			right: -1px;
+			bottom: 0;
+			width: 2px;
+			content: '';
+			background-color: transparent;
+			transition: background-color 160ms ease;
+		}
+
+		&:hover::after,
+		&:focus-visible::after {
+			background-color: clr.$accentColor;
+		}
+
+		&:focus-visible {
+			outline: none;
+		}
+	}
+
+	.sidebar.resizing > .resize::after {
+		background-color: clr.$accentColor;
 	}
 
 	.header {
@@ -706,6 +850,11 @@
 	}
 
 	@media (max-width: vars.$mobileMax) {
+		// The drawer keeps its own width on phones.
+		.resize {
+			display: none;
+		}
+
 		.backdrop {
 			position: fixed;
 			inset: 0;
