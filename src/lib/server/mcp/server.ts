@@ -9,6 +9,7 @@ import { recordAudit, type AuditOrigin } from '../audit';
 import { getEnv } from '../env';
 import { consumeApiRequest } from '../rate-limit';
 import { search, SEARCH_LIMIT_MAX } from '../search';
+import { tagsMcpTools } from '../tags/mcp';
 import { usageMcpTools } from '../usage/mcp';
 import { defineTool, type McpContext, type McpTool } from './types';
 import { log, logSecurityEvent } from '../log';
@@ -50,7 +51,7 @@ const searchTool = defineTool({
 });
 
 export function mcpTools(): McpTool[] {
-	return [searchTool, ...usageMcpTools, ...moduleMcpTools()];
+	return [searchTool, ...tagsMcpTools, ...usageMcpTools, ...moduleMcpTools()];
 }
 
 function toolText(value: unknown): { type: 'text'; text: string } {

@@ -108,6 +108,7 @@ describe('MCP', () => {
 			'list_note_folders',
 			'list_note_revisions',
 			'list_notes',
+			'list_tags',
 			'search'
 		]);
 		for (const tool of all.tools) {

@@ -35,7 +35,7 @@ One search covers your notes, your services, the names of your files and the nam
 
 ## Settings
 
-**Settings**, in the sidebar and in the account menu, has six pages. **Profile** holds your display name, username, email address and password, your preferences, and an **About** section with the version. **Security** holds two factor authentication, the list of signed in sessions and the audit log. **API Keys** creates, revokes and deletes the keys for the REST API and the MCP server. **Map** holds the basemaps of the map, see [Map Notes](map-notes.md#basemaps). **Usage** shows what Manifold keeps and the resources it uses, see [Usage report](usage.md). **Data** downloads an export of everything, the same archive the backup command writes; [Backups and restores](backups.md) explains how to use it.
+**Settings**, in the sidebar and in the account menu, has seven pages. **Profile** holds your display name, username, email address and password, your preferences, and an **About** section with the version. **Security** holds two factor authentication, the list of signed in sessions and the audit log. **API Keys** creates, revokes and deletes the keys for the REST API and the MCP server. **Map** holds the basemaps of the map, see [Map Notes](map-notes.md#basemaps). **Tags** holds the global tags, which modules such as AI Memory file their records under; only you make them, and agents choose from them. **Usage** shows what Manifold keeps and the resources it uses, see [Usage report](usage.md). **Data** downloads an export of everything, the same archive the backup command writes; [Backups and restores](backups.md) explains how to use it.
 
 ## API keys and scopes
 

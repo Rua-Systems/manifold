@@ -30,6 +30,15 @@
 	--color-map-feature: #2b7357;
 	--color-map-selected: #b45309;
 	--color-map-sketch: #2f5f9e;
+	// Tag marks. The tag's name stays in text ink beside them, so the color only tells tags apart.
+	--color-tag-gray: #6b7380;
+	--color-tag-green: #2b7357;
+	--color-tag-teal: #1f7a85;
+	--color-tag-blue: #2f5f9e;
+	--color-tag-violet: #7a4fa3;
+	--color-tag-rose: #a8436b;
+	--color-tag-amber: #9a6414;
+	--color-tag-red: #a8433a;
 }
 
 @mixin darkTheme {
@@ -63,4 +72,12 @@
 	--color-map-feature: #3f9a73;
 	--color-map-selected: #e0a13a;
 	--color-map-sketch: #7aa7e0;
+	--color-tag-gray: #8a93a3;
+	--color-tag-green: #3f9a73;
+	--color-tag-teal: #4fb3bf;
+	--color-tag-blue: #7aa7e0;
+	--color-tag-violet: #b391d9;
+	--color-tag-rose: #d77fa1;
+	--color-tag-amber: #d6a55a;
+	--color-tag-red: #c96f66;
 }

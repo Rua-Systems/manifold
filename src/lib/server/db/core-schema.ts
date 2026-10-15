@@ -10,6 +10,7 @@ import {
 	unique,
 	uuid
 } from 'drizzle-orm/pg-core';
+import type { TagColor } from '$lib/types/tags';
 import type { ActorType } from '../actor';
 import { session, user } from './auth-schema';
 
@@ -95,6 +96,14 @@ export const userSetting = pgTable('user_setting', {
 	locale: text('locale').$type<'en' | 'tr'>(),
 	theme: text('theme').$type<'light' | 'dark'>(),
 	sidebarWidth: integer('sidebar_width'),
+	createdAt: timestamptz('created_at').defaultNow().notNull(),
+	updatedAt: timestamptz('updated_at').defaultNow().notNull()
+});
+
+export const tag = pgTable('tag', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull(),
+	color: text('color').$type<TagColor>().notNull().default('gray'),
 	createdAt: timestamptz('created_at').defaultNow().notNull(),
 	updatedAt: timestamptz('updated_at').defaultNow().notNull()
 });

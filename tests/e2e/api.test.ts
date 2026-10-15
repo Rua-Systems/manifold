@@ -195,6 +195,7 @@ test('the MCP endpoint serves tools to a key', async ({ page }) => {
 		'list_note_folders',
 		'list_note_revisions',
 		'list_notes',
+		'list_tags',
 		'search'
 	]);
 

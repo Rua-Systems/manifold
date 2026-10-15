@@ -75,6 +75,7 @@ The answer is a JSON-RPC result with the tools this key may use.
 | Tool                      | Scope                 | What it does                                                                                              |
 | ------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------- |
 | `search`                  | any key               | Searches notes, services, file names and vault entry names at once, only in the modules the key may read. |
+| `list_tags`               | any key               | Lists the global tags by name, which tools that file records under tags accept.                           |
 | `list_services`           | `services:read`       | Lists the services in their sidebar order.                                                                |
 | `create_service`          | `services:write`      | Adds a service at the end of the list.                                                                    |
 | `update_service`          | `services:write`      | Changes the alias, the address or both of a service.                                                      |

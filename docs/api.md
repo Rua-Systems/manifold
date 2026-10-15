@@ -95,6 +95,7 @@ Always use an `https` address: a key sent over plain HTTP crosses the network in
 | `GET`    | `/api/v1/me`                                     | any key          | The key itself: name, scopes and expiry.                          |
 | `GET`    | `/api/v1/openapi.json`                           | any key          | The OpenAPI 3.1 document of this API.                             |
 | `GET`    | `/api/v1/search`                                 | any key          | Search across the modules the key may read.                       |
+| `GET`    | `/api/v1/tags`                                   | any key          | The global tags by name, paged.                                   |
 | `GET`    | `/api/v1/services`                               | `services:read`  | Services in their sidebar order, paged.                           |
 | `POST`   | `/api/v1/services`                               | `services:write` | Add a service at the end.                                         |
 | `PUT`    | `/api/v1/services/order`                         | `services:write` | Put all services in a new order.                                  |
@@ -423,6 +424,10 @@ A data source carries its settings by type, in snake_case, and names its stored 
 - `POST /api/v1/data-sources/{id}/test` runs a connection test and answers `ok`, `message` and `duration_ms`; the outcome becomes `last_test`.
 
 Writes are recorded as `data_source.create`, `data_source.update`, `data_source.delete` and `data_source.test`.
+
+## Tags
+
+`GET /api/v1/tags` lists the global tags of **Settings → Tags** by name, each with its `id`, `name` and `color`. Any key may read them: a tag name tells what records are filed under, not what they hold. The API does not create, rename or delete tags; only the owner does, in the app. Routes that file records under tags take their names, in any case, and refuse a name that is not a tag with `422` on the field `tags`.
 
 ## Usage
 
