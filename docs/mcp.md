@@ -72,35 +72,39 @@ The answer is a JSON-RPC result with the tools this key may use.
 
 ## Tools
 
-| Tool                  | Scope            | What it does                                                                                              |
-| --------------------- | ---------------- | --------------------------------------------------------------------------------------------------------- |
-| `search`              | any key          | Searches notes, services, file names and vault entry names at once, only in the modules the key may read. |
-| `list_services`       | `services:read`  | Lists the services in their sidebar order.                                                                |
-| `create_service`      | `services:write` | Adds a service at the end of the list.                                                                    |
-| `update_service`      | `services:write` | Changes the alias, the address or both of a service.                                                      |
-| `delete_service`      | `services:write` | Removes a service. It cannot be undone.                                                                   |
-| `list_notes`          | `notes:read`     | Lists notes, most recently updated first, optionally only those that match a query or sit in one folder.  |
-| `get_note`            | `notes:read`     | Reads one note with its content as Markdown and its version.                                              |
-| `create_note`         | `notes:write`    | Creates a note from a title and Markdown content, optionally in a folder.                                 |
-| `update_note`         | `notes:write`    | Changes the title, the Markdown content or both of a note, based on the version last read.                |
-| `trash_note`          | `notes:write`    | Moves a note to the trash, which also hides its map features.                                             |
-| `restore_note`        | `notes:write`    | Takes a note out of the trash, with its map features.                                                     |
-| `list_note_revisions` | `notes:read`     | Lists a note's revisions, newest first, with who wrote each one and when.                                 |
-| `move_note`           | `notes:write`    | Moves a note into a folder or to the top level, without a new version.                                    |
-| `list_note_folders`   | `notes:read`     | Lists every folder of notes with its parent.                                                              |
-| `create_note_folder`  | `notes:write`    | Creates a folder of notes, at the top level or inside another folder.                                     |
-| `update_note_folder`  | `notes:write`    | Renames a folder of notes, moves it, or both.                                                             |
-| `delete_note_folder`  | `notes:write`    | Deletes an empty folder of notes.                                                                         |
-| `list_map_features`   | `map:read`       | Lists map features as a GeoJSON FeatureCollection, optionally within a box or for one note.               |
-| `create_map_feature`  | `map:write`      | Places a pin, line or polygon on the map and links it to an existing note or a new one.                   |
-| `update_map_feature`  | `map:write`      | Replaces the geometry of a feature, keeping its kind.                                                     |
-| `delete_map_feature`  | `map:write`      | Removes a feature from the map. Its note stays.                                                           |
-| `list_files`          | `files:read`     | Lists stored files, newest first, by folder, owner, name, kind or use.                                    |
-| `get_file`            | `files:read`     | Reads one file's details and the places that use it, without its content.                                 |
-| `read_file_text`      | `files:read`     | Reads the start of a text file, such as TXT, Markdown, CSV or JSON.                                       |
-| `list_file_folders`   | `files:read`     | Lists the folders of the Files module.                                                                    |
-| `list_vault_secrets`  | `vault:read`     | Lists vault entries by name, with address and description, never their values.                            |
-| `get_usage`           | `usage:read`     | Reports what the app keeps and the resources it uses, as on **Settings → Usage**.                         |
+| Tool                      | Scope                 | What it does                                                                                              |
+| ------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------- |
+| `search`                  | any key               | Searches notes, services, file names and vault entry names at once, only in the modules the key may read. |
+| `list_services`           | `services:read`       | Lists the services in their sidebar order.                                                                |
+| `create_service`          | `services:write`      | Adds a service at the end of the list.                                                                    |
+| `update_service`          | `services:write`      | Changes the alias, the address or both of a service.                                                      |
+| `delete_service`          | `services:write`      | Removes a service. It cannot be undone.                                                                   |
+| `list_notes`              | `notes:read`          | Lists notes, most recently updated first, optionally only those that match a query or sit in one folder.  |
+| `get_note`                | `notes:read`          | Reads one note with its content as Markdown and its version.                                              |
+| `create_note`             | `notes:write`         | Creates a note from a title and Markdown content, optionally in a folder.                                 |
+| `update_note`             | `notes:write`         | Changes the title, the Markdown content or both of a note, based on the version last read.                |
+| `trash_note`              | `notes:write`         | Moves a note to the trash, which also hides its map features.                                             |
+| `restore_note`            | `notes:write`         | Takes a note out of the trash, with its map features.                                                     |
+| `list_note_revisions`     | `notes:read`          | Lists a note's revisions, newest first, with who wrote each one and when.                                 |
+| `move_note`               | `notes:write`         | Moves a note into a folder or to the top level, without a new version.                                    |
+| `list_note_folders`       | `notes:read`          | Lists every folder of notes with its parent.                                                              |
+| `create_note_folder`      | `notes:write`         | Creates a folder of notes, at the top level or inside another folder.                                     |
+| `update_note_folder`      | `notes:write`         | Renames a folder of notes, moves it, or both.                                                             |
+| `delete_note_folder`      | `notes:write`         | Deletes an empty folder of notes.                                                                         |
+| `list_map_features`       | `map:read`            | Lists map features as a GeoJSON FeatureCollection, optionally within a box or for one note.               |
+| `create_map_feature`      | `map:write`           | Places a pin, line or polygon on the map and links it to an existing note or a new one.                   |
+| `update_map_feature`      | `map:write`           | Replaces the geometry of a feature, keeping its kind.                                                     |
+| `delete_map_feature`      | `map:write`           | Removes a feature from the map. Its note stays.                                                           |
+| `list_files`              | `files:read`          | Lists stored files, newest first, by folder, owner, name, kind or use.                                    |
+| `get_file`                | `files:read`          | Reads one file's details and the places that use it, without its content.                                 |
+| `read_file_text`          | `files:read`          | Reads the start of a text file, such as TXT, Markdown, CSV or JSON.                                       |
+| `list_file_folders`       | `files:read`          | Lists the folders of the Files module.                                                                    |
+| `list_data_sources`       | `datasources:read`    | Lists data sources with their settings and which secrets they hold, by type or words.                     |
+| `get_data_source`         | `datasources:read`    | Reads one data source with its settings, notes, documentation link and last test.                         |
+| `get_data_source_secrets` | `datasources:secrets` | Reads the passwords, tokens and keys of a data source and its connection URL; every read is audited.      |
+| `test_data_source`        | `datasources:write`   | Has the server connect to a data source, read something harmless and report.                              |
+| `list_vault_secrets`      | `vault:read`          | Lists vault entries by name, with address and description, never their values.                            |
+| `get_usage`               | `usage:read`          | Reports what the app keeps and the resources it uses, as on **Settings → Usage**.                         |
 
 Each tool carries a description written for AI agents, which the client shows to the model together with the tool's arguments. Tools that only read are marked with `readOnlyHint`, so clients that support the hint can tell them from tools that change data.
 

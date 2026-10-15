@@ -2,6 +2,39 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.7.0 - 2026-10-15
+
+Notes go into folders, the sidebar can be dragged wider, and a new **Data Sources** module keeps where your databases, APIs, buckets and links are, with their secrets encrypted, SSH tunnels and connection tests. This release adds three database migrations, which run on start; take a backup before you update. A minor line such as `0.6` does not move to 0.7 by itself, so set `MANIFOLD_VERSION` to `0.7` or `0.7.0`.
+
+### Added
+
+- **Note folders:** notes sit in nested folders of your own. **New Folder** on the Notes page, folders that open their own page with the path back, **New Note** inside a folder, **Move to Folder** in a note's bar, and dragging notes and folders onto folders on a computer. Folders are renamed, moved and deleted once empty; notes in the trash do not count and move to the top. Moving a note keeps its version. The sidebar shows the notes as a tree: folders by name, each with its newest notes, and the folder of the open note opens by itself. See [Notes](docs/notes.md#folders).
+- **Sidebar width:** drag the right edge of the expanded sidebar to make it 200 to 500 pixels wide, or move it with the arrow keys, **Home** and **End**; a double click resets it. The width is stored with your account, so every browser opens the sidebar as wide.
+- **Data Sources:** **Data Sources** in the sidebar keeps PostgreSQL, MySQL and MariaDB, Redis, S3 compatible storage, HTTP APIs and links, each with its settings, notes, a documentation link and its secrets, encrypted like vault values. See [Data Sources](docs/data-sources.md).
+  - **Test Connection** has the server connect, read something harmless such as the server version, and close; the outcome stays with the source.
+  - Databases and Redis can be reached through an SSH tunnel, with a password or a private key. The first test that gets through trusts the SSH server's host key, and later tests refuse another one.
+  - Secrets show for 30 seconds, or go to the clipboard, after you confirm your identity, and each reveal is recorded in the audit log. Changing a secret asks for the same confirmation.
+- **REST API:**
+  - `/api/v1/note-folders` lists, creates, renames, moves and deletes folders of notes;
+  - notes carry `folder_id`, which also filters `GET /api/v1/notes` (`root` for the top level), places a new note and moves one with `PATCH`;
+  - `/api/v1/data-sources` adds, lists, reads, changes, deletes and tests sources;
+  - `/api/v1/data-sources/{id}/secrets` reads a source's secrets.
+- **MCP:**
+  - `move_note`, `list_note_folders`, `create_note_folder`, `update_note_folder` and `delete_note_folder`;
+  - `list_notes` and `create_note` take a `folder_id`;
+  - `list_data_sources`, `get_data_source`, `get_data_source_secrets` and `test_data_source`.
+- **Scopes:** `datasources:read` reads sources without their secrets, `datasources:secrets` reads only the secrets, and `datasources:write` changes and tests sources.
+- The search and the command palette find data sources by name, the palette offers **New Data Source**, and the usage report counts note folders and data sources.
+
+### Changed
+
+- `node cli.js vault:rotate-key` encrypts the secrets of data sources again too, in the same transaction as the vault.
+- `PATCH /api/v1/notes/{id}` needs `version` only when it changes the title or the content; `folder_id` alone moves the note. A note token cannot move its note or see folders.
+- Moving a note to the trash returns you to its folder.
+- The buttons in a note's bar wrap onto a second row on a phone instead of running off the screen.
+- The MCP `search` tool accepts `file` and `data_source` as types.
+- Dependencies: the 14 minor and patch updates of Rua-Systems/manifold#33 and the GitHub Actions updates of Rua-Systems/manifold#32. `smol-toml` and `katex`, used only by the Markdown linter in development, are lifted past their advisories. The SvelteKit setting `csrf.checkOrigin: false` became `csrf.trustedOrigins: ['*']`, which does the same without the deprecation warning.
+
 ## 0.6.0 - 2026-10-10
 
 Manifold gets a Files module: every stored file in one place, in folders, with previews, uploads of any type and simple image editing, and notes take any file. This release adds a database migration, which runs on start; take a backup before you update. `UPLOAD_MAX_BYTES` now defaults to 100 MB, so a reverse proxy in front of Manifold has to accept request bodies of 101 MB, such as `client_max_body_size 101m` in Nginx. A minor line such as `0.5` does not move to 0.6 by itself, so set `MANIFOLD_VERSION` to `0.6` or `0.6.0`.

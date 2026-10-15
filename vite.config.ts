@@ -24,9 +24,10 @@ export default defineConfig({
 				name: packageJson.version
 			},
 			// hooks.server.ts runs the same origin check for form posts, except under /api/, where
-			// only Bearer keys count and API clients send no Origin header with their uploads.
+			// only Bearer keys count and API clients send no Origin header with their uploads. A
+			// trusted '*' turns SvelteKit's own check off; `checkOrigin` is deprecated.
 			csrf: {
-				checkOrigin: false
+				trustedOrigins: ['*']
 			},
 			csp: {
 				mode: 'auto',
