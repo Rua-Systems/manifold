@@ -205,3 +205,20 @@ test('the MCP endpoint serves tools to a key', async ({ page }) => {
 	});
 	expect(refused.status()).toBe(401);
 });
+
+test('every scope label stays inside its card, in the longer Turkish labels too', async ({
+	page
+}) => {
+	await page.goto('/tr/settings/api-keys', { waitUntil: 'networkidle' });
+	const overflowing = await page.locator('.scopes > .group').evaluateAll((groups) =>
+		groups
+			.filter((group) => {
+				const edge = group.getBoundingClientRect().right;
+				return [...group.querySelectorAll('*')].some(
+					(child) => child.getBoundingClientRect().right > edge + 0.5
+				);
+			})
+			.map((group) => group.querySelector('.group-name')?.textContent ?? '')
+	);
+	expect(overflowing).toEqual([]);
+});

@@ -86,8 +86,10 @@
 							checked={selected.includes(scope.id)}
 							onchange={(event) => toggle(scope.id, event.currentTarget.checked)}
 						/>
-						<span>{scope.label()}</span>
-						<code>{scope.id}</code>
+						<span class="text">
+							<span>{scope.label()}</span>
+							<code>{scope.id}</code>
+						</span>
 					</label>
 				{/each}
 			</div>
@@ -222,25 +224,38 @@
 				color: clr.$textPrimaryColor;
 			}
 
+			// The label and the scope id stack and wrap, so long labels such as those of data
+			// sources stay inside a narrow card instead of running past its edge.
 			> .scope {
 				display: flex;
-				align-items: center;
+				align-items: flex-start;
 				gap: 0.5rem;
 				min-height: vars.$touchTarget;
+				padding-block: 0.4rem;
 				font-size: 0.8rem;
+				line-height: 1.35;
 				color: clr.$textSecondaryColor;
 				cursor: pointer;
 
 				> input {
+					flex: none;
 					width: 1.1rem;
 					height: 1.1rem;
+					margin: 0;
 					accent-color: clr.$accentColor;
 				}
 
-				> code {
-					margin-left: auto;
-					font-size: 0.68rem;
-					color: clr.$textMutedColor;
+				> .text {
+					display: flex;
+					flex-direction: column;
+					gap: 0.1rem;
+					min-width: 0;
+					overflow-wrap: anywhere;
+
+					> code {
+						font-size: 0.68rem;
+						color: clr.$textMutedColor;
+					}
 				}
 			}
 		}
