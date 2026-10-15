@@ -14,7 +14,10 @@
 
 	let { data, children }: LayoutProps = $props();
 
-	const sidebar = setSidebarState(untrack(() => data.sidebarPreferences));
+	const sidebar = setSidebarState(
+		untrack(() => data.sidebarPreferences),
+		untrack(() => data.sidebarWidth)
+	);
 	setStepUp();
 	const palette = setPalette();
 

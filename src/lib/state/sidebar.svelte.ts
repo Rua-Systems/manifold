@@ -1,9 +1,12 @@
+import { postAction } from '$lib/utils/actions';
+import { localizedHref } from '$lib/utils/navigation';
 import {
 	serializeSidebarPreferences,
 	SIDEBAR_COOKIE,
 	SIDEBAR_COOKIE_MAX_AGE,
 	type SidebarPreferences
 } from '$lib/utils/sidebar-preferences';
+import { clampSidebarWidth } from '$lib/utils/sidebar-width';
 import { getContext, setContext } from 'svelte';
 
 const SIDEBAR_KEY = Symbol('sidebar');
@@ -17,9 +20,44 @@ export class SidebarState {
 
 	closedGroups = $state<string[]>([]);
 
-	constructor(preferences: SidebarPreferences) {
+	/** Desktop: the width the edge was dragged to, in pixels, or null for the default width. */
+	width = $state<number | null>(null);
+
+	/** The edge is being dragged, so the width follows the pointer without its transition. */
+	resizing = $state(false);
+
+	constructor(preferences: SidebarPreferences, width: number | null) {
 		this.expanded = !preferences.collapsed;
 		this.closedGroups = [...preferences.closedGroups];
+		this.width = width;
+	}
+
+	setWidth(width: number): void {
+		this.width = clampSidebarWidth(width);
+	}
+
+	resetWidth(): void {
+		this.width = null;
+	}
+
+	// Saves go out one after another, so the last width the owner chose is the one that stays.
+	private saving: Promise<void> = Promise.resolve();
+
+	/**
+	 * Keeps the width in the owner's settings, so every browser opens the sidebar as wide. A failed
+	 * save only costs the width on the next visit, so it is not reported.
+	 */
+	saveWidth(): Promise<void> {
+		this.saving = this.saving.then(async () => {
+			try {
+				await postAction(`${localizedHref('/sidebar')}?/width`, {
+					width: String(this.width ?? '')
+				});
+			} catch {
+				// The page keeps the width it shows; the next drag saves it again.
+			}
+		});
+		return this.saving;
 	}
 
 	toggle(): void {
@@ -73,8 +111,11 @@ export class SidebarState {
 	}
 }
 
-export function setSidebarState(preferences: SidebarPreferences): SidebarState {
-	return setContext(SIDEBAR_KEY, new SidebarState(preferences));
+export function setSidebarState(
+	preferences: SidebarPreferences,
+	width: number | null
+): SidebarState {
+	return setContext(SIDEBAR_KEY, new SidebarState(preferences, width));
 }
 
 export function getSidebarState(): SidebarState {

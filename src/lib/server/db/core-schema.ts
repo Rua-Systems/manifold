@@ -1,5 +1,15 @@
 import { sql } from 'drizzle-orm';
-import { bigint, index, jsonb, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+	bigint,
+	index,
+	integer,
+	jsonb,
+	pgTable,
+	text,
+	timestamp,
+	unique,
+	uuid
+} from 'drizzle-orm/pg-core';
 import type { ActorType } from '../actor';
 import { session, user } from './auth-schema';
 
@@ -84,6 +94,7 @@ export const userSetting = pgTable('user_setting', {
 		.references(() => user.id, { onDelete: 'cascade' }),
 	locale: text('locale').$type<'en' | 'tr'>(),
 	theme: text('theme').$type<'light' | 'dark'>(),
+	sidebarWidth: integer('sidebar_width'),
 	createdAt: timestamptz('created_at').defaultNow().notNull(),
 	updatedAt: timestamptz('updated_at').defaultNow().notNull()
 });

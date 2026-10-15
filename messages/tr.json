@@ -673,6 +673,8 @@
 	"sidebar_group_expand": "{group} grubunu aç",
 	"sidebar_label": "Bölümler",
 	"sidebar_open": "Gezinmeyi aç",
+	"sidebar_resize": "Kenar çubuğu genişliği",
+	"sidebar_resize_hint": "Genişliği değiştirmek için sürükleyin, varsayılana döndürmek için çift tıklayın",
 	"step_up_confirm": "Onayla",
 	"step_up_confirmed": "Onaylandı. Hassas işlemler on dakika boyunca açık.",
 	"step_up_lead": "Devam etmek için şifrenizi girin. On dakika boyunca yeniden sorulmayacak.",
