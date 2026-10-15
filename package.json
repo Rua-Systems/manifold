@@ -1,7 +1,7 @@
 {
 	"name": "manifold",
 	"private": true,
-	"version": "0.7.0",
+	"version": "0.8.0",
 	"description": "A private, self-hosted workspace for one person: services, notes, map notes and a vault, with a REST API and an MCP server.",
 	"license": "Apache-2.0",
 	"repository": {
@@ -89,7 +89,7 @@
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.71.1",
 		"vite": "^8.3.4",
-		"vitest": "^5.0.3"
+		"vitest": "^5.0.4"
 	},
 	"allowScripts": {
 		"@parcel/watcher@2.6.0": true,

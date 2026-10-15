@@ -2,6 +2,41 @@
 
 All notable changes to Manifold are listed here. Versions follow [Semantic Versioning](https://semver.org/); before 1.0.0, a minor version may change configuration, the API or the data in incompatible ways, and its notes say so.
 
+## 0.8.0 - 2026-10-15
+
+A new **AI Memory** module keeps what you and your AI agents share: memories in categories, with global tags, pins and a history that names every writer, and saved prompts that MCP clients offer as commands. Global **tags** arrive in **Settings → Tags**. This release adds three database migrations, which run on start; take a backup before you update. A minor line such as `0.7` does not move to 0.8 by itself, so set `MANIFOLD_VERSION` to `0.8` or `0.8.0`.
+
+### Added
+
+- **Tags:** **Settings → Tags** keeps global tags, each with a name, unique whatever its case, and one of eight colors that work in both themes. Only you make, rename and delete them; agents choose from them by name. Deleting a tag takes it off everything that carried it.
+- **AI Memory:** **AI Memory** in the sidebar keeps memories, a title and text written in the note editor, for you and your agents. See [AI Memory](docs/ai-memory.md).
+  - Memories sit in categories with subcategories, two levels, carry tags and can be pinned. Pinned memories are what agents read first.
+  - Every new title or text is a version that names its writer, you or the API key by name; **History** shows and restores them. Changing the category, tags or pin is not a version. A memory changed elsewhere while you edit offers **Reload** or **Keep Mine**.
+  - The trash keeps memories for `TRASH_RETENTION_DAYS`. Agents can trash and restore; only you delete for good.
+  - The AI Memory page filters by words, category, tag and pin, and **Categories** manages the categories; only empty ones are deleted.
+- **Prompts:** **Prompts** in AI Memory keeps instructions you use again, with `{{name}}` for each place that changes, a handle such as `code-review`, a category and tags. **Try it** fills the places and copies the result. See [AI Memory](docs/ai-memory.md#prompts).
+- **Keys limited to categories:** an API key with a memory or prompt scope can be limited to some categories when it is created. It then reaches only the memories and prompts in them and their subcategories, everywhere, including the search, and files everything it writes in them.
+- **MCP:**
+  - the server offers your prompts as MCP prompts, under their handles and with their places as arguments; Claude Code shows them as commands;
+  - memory tools `get_memory_context`, `search_memories`, `get_memory`, `remember`, `update_memory`, `trash_memory`, `restore_memory`, `list_memory_categories` and `list_memory_revisions`;
+  - prompt tools `list_prompts`, `get_prompt`, `save_prompt` and `update_prompt`;
+  - `list_tags`, for any key.
+- **REST API:**
+  - `/api/v1/memories`, with revisions, trash and restore;
+  - `/api/v1/memory-categories` and `/api/v1/memory/context`;
+  - `/api/v1/prompts`, with `/render`;
+  - `GET /api/v1/tags`.
+
+  Memories go in and out as Markdown, and tags by name.
+
+- **Scopes:** `memory:read`, `memory:write`, `prompts:read` and `prompts:write`.
+- The search and the command palette find memories and prompts, the dashboard has an **AI Memory** card, and the usage report counts memories, categories, the memory trash, revisions and prompts.
+
+### Changed
+
+- The MCP `search` tool accepts `memory` and `prompt` as types, and the search hands each module the key that searches, so a key limited to some categories finds only their memories and prompts.
+- Modules may give the search more than one provider, and offer MCP prompts through their manifest.
+
 ## 0.7.0 - 2026-10-15
 
 Notes go into folders, the sidebar can be dragged wider, and a new **Data Sources** module keeps where your databases, APIs, buckets and links are, with their secrets encrypted, SSH tunnels and connection tests. This release adds three database migrations, which run on start; take a backup before you update. A minor line such as `0.6` does not move to 0.7 by itself, so set `MANIFOLD_VERSION` to `0.7` or `0.7.0`.
