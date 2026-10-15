@@ -19,15 +19,16 @@ The features you work with come as modules. A module has its own page, its own e
 | Services     | `/services`     | Links to the services you run, with icons and in an order you choose. They also fill the sidebar. |
 | Notes        | `/notes`        | Rich text notes in folders, with automatic saving, a history of versions and a trash.             |
 | Map Notes    | `/notes/map`    | Pins, lines and polygons on a map, each linked to a note. Map Notes is part of the Notes module.  |
+| AI Memory    | `/memory`       | What you and your AI agents keep for each other, in categories, with tags, pins and a history.    |
 | Files        | `/files`        | Every stored file, in folders, with previews of images, PDF, audio, video and text.               |
 | Data Sources | `/data-sources` | Where your databases, APIs, buckets and links are, with encrypted secrets and connection tests.   |
 | Vault        | `/vault`        | Passwords and keys, encrypted in the database and shown only after you confirm your identity.     |
 
-After signing in you land on the [Dashboard](dashboard.md), which sums up the modules, access and usage on one page. [Services](services.md), [Notes](notes.md), [Map Notes](map-notes.md), [Files](files.md), [Data Sources](data-sources.md) and [Vault](vault.md) describe each module.
+After signing in you land on the [Dashboard](dashboard.md), which sums up the modules, access and usage on one page. [Services](services.md), [Notes](notes.md), [Map Notes](map-notes.md), [AI Memory](ai-memory.md), [Files](files.md), [Data Sources](data-sources.md) and [Vault](vault.md) describe each module.
 
 ## The sidebar and the account menu
 
-The sidebar lists **Search**, **Dashboard**, the modules and **Settings**. **Services** and **Notes** are groups that open to show their items: every service, and for notes **Map Notes**, **New Note**, a filter, your folders, your most recently changed notes and **Show all**. **Files**, **Data Sources** and **Vault** are plain links. The button with the person icon in the top right corner opens the account menu, with **Settings**, the **Language** and **Theme** switches, and **Logout**.
+The sidebar lists **Search**, **Dashboard**, the modules and **Settings**. **Services**, **Notes** and **AI Memory** are groups that open to show their items: every service; for notes **Map Notes**, **New Note**, a filter, your folders, your most recently changed notes and **Show all**; and for AI Memory **New Memory**, a filter, your categories and memories and **Show all**. **Files**, **Data Sources** and **Vault** are plain links. The button with the person icon in the top right corner opens the account menu, with **Settings**, the **Language** and **Theme** switches, and **Logout**.
 
 ## Search and the command palette
 

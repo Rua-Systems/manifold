@@ -1,5 +1,6 @@
 import { dataSourcesManifest } from './datasources/manifest';
 import { filesManifest } from './files/manifest';
+import { memoryManifest } from './memory/manifest';
 import { notesManifest } from './notes/manifest';
 import { servicesManifest } from './services/manifest';
 import { vaultManifest } from './vault/manifest';
@@ -13,6 +14,7 @@ import type { ModuleManifest } from './types';
 export const MODULES: readonly ModuleManifest[] = [
 	servicesManifest,
 	notesManifest,
+	memoryManifest,
 	filesManifest,
 	dataSourcesManifest,
 	vaultManifest

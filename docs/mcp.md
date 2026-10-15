@@ -1,6 +1,6 @@
 # MCP server
 
-Manifold includes a Model Context Protocol (MCP) server at `/mcp`. AI agents such as Claude Code use it to search your workspace, read and write notes, keep your services up to date and place notes on the map. It uses the same API keys, scopes, rate limit and audit log as the [REST API](api.md), and its tools run the same code as the REST endpoints, so they validate input and report errors the same way.
+Manifold includes a Model Context Protocol (MCP) server at `/mcp`. AI agents such as Claude Code use it to search your workspace, share a memory with you and your other agents, read and write notes, keep your services up to date and place notes on the map. It uses the same API keys, scopes, rate limit and audit log as the [REST API](api.md), and its tools run the same code as the REST endpoints, so they validate input and report errors the same way.
 
 ## How it works
 
@@ -21,6 +21,7 @@ Create a key under **Settings → API Keys** as described in [API keys](api.md#a
 - For an agent that only looks things up, choose the read scopes: `notes:read`, `map:read`, `services:read` and, if it should know which credentials exist, `vault:read`.
 - Add `notes:write`, `map:write` or `services:write` only when the agent should change data.
 - `vault:read` shows names, addresses and descriptions of vault entries. No tool reads or writes a vault value, whatever the scopes.
+- Add `memory:read` and `memory:write` for an agent that should use [AI Memory](ai-memory.md); with them, you can limit the key to some categories of memories.
 - Add `usage:read` for an agent that should keep an eye on the size of the data or the server; it adds the `get_usage` tool.
 - No tool uses the `files:read` and `files:write` scopes.
 
@@ -96,6 +97,15 @@ The answer is a JSON-RPC result with the tools this key may use.
 | `create_map_feature`      | `map:write`           | Places a pin, line or polygon on the map and links it to an existing note or a new one.                   |
 | `update_map_feature`      | `map:write`           | Replaces the geometry of a feature, keeping its kind.                                                     |
 | `delete_map_feature`      | `map:write`           | Removes a feature from the map. Its note stays.                                                           |
+| `get_memory_context`      | `memory:read`         | Reads the pinned memories in full, the categories and the tags; the first call of a task.                 |
+| `search_memories`         | `memory:read`         | Finds memories by words, category, tags or pin, or in the trash, with excerpts.                           |
+| `get_memory`              | `memory:read`         | Reads one memory as Markdown with its category, tags, pin and version.                                    |
+| `list_memory_categories`  | `memory:read`         | Lists the categories and subcategories of memories with their paths and counts.                           |
+| `list_memory_revisions`   | `memory:read`         | Lists a memory's revisions, newest first, with who wrote each one.                                        |
+| `remember`                | `memory:write`        | Writes a memory from a title and Markdown, optionally with a category, tags and a pin.                    |
+| `update_memory`           | `memory:write`        | Changes a memory: the title or the text based on the version read, the category, tags or pin freely.      |
+| `trash_memory`            | `memory:write`        | Moves a memory to the trash.                                                                              |
+| `restore_memory`          | `memory:write`        | Takes a memory out of the trash.                                                                          |
 | `list_files`              | `files:read`          | Lists stored files, newest first, by folder, owner, name, kind or use.                                    |
 | `get_file`                | `files:read`          | Reads one file's details and the places that use it, without its content.                                 |
 | `read_file_text`          | `files:read`          | Reads the start of a text file, such as TXT, Markdown, CSV or JSON.                                       |
@@ -114,6 +124,16 @@ A few tools need more than one step or a choice between arguments:
 - `update_note` needs `version`, the version the agent last read with `get_note`. If the note changed since, the call fails with the code `version_conflict` and the `current_version`, and the agent should read the note again, merge and retry.
 - `create_map_feature` takes a `geometry` and either `note_id` for an existing note, or `note_title` and optionally `note_markdown` for a new note, not both. Geometries are GeoJSON in longitude, latitude order, with the limits described under [Map features](api.md#map-features). Creating the note along with the feature needs only `map:write`.
 - `list_notes`, `list_note_revisions`, `list_services`, `list_map_features` and `list_vault_secrets` page like the REST lists: they answer `next_cursor`, which the agent passes back as `cursor`.
+
+## AI Memory
+
+The memory tools give your agents a shared memory that you can read and correct in the app, see [AI Memory](ai-memory.md). Their descriptions tell the agent how to use it, and a line in the agent's own instructions, such as `CLAUDE.md`, helps it remember:
+
+- Call `get_memory_context` at the start of a task. It answers the pinned memories in full, the categories to file memories in and the tags to choose from.
+- Search with `search_memories` before writing, and update an existing memory with `update_memory` rather than writing a near copy with `remember`.
+- `update_memory` with a new `title` or `markdown` needs `version`, as `update_note` does. `category_id`, `tags` and `pinned` change without it.
+- Tags go by name, in any case, and must be tags you made under **Settings → Tags**; agents cannot make new ones. Categories go by id from `get_memory_context` or `list_memory_categories`.
+- A key limited to some categories sees only those, and must file every memory in one of them.
 
 ## Answers and errors
 
@@ -135,6 +155,6 @@ Arguments that do not match a tool's input schema are refused with a plain-text 
 
 ## Keeping an agent in check
 
-- Every change an agent makes to a note adds a revision, which you can restore in the app. Notes it moves to the trash can be restored until the trash is emptied. `delete_service` and `delete_map_feature` cannot be undone.
+- Every change an agent makes to a note or a memory adds a revision, which you can restore in the app. Notes it moves to the trash can be restored until the trash is emptied. `delete_service` and `delete_map_feature` cannot be undone.
 - The audit log under **Settings → Security** shows every write the agent made, with **API key** or **Note token** as the actor. See [Your account](account.md).
 - To stop an agent at once, revoke or delete its key or note token under **Settings → API Keys**.

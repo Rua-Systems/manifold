@@ -234,7 +234,7 @@ describe('files', () => {
 
 		const hits = await searchFiles('annual', 5);
 		expect(hits.map((hit) => hit.id)).toEqual([report]);
-		const provided = await filesServerManifest.search?.search('annual', 5);
+		const provided = await filesServerManifest.search?.search('annual', 5, null);
 		expect(provided?.[0]).toMatchObject({ type: 'file', href: `/files/view/${report}` });
 	});
 

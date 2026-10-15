@@ -50,6 +50,8 @@ Each module has its own scopes, and the usage report has its own:
 | `notes:write`         | **Change notes**                                  | Creating, changing, trashing and restoring notes, and restoring revisions.               |
 | `map:read`            | **Read map features**                             | Listing and reading map features.                                                        |
 | `map:write`           | **Change map features**                           | Adding, changing and deleting map features, and creating a note together with a feature. |
+| `memory:read`         | **Read memories**                                 | Reading memories, their revisions, the categories and the context of AI Memory.          |
+| `memory:write`        | **Change memories**                               | Writing, changing, trashing and restoring memories.                                      |
 | `vault:read`          | **Read vault names (never values)**               | Listing and reading the name, address and description of vault entries.                  |
 | `files:read`          | **Read files**                                    | Listing files and folders, reading their details and text, and downloading files.        |
 | `files:write`         | **Change files**                                  | Uploading files, renaming, moving and deleting them, and managing folders.               |
@@ -60,6 +62,7 @@ Each module has its own scopes, and the usage report has its own:
 
 - A write scope does not include the read scope. A key with only `notes:write` can create and change notes, but it cannot list or read them.
 - `datasources:secrets` is the only scope that reads a password or a token of a data source, and every read is recorded in the audit log. It does not include `datasources:read`.
+- A key with a memory scope can be limited to some categories of AI Memory when it is created; it then reaches only the memories in them. See [Giving agents access](ai-memory.md#giving-agents-access).
 - `vault:read` never sees a value. No API route and no MCP tool returns or accepts a vault value; values are revealed only in the app, after you confirm your identity. See [Vault](vault.md).
 - `GET /api/v1/me`, `GET /api/v1/search` and `GET /api/v1/openapi.json` work with any valid key. The search covers only the modules the key may read. Note tokens reach less, see [Note tokens](#note-tokens).
 
@@ -121,6 +124,16 @@ Always use an `https` address: a key sent over plain HTTP crosses the network in
 | `GET`    | `/api/v1/map/basemaps/{id}`                      | `map:read`       | One basemap.                                                      |
 | `PATCH`  | `/api/v1/map/basemaps/{id}`                      | `map:write`      | Change a basemap, or put it in use.                               |
 | `DELETE` | `/api/v1/map/basemaps/{id}`                      | `map:write`      | Delete a basemap.                                                 |
+| `GET`    | `/api/v1/memory/context`                         | `memory:read`    | The pinned memories, the categories and the tags.                 |
+| `GET`    | `/api/v1/memories`                               | `memory:read`    | Memories by last update, paged; by words, category, tag or pin.   |
+| `POST`   | `/api/v1/memories`                               | `memory:write`   | Write a memory.                                                   |
+| `GET`    | `/api/v1/memories/{id}`                          | `memory:read`    | One memory as Markdown, also from the trash.                      |
+| `PATCH`  | `/api/v1/memories/{id}`                          | `memory:write`   | Change a memory, based on the version you read.                   |
+| `DELETE` | `/api/v1/memories/{id}`                          | `memory:write`   | Move a memory to the trash.                                       |
+| `POST`   | `/api/v1/memories/{id}/restore`                  | `memory:write`   | Take a memory out of the trash.                                   |
+| `GET`    | `/api/v1/memories/{id}/revisions`                | `memory:read`    | A memory's revisions with their writers, newest first, paged.     |
+| `GET`    | `/api/v1/memories/{id}/revisions/{version}`      | `memory:read`    | One revision as Markdown.                                         |
+| `GET`    | `/api/v1/memory-categories`                      | `memory:read`    | The categories and subcategories within the key's reach.          |
 | `GET`    | `/api/v1/vault/secrets`                          | `vault:read`     | Vault entries by name, without their values, paged.               |
 | `GET`    | `/api/v1/vault/secrets/{id}`                     | `vault:read`     | One entry's name, address and description.                        |
 | `GET`    | `/api/v1/files`                                  | `files:read`     | Files, newest first, paged; by folder, owner, name, kind or use.  |
@@ -308,6 +321,19 @@ Basemaps are the tile sources added under **Settings → Map**. The **Standard**
 - `POST /api/v1/map/basemaps` adds the basemap at the end without putting it in use.
 - `PATCH /api/v1/map/basemaps/{id}` changes the fields it is sent. `in_use: true` puts the basemap in use instead of the one before; `in_use: false` on the basemap in use returns the maps to **Standard**.
 - `DELETE /api/v1/map/basemaps/{id}` removes the basemap; when it was in use, the maps go back to **Standard**.
+
+## AI Memory
+
+The routes of [AI Memory](ai-memory.md) take and answer the text as Markdown, and tags by name. A memory answers `id`, `title`, `markdown`, `version`, `category_id`, `category` (such as `Work / Atlas`), `pinned`, `tags`, `created_at`, `updated_at` and `deleted_at`; lists answer an `excerpt` instead of the Markdown.
+
+- `GET /api/v1/memory/context` is what an agent reads first: `pinned`, the pinned memories in full, newest first and at most 50; `categories`, with their `path` and `memory_count`; `tags`; and `limited`, whether the key reaches only some categories.
+- `GET /api/v1/memories` takes `q` for words, `category_id` for a category with its subcategories or `none` for memories without one, `tags` as comma separated names that a memory must all have, `pinned` and `trashed`.
+- `POST /api/v1/memories` takes `title` and optionally `markdown`, `category_id`, `tags` and `pinned`. A tag name that is not a tag is refused with `422` on `tags`, and an image in the Markdown on `markdown`.
+- `PATCH /api/v1/memories/{id}` with `title` or `markdown` writes a new version and needs `version`, the version you read; a different stored version answers `409 version_conflict` with `current_version`. `category_id`, `tags`, which replace the tags, and `pinned` change without a new version and need no `version` when sent alone.
+- `DELETE /api/v1/memories/{id}` moves the memory to the trash, and `POST /api/v1/memories/{id}/restore` brings it back. Only the owner deletes a memory for good, in the app.
+- Revisions name their writer: `actor_type` is `owner` or `api_key`, and `actor_name` the key's name while it exists.
+
+A key limited to some categories reaches only the memories in them: others answer `404`, lists and the search leave them out, and a write must name one of its categories in `category_id`. Writes are recorded as `memory.create`, `memory.update`, `memory.trash` and `memory.restore`.
 
 ## Vault
 

@@ -11,9 +11,11 @@
 		keys: ApiKeyView[];
 		/** Ids of the keys with a copy in the vault, which revoking deletes. */
 		copies: string[];
+		/** The memory categories each limited key reaches, by key id. */
+		memoryLimits: Record<string, string[]>;
 	}
 
-	let { keys, copies }: Props = $props();
+	let { keys, copies, memoryLimits }: Props = $props();
 
 	const notifications = getNotifications();
 
@@ -106,6 +108,13 @@
 							<code>{scope}</code>
 						{/each}
 					</p>
+					{#if (memoryLimits[key.id] ?? []).length > 0}
+						<p class="limits">
+							{m.api_keys_memory_limited({
+								categories: memoryLimits[key.id].join(', ')
+							})}
+						</p>
+					{/if}
 					<p class="meta">
 						{key.expiresAt === null
 							? m.api_keys_no_expiry()
@@ -241,6 +250,11 @@
 					border: 1px solid clr.$borderSubtleColor;
 					border-radius: vars.$radius;
 				}
+			}
+
+			> .limits {
+				font-size: 0.72rem;
+				color: clr.$textSecondaryColor;
 			}
 
 			> .meta {

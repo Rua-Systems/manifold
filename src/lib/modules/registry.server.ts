@@ -8,6 +8,7 @@ import type { UsageItem } from '$lib/types/usage';
 import { MODULES } from './registry';
 import { dataSourcesServerManifest } from './datasources/manifest.server';
 import { filesServerManifest } from './files/manifest.server';
+import { memoryServerManifest } from './memory/manifest.server';
 import { notesServerManifest } from './notes/manifest.server';
 import { servicesServerManifest } from './services/manifest.server';
 import { vaultServerManifest } from './vault/manifest.server';
@@ -18,6 +19,7 @@ import type { ServerModuleManifest } from './types.server';
 export const SERVER_MODULES: readonly ServerModuleManifest[] = [
 	servicesServerManifest,
 	notesServerManifest,
+	memoryServerManifest,
 	filesServerManifest,
 	dataSourcesServerManifest,
 	vaultServerManifest
