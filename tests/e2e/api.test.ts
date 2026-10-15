@@ -190,7 +190,13 @@ test('the MCP endpoint serves tools to a key', async ({ page }) => {
 	const names = ((await listed.json()) as { result: { tools: { name: string }[] } }).result.tools
 		.map((tool) => tool.name)
 		.sort();
-	expect(names).toEqual(['get_note', 'list_note_revisions', 'list_notes', 'search']);
+	expect(names).toEqual([
+		'get_note',
+		'list_note_folders',
+		'list_note_revisions',
+		'list_notes',
+		'search'
+	]);
 
 	const refused = await page.request.post('/mcp', {
 		headers: { Accept: headers.Accept },

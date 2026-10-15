@@ -4,7 +4,7 @@ import { file } from '$lib/server/db/schema';
 import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
 import { storeUpload } from '$lib/server/files/files';
 import { housekeepingTasks } from '$lib/server/tasks';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { NoteContent } from './content';
 import { notesServerManifest } from './manifest.server';
@@ -68,6 +68,8 @@ async function fileExists(id: string): Promise<boolean> {
 }
 
 beforeEach(async () => {
+	// Folders from other test files would show in the sidebar.
+	await getDb().execute(sql`truncate note_folder cascade`);
 	await getDb().delete(note);
 	await getDb().delete(file);
 });

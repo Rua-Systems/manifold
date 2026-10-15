@@ -32,7 +32,8 @@ export interface ModuleManifest {
 	commands?: ModuleCommand[];
 }
 
-export type SidebarLink = { kind: 'internal'; path: Pathname } | { kind: 'external'; url: string };
+export type SidebarLink =
+	{ kind: 'internal'; path: PathnameWithSearchOrHash } | { kind: 'external'; url: string };
 
 export type SidebarIcon = { kind: 'image'; src: string } | { kind: 'letter'; letter: string };
 
@@ -43,6 +44,11 @@ export interface SidebarItem {
 	icon?: SidebarIcon;
 	/** Hidden by the group's filter field when its label does not match. */
 	filterable?: boolean;
+	/**
+	 * Items inside this one, which then shows as a folder that opens and closes. The filter looks
+	 * at the filterable items inside folders, not at the folders.
+	 */
+	children?: SidebarItem[];
 }
 
 export interface SidebarGroup {

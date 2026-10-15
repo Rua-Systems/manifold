@@ -8,7 +8,7 @@ import { createNoteToken } from '$lib/modules/notes/tokens.server';
 import { createSecret } from '$lib/modules/vault/vault.server';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ownerActor } from '../actor';
 import { createApiKey } from '../api-keys';
@@ -102,6 +102,7 @@ describe('MCP', () => {
 		const readOnly = await (await connect(['notes:read'])).listTools();
 		expect(readOnly.tools.map((tool) => tool.name).sort()).toEqual([
 			'get_note',
+			'list_note_folders',
 			'list_note_revisions',
 			'list_notes',
 			'search'
@@ -310,6 +311,57 @@ describe('MCP', () => {
 		expect(folders.data).toMatchObject({
 			data: [{ id: folder.id, name: 'Agent files', parent_id: null }]
 		});
+	});
+
+	it('keeps notes in folders', async () => {
+		await getDb().execute(sql`truncate note_folder cascade`);
+		const client = await connect(['notes:read', 'notes:write']);
+
+		const work = await call(client, 'create_note_folder', { name: 'Work' });
+		expect(work.isError).toBe(false);
+		const workId = (work.data as { id: string }).id;
+		const atlas = await call(client, 'create_note_folder', {
+			name: 'Atlas',
+			parent_id: workId
+		});
+		const atlasId = (atlas.data as { id: string }).id;
+		expect((await call(client, 'create_note_folder', { name: 'work' })).isError).toBe(true);
+
+		const created = await call(client, 'create_note', {
+			title: 'Plan',
+			markdown: 'Ferry at nine',
+			folder_id: atlasId
+		});
+		expect(created.data).toMatchObject({ title: 'Plan', folder_id: atlasId });
+		const noteId = (created.data as { id: string }).id;
+
+		const listed = await call(client, 'list_notes', { folder_id: atlasId });
+		expect((listed.data as { data: { id: string }[] }).data.map((item) => item.id)).toEqual([
+			noteId
+		]);
+		const top = await call(client, 'list_notes', { folder_id: 'root' });
+		expect((top.data as { data: unknown[] }).data).toEqual([]);
+
+		const moved = await call(client, 'move_note', { id: noteId, folder_id: null });
+		expect(moved.data).toMatchObject({ id: noteId, folder_id: null, version: 1 });
+		expect(moved.data).not.toHaveProperty('content');
+
+		const renamed = await call(client, 'update_note_folder', {
+			id: atlasId,
+			name: 'Maps',
+			parent_id: null
+		});
+		expect(renamed.data).toMatchObject({ name: 'Maps', parent_id: null });
+		const folders = await call(client, 'list_note_folders', {});
+		expect(
+			(folders.data as { data: { name: string }[] }).data.map((item) => item.name)
+		).toEqual(['Maps', 'Work']);
+
+		expect((await call(client, 'delete_note_folder', { id: workId })).data).toEqual({
+			id: workId,
+			deleted: true
+		});
+		expect((await call(client, 'delete_note_folder', { id: workId })).isError).toBe(true);
 	});
 
 	it('reports usage to a key with usage:read', async () => {

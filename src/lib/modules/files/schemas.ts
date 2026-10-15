@@ -1,30 +1,11 @@
-import { m } from '$lib/paraglide/messages.js';
-import { z } from 'zod';
+import { FOLDER_NAME_MAX_LENGTH, folderNameSchema, plainNameSchema } from '$lib/schemas/names';
 import type { FilesKindFilter, FilesSort } from './types';
 
-export const FOLDER_NAME_MAX_LENGTH = 100;
+export { FOLDER_NAME_MAX_LENGTH, folderNameSchema };
+
 export const FILE_NAME_MAX_LENGTH = 200;
 
-// Slashes would read as a path in the breadcrumbs; control characters have no place in a name.
-const PLAIN_NAME = /^[^/\\\p{Cc}]+$/u;
-
-export const folderNameSchema = z
-	.string()
-	.trim()
-	.min(1, { error: () => m.validation_required() })
-	.max(FOLDER_NAME_MAX_LENGTH, {
-		error: () => m.validation_max_length({ max: FOLDER_NAME_MAX_LENGTH })
-	})
-	.regex(PLAIN_NAME, { error: () => m.files_error_name_characters() });
-
-export const fileNameSchema = z
-	.string()
-	.trim()
-	.min(1, { error: () => m.validation_required() })
-	.max(FILE_NAME_MAX_LENGTH, {
-		error: () => m.validation_max_length({ max: FILE_NAME_MAX_LENGTH })
-	})
-	.regex(PLAIN_NAME, { error: () => m.files_error_name_characters() });
+export const fileNameSchema = plainNameSchema(FILE_NAME_MAX_LENGTH);
 
 const SORTS: readonly FilesSort[] = ['newest', 'oldest', 'name', 'size'];
 const KINDS: readonly FilesKindFilter[] = [

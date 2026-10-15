@@ -2,6 +2,7 @@ import { m } from '$lib/paraglide/messages.js';
 import { fileReferences, moduleFileUses } from '$lib/modules/registry.server';
 import { getDb } from '$lib/server/db';
 import { file } from '$lib/server/db/schema';
+import { FOREIGN_KEY_VIOLATION, hasErrorCode, UNIQUE_VIOLATION } from '$lib/server/db/errors';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
 import {
 	changeFileOwner,
@@ -87,20 +88,8 @@ function parseName(schema: z.ZodType<string>, value: string): string {
 	return parsed.data;
 }
 
-/** Postgres' unique violation, also when Drizzle wraps the driver's error. */
-function hasErrorCode(error: unknown, code: string): boolean {
-	let current: unknown = error;
-	while (current instanceof Error) {
-		if ((current as { code?: unknown }).code === code) {
-			return true;
-		}
-		current = current.cause;
-	}
-	return false;
-}
-
 function nameTakenOr(error: unknown): unknown {
-	if (hasErrorCode(error, '23505')) {
+	if (hasErrorCode(error, UNIQUE_VIOLATION)) {
 		return new ValidationError({ name: m.files_error_name_taken() });
 	}
 	return error;
@@ -488,7 +477,7 @@ export async function deleteFolder(id: string): Promise<void> {
 		await getDb().delete(fileFolder).where(eq(fileFolder.id, id));
 	} catch (error) {
 		// Something was put inside meanwhile.
-		if (hasErrorCode(error, '23503')) {
+		if (hasErrorCode(error, FOREIGN_KEY_VIOLATION)) {
 			throw new ValidationError({ folder: m.files_error_folder_not_empty() });
 		}
 		throw error;

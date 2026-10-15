@@ -36,8 +36,8 @@
 		FolderSummary
 	} from '../types';
 	import FileGlyph from './FileGlyph.svelte';
-	import MoveForm from './MoveForm.svelte';
-	import NameForm from './NameForm.svelte';
+	import MoveForm from '$lib/components/Folders/MoveForm.svelte';
+	import NameForm from '$lib/components/Folders/NameForm.svelte';
 	import UploadList from './UploadList.svelte';
 
 	interface Props {
@@ -663,6 +663,7 @@
 				action={moving.kind === 'file' ? '?/moveFile' : '?/moveFolder'}
 				fields={{ id: moving.id }}
 				{folders}
+				rootLabel={m.files_title()}
 				current={moving.current}
 				moving={moving.kind === 'folder' ? moving.id : null}
 				serverMessage={messageFor(moving.kind === 'file' ? 'moveFile' : 'moveFolder')}

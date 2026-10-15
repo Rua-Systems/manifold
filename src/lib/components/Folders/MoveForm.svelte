@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { m } from '$lib/paraglide/messages.js';
+	import type { FolderOption } from '$lib/types/folders';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { untrack } from 'svelte';
-	import type { FolderSummary } from '../types';
 
 	interface Props {
-		/** `?/moveFile` or `?/moveFolder`. */
+		/** The form action, such as `?/moveFile` or `?/moveFolder`. */
 		action: string;
 		fields: Record<string, string>;
-		folders: FolderSummary[];
+		folders: FolderOption[];
+		/** The name of the top level, such as the module's name. */
+		rootLabel: string;
 		/** Where the item is now, null for the top. */
 		current: string | null;
 		/** A folder being moved: it and the folders below it are not offered. */
@@ -18,14 +20,15 @@
 		onsaved: (message: string) => void;
 	}
 
-	let { action, fields, folders, current, moving, serverMessage, onsaved }: Props = $props();
+	let { action, fields, folders, rootLabel, current, moving, serverMessage, onsaved }: Props =
+		$props();
 
 	let target = $state(untrack(() => current ?? ''));
 	let submitted = $state(false);
 
 	/** The folders inside each folder, by its id; `''` holds those at the top. */
 	const children = $derived.by(() => {
-		const byParent: Record<string, FolderSummary[]> = {};
+		const byParent: Record<string, FolderOption[]> = {};
 		for (const folder of folders) {
 			const key = folder.parentId ?? '';
 			byParent[key] = [...(byParent[key] ?? []), folder];
@@ -73,12 +76,12 @@
 		<input type="hidden" {name} {value} />
 	{/each}
 	<fieldset>
-		<legend>{m.files_move_to()}</legend>
+		<legend>{m.folders_move_to()}</legend>
 		<ul class="tree">
 			<li>
 				<label class="option">
 					<input type="radio" name="target" value="" bind:group={target} />
-					<span>{m.files_title()}</span>
+					<span>{rootLabel}</span>
 				</label>
 				<ul>
 					{@render branch('', 1)}
@@ -88,14 +91,14 @@
 	</fieldset>
 	<div class="submit">
 		<p class="notice" role="alert">{notice}</p>
-		<button type="submit" disabled={target === (current ?? '')}>{m.files_move()}</button>
+		<button type="submit" disabled={target === (current ?? '')}>{m.folders_move()}</button>
 	</div>
 </form>
 
 <style lang="scss">
-	@use '../../../../styles/colors' as clr;
-	@use '../../../../styles/forms' as forms;
-	@use '../../../../styles/variables' as vars;
+	@use '../../../styles/colors' as clr;
+	@use '../../../styles/forms' as forms;
+	@use '../../../styles/variables' as vars;
 
 	form {
 		display: flex;

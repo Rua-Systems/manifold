@@ -22,7 +22,7 @@ import {
 } from 'drizzle-orm';
 import { emptyNoteContent, fileIdsInContent, type NoteContent } from './content';
 import { contentToText, validateNoteContent } from './content.server';
-import { note, noteFile, noteRevision } from './schema.server';
+import { note, noteFile, noteFolder, noteRevision } from './schema.server';
 import { containsPattern, prefixQuery } from '$lib/server/search-query';
 import { noteTitleSchema } from './schemas';
 import type { NoteDetail, NoteRevisionSummary, NoteSummary, RevisionActorType } from './types';
@@ -40,9 +40,16 @@ export interface NoteInput {
 	content?: unknown;
 }
 
+/** A new note: its title and content, and the folder it starts in, null for the top level. */
+export interface NewNoteInput extends NoteInput {
+	folderId?: string | null;
+}
+
 export interface ListNotesOptions {
 	query?: string;
 	trashed?: boolean;
+	/** Only the notes directly in this folder, or at the top level for null; all when left out. */
+	folderId?: string | null;
 	limit?: number;
 }
 
@@ -77,6 +84,7 @@ const summaryColumns = {
 	title: note.title,
 	// Enough text for the excerpt without reading whole documents.
 	contentText: sql<string>`left(${note.contentText}, ${EXCERPT_LENGTH * 4})`,
+	folderId: note.folderId,
 	updatedAt: note.updatedAt,
 	deletedAt: note.deletedAt
 };
@@ -85,6 +93,7 @@ function toSummary(row: {
 	id: string;
 	title: string;
 	contentText: string;
+	folderId: string | null;
 	updatedAt: Date;
 	deletedAt: Date | null;
 }): NoteSummary {
@@ -92,9 +101,36 @@ function toSummary(row: {
 		id: row.id,
 		title: row.title,
 		excerpt: excerptOf(row.contentText),
+		folderId: row.folderId,
 		updatedAt: row.updatedAt,
 		deletedAt: row.deletedAt
 	};
+}
+
+/** The condition for notes directly in a folder, or at the top level for null. */
+function inFolder(folderId: string | null): SQL {
+	if (folderId === null) {
+		return isNull(note.folderId);
+	}
+	return eq(note.folderId, folderId);
+}
+
+/** Checks that a folder exists before a note goes into it. */
+async function requireFolderFor(folderId: string | null | undefined): Promise<string | null> {
+	if (folderId === undefined || folderId === null) {
+		return null;
+	}
+	if (isUuid(folderId)) {
+		const [row] = await getDb()
+			.select({ id: noteFolder.id })
+			.from(noteFolder)
+			.where(eq(noteFolder.id, folderId))
+			.limit(1);
+		if (row !== undefined) {
+			return row.id;
+		}
+	}
+	throw new ValidationError({ folder: m.folders_error_missing() });
 }
 
 /**
@@ -123,6 +159,7 @@ export interface NoteSearchHit {
 	id: string;
 	title: string;
 	snippet: string;
+	folderId: string | null;
 	updatedAt: Date;
 	/** From 0 to 1. */
 	score: number;
@@ -149,6 +186,7 @@ export async function searchNotes(query: string, limit: number): Promise<NoteSea
 			id: note.id,
 			title: note.title,
 			snippet: sql<string>`ts_headline('simple', left(${note.contentText}, 20000), ${tsquery}, 'StartSel="", StopSel="", MaxWords=24, MinWords=8, MaxFragments=1, FragmentDelimiter=" "')`,
+			folderId: note.folderId,
 			updatedAt: note.updatedAt,
 			score
 		})
@@ -171,6 +209,9 @@ export async function listNotes(options: ListNotesOptions = {}): Promise<NoteSum
 	const match = textMatch(options.query);
 	if (match !== undefined) {
 		conditions.push(match);
+	}
+	if (options.folderId !== undefined) {
+		conditions.push(inFolder(options.folderId));
 	}
 
 	const rows = await getDb()
@@ -195,6 +236,7 @@ async function findNote(id: string, includeTrashed: boolean): Promise<NoteDetail
 		title: row.title,
 		content: row.content,
 		version: row.version,
+		folderId: row.folderId,
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
 		deletedAt: row.deletedAt
@@ -328,12 +370,13 @@ function forcedFor(actor: Actor, options: WriteOptions): boolean {
 /** Inserts a note inside the caller's transaction, for writes that create other rows with it. */
 export async function insertNote(
 	tx: Transaction,
-	input: NoteInput,
+	input: NewNoteInput,
 	actor: Actor,
 	options: WriteOptions = {}
 ): Promise<string> {
 	const title = parseTitle(input.title, '');
 	const content = parseContent(input.content, emptyNoteContent());
+	const folderId = await requireFolderFor(input.folderId);
 	const now = options.now ?? new Date();
 
 	const [created] = await tx
@@ -343,6 +386,7 @@ export async function insertNote(
 			content,
 			contentText: contentToText(content),
 			version: 1,
+			folderId,
 			createdAt: now,
 			updatedAt: now
 		})
@@ -359,7 +403,7 @@ export async function insertNote(
 }
 
 export async function createNote(
-	input: NoteInput,
+	input: NewNoteInput,
 	actor: Actor,
 	options: WriteOptions = {}
 ): Promise<NoteDetail> {
@@ -502,6 +546,8 @@ export async function purgeTrashedNotes(now: Date, retentionDays: number): Promi
 export interface NotePageOptions {
 	query?: string;
 	includeTrashed?: boolean;
+	/** Only the notes directly in this folder, or at the top level for null; all when left out. */
+	folderId?: string | null;
 	limit: number;
 	/** The last note of the previous page. */
 	after?: { updatedAt: Date; id: string };
@@ -521,6 +567,9 @@ export async function listNotePage(
 	const match = textMatch(options.query);
 	if (match !== undefined) {
 		conditions.push(match);
+	}
+	if (options.folderId !== undefined) {
+		conditions.push(inFolder(options.folderId));
 	}
 	if (options.after !== undefined) {
 		conditions.push(

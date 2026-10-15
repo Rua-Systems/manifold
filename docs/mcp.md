@@ -79,13 +79,18 @@ The answer is a JSON-RPC result with the tools this key may use.
 | `create_service`      | `services:write` | Adds a service at the end of the list.                                                                    |
 | `update_service`      | `services:write` | Changes the alias, the address or both of a service.                                                      |
 | `delete_service`      | `services:write` | Removes a service. It cannot be undone.                                                                   |
-| `list_notes`          | `notes:read`     | Lists notes, most recently updated first, optionally only those that match a query.                       |
+| `list_notes`          | `notes:read`     | Lists notes, most recently updated first, optionally only those that match a query or sit in one folder.  |
 | `get_note`            | `notes:read`     | Reads one note with its content as Markdown and its version.                                              |
-| `create_note`         | `notes:write`    | Creates a note from a title and Markdown content.                                                         |
+| `create_note`         | `notes:write`    | Creates a note from a title and Markdown content, optionally in a folder.                                 |
 | `update_note`         | `notes:write`    | Changes the title, the Markdown content or both of a note, based on the version last read.                |
 | `trash_note`          | `notes:write`    | Moves a note to the trash, which also hides its map features.                                             |
 | `restore_note`        | `notes:write`    | Takes a note out of the trash, with its map features.                                                     |
 | `list_note_revisions` | `notes:read`     | Lists a note's revisions, newest first, with who wrote each one and when.                                 |
+| `move_note`           | `notes:write`    | Moves a note into a folder or to the top level, without a new version.                                    |
+| `list_note_folders`   | `notes:read`     | Lists every folder of notes with its parent.                                                              |
+| `create_note_folder`  | `notes:write`    | Creates a folder of notes, at the top level or inside another folder.                                     |
+| `update_note_folder`  | `notes:write`    | Renames a folder of notes, moves it, or both.                                                             |
+| `delete_note_folder`  | `notes:write`    | Deletes an empty folder of notes.                                                                         |
 | `list_map_features`   | `map:read`       | Lists map features as a GeoJSON FeatureCollection, optionally within a box or for one note.               |
 | `create_map_feature`  | `map:write`      | Places a pin, line or polygon on the map and links it to an existing note or a new one.                   |
 | `update_map_feature`  | `map:write`      | Replaces the geometry of a feature, keeping its kind.                                                     |

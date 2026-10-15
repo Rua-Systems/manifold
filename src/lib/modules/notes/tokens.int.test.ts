@@ -246,6 +246,11 @@ describe('note tokens on the API', () => {
 			(await call('PATCH', `/notes/${other.id}`, token, { version: 1, title: 'No' })).status
 		).toBe(404);
 		expect((await call('DELETE', `/notes/${target.id}`, token)).status).toBe(403);
+		// The owner's folders are not the token's to change.
+		expect(
+			(await call('PATCH', `/notes/${target.id}`, token, { folder_id: null })).status
+		).toBe(403);
+		expect((await call('GET', '/note-folders', token)).status).toBe(403);
 	});
 
 	it('stops working while its note is in the trash', async () => {
