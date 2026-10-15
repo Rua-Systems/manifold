@@ -34,10 +34,10 @@
 		"sbom": "npm sbom --sbom-format cyclonedx --sbom-type application --omit dev"
 	},
 	"dependencies": {
-		"@fastify/busboy": "^3.2.2",
+		"@fastify/busboy": "^3.2.3",
 		"@fontsource/space-mono": "^5.3.0",
-		"@lucide/svelte": "^1.52.0",
-		"@modelcontextprotocol/sdk": "^1.32.0",
+		"@lucide/svelte": "^1.55.0",
+		"@modelcontextprotocol/sdk": "^1.32.1",
 		"@tiptap/core": "^3.31.4",
 		"@tiptap/extension-bubble-menu": "^3.31.4",
 		"@tiptap/extension-code-block-lowlight": "^3.31.4",
@@ -50,23 +50,23 @@
 		"@tiptap/starter-kit": "^3.31.4",
 		"aws4fetch": "^1.0.20",
 		"better-auth": "^1.7.7",
-		"drizzle-orm": "^0.45.3",
+		"drizzle-orm": "^0.45.4",
 		"highlight.js": "^11.12.0",
 		"lowlight": "^3.3.0",
 		"mysql2": "^3.24.6",
-		"nodemailer": "^10.0.14",
+		"nodemailer": "^10.1.0",
 		"ol": "^10.11.0",
 		"pdfjs-dist": "^6.4.299",
 		"postgres": "^3.4.9",
 		"qrcode": "^1.5.4",
 		"ssh2": "^1.17.0",
 		"tar": "^7.5.22",
-		"zod": "^4.6.5"
+		"zod": "^4.6.6"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@inlang/paraglide-js": "^2.25.4",
-		"@playwright/test": "^1.63.0",
+		"@inlang/paraglide-js": "^2.27.0",
+		"@playwright/test": "^1.64.0",
 		"@sveltejs/adapter-node": "^5.5.7",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
@@ -78,17 +78,17 @@
 		"drizzle-kit": "^0.31.11",
 		"eslint": "^10.12.0",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-svelte": "^3.19.0",
+		"eslint-plugin-svelte": "^3.23.1",
 		"globals": "^17.13.0",
 		"markdownlint-cli2": "^0.23.3",
-		"prettier": "^3.9.9",
+		"prettier": "^3.9.10",
 		"prettier-plugin-svelte": "^4.1.0",
 		"sass": "^1.105.1",
-		"svelte": "^5.57.1",
+		"svelte": "^5.57.2",
 		"svelte-check": "^4.6.0",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.71.0",
-		"vite": "^8.3.2",
+		"typescript-eslint": "^8.71.1",
+		"vite": "^8.3.4",
 		"vitest": "^5.0.3"
 	},
 	"allowScripts": {
@@ -102,6 +102,12 @@
 		},
 		"@esbuild-kit/core-utils": {
 			"esbuild": "^0.25.12"
+		},
+		"markdownlint-cli2": {
+			"smol-toml": "^1.9.1"
+		},
+		"micromark-extension-math": {
+			"katex": "^0.18.2"
 		}
 	}
 }
