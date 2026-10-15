@@ -216,11 +216,13 @@ describe('the data sources MCP tools', () => {
 		expect(reading.tools.map((item) => item.name).sort()).toEqual([
 			'get_data_source',
 			'list_data_sources',
+			'list_tags',
 			'search'
 		]);
 		const secrets = await (await mcpWith(['datasources:secrets'])).listTools();
 		expect(secrets.tools.map((item) => item.name).sort()).toEqual([
 			'get_data_source_secrets',
+			'list_tags',
 			'search'
 		]);
 	});
