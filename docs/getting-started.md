@@ -14,18 +14,20 @@ Manifold has exactly one account, the owner. It is created on the first start fr
 
 The features you work with come as modules. A module has its own page, its own entry in the sidebar and in the command palette and its own API scopes, and it takes part in the search.
 
-| Module    | Page         | What it holds                                                                                     |
-| --------- | ------------ | ------------------------------------------------------------------------------------------------- |
-| Services  | `/services`  | Links to the services you run, with icons and in an order you choose. They also fill the sidebar. |
-| Notes     | `/notes`     | Rich text notes in folders, with automatic saving, a history of versions and a trash.             |
-| Map Notes | `/notes/map` | Pins, lines and polygons on a map, each linked to a note. Map Notes is part of the Notes module.  |
-| Vault     | `/vault`     | Passwords and keys, encrypted in the database and shown only after you confirm your identity.     |
+| Module       | Page            | What it holds                                                                                     |
+| ------------ | --------------- | ------------------------------------------------------------------------------------------------- |
+| Services     | `/services`     | Links to the services you run, with icons and in an order you choose. They also fill the sidebar. |
+| Notes        | `/notes`        | Rich text notes in folders, with automatic saving, a history of versions and a trash.             |
+| Map Notes    | `/notes/map`    | Pins, lines and polygons on a map, each linked to a note. Map Notes is part of the Notes module.  |
+| Files        | `/files`        | Every stored file, in folders, with previews of images, PDF, audio, video and text.               |
+| Data Sources | `/data-sources` | Where your databases, APIs, buckets and links are, with encrypted secrets and connection tests.   |
+| Vault        | `/vault`        | Passwords and keys, encrypted in the database and shown only after you confirm your identity.     |
 
-After signing in you land on the [Dashboard](dashboard.md), which sums up the modules, access and usage on one page. [Services](services.md), [Notes](notes.md), [Map Notes](map-notes.md), [Files](files.md) and [Vault](vault.md) describe each module.
+After signing in you land on the [Dashboard](dashboard.md), which sums up the modules, access and usage on one page. [Services](services.md), [Notes](notes.md), [Map Notes](map-notes.md), [Files](files.md), [Data Sources](data-sources.md) and [Vault](vault.md) describe each module.
 
 ## The sidebar and the account menu
 
-The sidebar lists **Search**, **Dashboard**, the modules and **Settings**. **Services** and **Notes** are groups that open to show their items: every service, and for notes **Map Notes**, **New Note**, a filter, your folders, your most recently changed notes and **Show all**. **Vault** is a plain link. The button with the person icon in the top right corner opens the account menu, with **Settings**, the **Language** and **Theme** switches, and **Logout**.
+The sidebar lists **Search**, **Dashboard**, the modules and **Settings**. **Services** and **Notes** are groups that open to show their items: every service, and for notes **Map Notes**, **New Note**, a filter, your folders, your most recently changed notes and **Show all**. **Files**, **Data Sources** and **Vault** are plain links. The button with the person icon in the top right corner opens the account menu, with **Settings**, the **Language** and **Theme** switches, and **Logout**.
 
 ## Search and the command palette
 
