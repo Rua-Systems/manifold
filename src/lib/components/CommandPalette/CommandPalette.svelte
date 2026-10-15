@@ -121,6 +121,7 @@
 			['security', m.settings_section_security, '/settings/security'],
 			['apiKeys', m.settings_section_api_keys, '/settings/api-keys'],
 			['map', m.settings_section_map, '/settings/map'],
+			['tags', m.settings_section_tags, '/settings/tags'],
 			['usage', m.settings_section_usage, '/settings/usage'],
 			['data', m.settings_section_data, '/settings/data']
 		];
