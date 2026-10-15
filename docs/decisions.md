@@ -311,3 +311,7 @@ The choices made while building Manifold that someone could reasonably have made
 - **Prompts are plain text with `{{name}}` places, not editor documents.** A prompt is handed over exactly as written, so formatting that the editor would change has no place in it. The handle, lower case words with hyphens, is what MCP clients call it by.
 - **Prompts are MCP prompts as well as tools.** Clients such as Claude Code show MCP prompts as commands and ask for their places, which is how the owner uses them by hand; the tools let an agent find, fill in and save prompts while it works. The list is built for every request, so it follows the owner's changes and the key's reach.
 - **Prompts have no trash and no revisions.** They are short and the owner's own; a version number keeps two writers from overwriting each other.
+
+## 0.8.1
+
+- **With a mouse, the editor toolbar wraps by whole groups instead of scrolling.** The one scrolling row of 0.1.1 fit the note page only by a few pixels once the attach and file buttons arrived, and a scrollbar under the toolbar beside a wider sidebar hid tools for no gain. Groups move whole, so related buttons stay together. Touch screens keep the scrolling row, where wrapped rows of touch sized buttons would still take too much of the screen.
