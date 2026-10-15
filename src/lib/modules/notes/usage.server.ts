@@ -2,12 +2,13 @@ import { m } from '$lib/paraglide/messages.js';
 import { measureRows } from '$lib/server/usage/measure';
 import type { UsageItem } from '$lib/types/usage';
 import { isNotNull, isNull } from 'drizzle-orm';
-import { mapBasemap, mapFeature, note, noteRevision, noteToken } from './schema.server';
+import { mapBasemap, mapFeature, note, noteFolder, noteRevision, noteToken } from './schema.server';
 
-/** Notes, the trash, revisions, note tokens and the map, for the usage report. */
+/** Notes, their folders, the trash, revisions, note tokens and the map, for the usage report. */
 export async function notesUsage(): Promise<UsageItem[]> {
-	const [notes, trash, revisions, tokens, features, basemaps] = await Promise.all([
+	const [notes, folders, trash, revisions, tokens, features, basemaps] = await Promise.all([
 		measureRows(note, isNull(note.deletedAt)),
+		measureRows(noteFolder),
 		measureRows(note, isNotNull(note.deletedAt)),
 		measureRows(noteRevision),
 		measureRows(noteToken),
@@ -16,6 +17,7 @@ export async function notesUsage(): Promise<UsageItem[]> {
 	]);
 	return [
 		{ id: 'notes.notes', label: m.usage_notes(), ...notes },
+		{ id: 'notes.folders', label: m.usage_note_folders(), ...folders },
 		{ id: 'notes.trash', label: m.usage_notes_trash(), ...trash },
 		{ id: 'notes.revisions', label: m.usage_notes_revisions(), ...revisions },
 		{ id: 'notes.tokens', label: m.usage_note_tokens(), ...tokens },

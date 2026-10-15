@@ -99,8 +99,8 @@
 </form>
 
 <style lang="scss">
-	@use '../../../../styles/forms' as forms;
-	@use '../../../../styles/variables' as vars;
+	@use '../../../styles/forms' as forms;
+	@use '../../../styles/variables' as vars;
 
 	form {
 		display: flex;

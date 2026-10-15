@@ -14,6 +14,7 @@
 	import { localizedHref } from '$lib/utils/navigation';
 	import { relativeTime } from '$lib/utils/time';
 	import { pageTitle } from '$lib/utils/title';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import History from '@lucide/svelte/icons/history';
 	import Maximize2 from '@lucide/svelte/icons/maximize-2';
 	import Minimize2 from '@lucide/svelte/icons/minimize-2';
@@ -32,6 +33,7 @@
 		AttachedFile,
 		NoteDetail,
 		NoteEditorHost,
+		NoteFolderPath,
 		NotePreview,
 		NoteRevisionSummary
 	} from '../types';
@@ -46,6 +48,10 @@
 		uploadMaxBytes: number;
 		/** Called once the first save has created the note. */
 		oncreated?: (id: string) => Promise<void>;
+		/** The folders from the top down to the note's folder, for the links back. */
+		path?: NoteFolderPath;
+		/** The folder a new note is created in, null for the top level. */
+		newNoteFolderId?: string | null;
 		/** Set when the editor is shown outside the note page; it then never navigates. */
 		host?: NoteEditorHost;
 		/** More buttons for the bar, such as sharing; hidden in focus mode. */
@@ -54,8 +60,18 @@
 		children?: Snippet;
 	}
 
-	let { note, revisions, preview, uploadMaxBytes, oncreated, host, tools, children }: Props =
-		$props();
+	let {
+		note,
+		revisions,
+		preview,
+		uploadMaxBytes,
+		oncreated,
+		path = [],
+		newNoteFolderId = null,
+		host,
+		tools,
+		children
+	}: Props = $props();
 
 	const STATUSES: SaveStatus[] = ['idle', 'saved', 'unsaved', 'saving', 'failed', 'conflict'];
 
@@ -123,6 +139,9 @@
 		};
 		if (request.version !== null) {
 			fields.version = String(request.version);
+		}
+		if (request.id === null && newNoteFolderId !== null) {
+			fields.folder = newNoteFolderId;
 		}
 
 		const result = await postAction(
@@ -338,7 +357,17 @@
 <article class="note-page" class:embedded={host !== undefined} class:focused>
 	<header class="bar">
 		{#if host === undefined && !focused}
-			<a class="back" href={localizedHref('/notes')}>{m.notes_all()}</a>
+			{#if path.length === 0}
+				<a class="back" href={localizedHref('/notes')}>{m.notes_all()}</a>
+			{:else}
+				<nav class="crumbs" aria-label={m.notes_folder_path()}>
+					<a href={localizedHref('/notes')}>{m.notes_title()}</a>
+					{#each path as crumb (crumb.id)}
+						<ChevronRight size={13} aria-hidden="true" />
+						<a href={localizedHref(`/notes?folder=${crumb.id}`)}>{crumb.name}</a>
+					{/each}
+				</nav>
+			{/if}
 		{/if}
 		<div class="tools">
 			<p class="status" role="status">
@@ -576,10 +605,30 @@
 			@include forms.mutedLink;
 		}
 
+		> .crumbs {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 0.15rem;
+			min-width: 0;
+			color: clr.$textMutedColor;
+
+			> a {
+				@include forms.mutedLink;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+		}
+
+		// The buttons wrap onto a second row on a phone rather than run off its edge.
 		> .tools {
 			display: flex;
+			flex-wrap: wrap;
 			align-items: center;
+			justify-content: flex-end;
 			gap: 0.3rem;
+			min-width: 0;
 			margin-left: auto;
 		}
 	}

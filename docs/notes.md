@@ -1,14 +1,26 @@
 # Notes
 
-Notes are rich text documents with headings, lists, tables, code and images. They save themselves while you type, keep a history of versions and go to a trash before they are deleted. A note can also have places on a map; [Map Notes](map-notes.md) covers that side.
+Notes are rich text documents with headings, lists, tables, code and images. They save themselves while you type, keep a history of versions, sit in folders of your own and go to a trash before they are deleted. A note can also have places on a map; [Map Notes](map-notes.md) covers that side.
 
 ## Finding your notes
 
-- **The sidebar**: the **Notes** group lists **Map Notes**, **New Note**, a filter, your 100 most recently changed notes and **Show all**.
-- **The Notes page**: **Show all**, or **Go to Notes** in the command palette, opens `/notes` with every note, most recently changed first, each with the beginning of its text and when it was last updated. **Trash** and **New Note** sit at the top.
+- **The sidebar**: the **Notes** group lists **Map Notes**, **New Note**, a filter, your folders, up to 100 of the most recently changed notes outside folders, and **Show all**. A folder opens and closes with the arrow beside it and lists its folders and up to 25 of its newest notes; when it holds more, **More in** leads to its page. The folder of the note you are reading opens by itself.
+- **The Notes page**: **Show all**, or **Go to Notes** in the command palette, opens `/notes` with your folders and the notes outside folders, most recently changed first, each note with the beginning of its text and when it was last updated. **Trash**, **New Folder** and **New Note** sit at the top. See [Folders](#folders).
 - **The search**: the command palette and the search page find notes by words in their title and text; see [Search and the command palette](search.md).
 
-Both filters, **Filter notes** in the sidebar and on the Notes page, use the rules of the search, so they find words inside notes and not only in titles. The sidebar filter narrows the listed notes as you type and then shows up to ten matches from the search, which also finds notes beyond the hundred it lists. The filter on the Notes page updates the list shortly after you stop typing and shows up to 100 matches, best first; the address keeps the filter as `?q=`, so a filtered list can be bookmarked.
+Both filters, **Filter notes** in the sidebar and on the Notes page, use the rules of the search, so they find words inside notes and not only in titles. The sidebar filter narrows the listed notes as you type and then shows up to ten matches from the search, which also finds notes beyond the hundred it lists. The filter on the Notes page searches every folder, updates the list shortly after you stop typing and shows up to 100 matches, best first; the address keeps the filter as `?q=`, so a filtered list can be bookmarked.
+
+## Folders
+
+Folders keep notes apart, such as one folder per project, and can hold folders of their own.
+
+- **New Folder** on the Notes page creates a folder in the one you are looking at. A name has up to 100 characters without slashes and must differ from the other folders in the same place, whatever its case.
+- A folder opens its own page at `/notes?folder=...`, with the path back to the top above it. **New Note** there writes the note into that folder.
+- **Move to Folder**, in the bar of a note, puts the note into another folder or back at the top. On the Notes page, the folder button of each note does the same, and on a computer you can drag a note or a folder onto a folder or onto a step of the path.
+- The buttons of a folder rename it, move it into another folder and delete it. A folder can never move into itself or a folder inside it.
+- Only an empty folder can be deleted. Notes in the trash do not count: deleting their folder moves them to the top, and they come back there when you restore them.
+
+Moving a note is not an edit: it keeps its version and its place in the history, and an open editor goes on saving.
 
 ## Writing a note
 
@@ -88,7 +100,7 @@ Choose an entry to see it: **Viewing version N, read only.** appears above the t
 
 ## Trash
 
-**Move to trash**, the trash button at the top of a note, takes it out of the lists, the sidebar and the search, hides its places on the map and returns you to the Notes page. Nothing is deleted yet.
+**Move to trash**, the trash button at the top of a note, takes it out of the lists, the sidebar and the search, hides its places on the map and returns you to the note's folder on the Notes page. Nothing is deleted yet.
 
 The **Trash** page at `/notes/trash` lists the trashed notes, most recently trashed first:
 
@@ -124,4 +136,4 @@ The token sits after the `#` of the link, a part browsers never send to a server
 
 ## Through the API and MCP
 
-API keys with `notes:read` read notes and their history; keys with `notes:write` create and change notes, move them to the trash and back, and restore versions. Neither can delete a note for good. A note token works as a key for its own note alone: it reads the note, and with **Read and edit** it changes it, see [Note tokens](api.md#note-tokens). Scripts and agents can send and receive notes as Markdown; [REST API](api.md) and [MCP server](mcp.md) describe how.
+API keys with `notes:read` read notes, their folders and their history; keys with `notes:write` create and change notes and folders, move notes between folders, move them to the trash and back, and restore versions. Neither can delete a note for good. A note token works as a key for its own note alone: it reads the note, and with **Read and edit** it changes it, but it never sees or changes folders, see [Note tokens](api.md#note-tokens). Scripts and agents can send and receive notes as Markdown; [REST API](api.md) and [MCP server](mcp.md) describe how.

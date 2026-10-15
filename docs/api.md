@@ -21,7 +21,7 @@ A key cannot be changed after it is created. To give a program other scopes, cre
 
 A note token, created with **Share** on a note's page as described in [Sharing a note](notes.md#sharing-a-note), is a key for that one note. It starts with `mfn_` and is sent like an API key, as `Authorization: Bearer mfn_...`.
 
-- It reaches `GET /api/v1/me`, `GET /api/v1/notes/{id}` and, with **Read and edit**, `PATCH /api/v1/notes/{id}`, for its own note only. Another note's id answers `404 not_found`, as if the note did not exist, and every other route `403 insufficient_scope`.
+- It reaches `GET /api/v1/me`, `GET /api/v1/notes/{id}` and, with **Read and edit**, `PATCH /api/v1/notes/{id}` without `folder_id`, for its own note only. Another note's id answers `404 not_found`, as if the note did not exist, and every other route `403 insufficient_scope`.
 - `GET /api/v1/me` answers its name, the scopes its access stands for (`notes:read`, and `notes:write` with edit access), its last day and `note` with the note's `id` and `access`. For an API key, `note` is `null`.
 - `/files/{id}` serves it the images its note shows, and no other file.
 - It has its own rate limit of `API_RATE_LIMIT_PER_MINUTE`, shared with the share link's page and its saves. Changes are recorded with `note_token` as the actor type.
@@ -205,6 +205,7 @@ A note carries its content in two forms: `content` is the TipTap JSON document t
   "id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   "title": "Trip",
   "version": 1,
+  "folder_id": null,
   "created_at": "2026-09-29T17:40:02.118Z",
   "updated_at": "2026-09-29T17:40:02.118Z",
   "deleted_at": null,
@@ -225,16 +226,32 @@ A note carries its content in two forms: `content` is the TipTap JSON document t
 
 - `GET /api/v1/notes/{id}` and `GET /api/v1/notes/{id}/revisions/{version}` accept `format`: `json` for `content` only, `markdown` for `markdown` only, or `both`, the default. Writes always answer both.
 - Notes in the trash can be read too; their `deleted_at` is set.
-- `GET /api/v1/notes` lists notes without their content: `id`, `title`, `excerpt`, `version`, `updated_at` and `deleted_at`. `q`, up to 200 characters, keeps the notes whose title or text match it, and `include_trashed=true` adds the notes in the trash.
+- `GET /api/v1/notes` lists notes without their content: `id`, `title`, `excerpt`, `version`, `folder_id`, `updated_at` and `deleted_at`. `q`, up to 200 characters, keeps the notes whose title or text match it, `folder_id` keeps the notes directly in one folder, or at the top level with `root`, and `include_trashed=true` adds the notes in the trash.
 
 ### Writing notes
 
-- `POST /api/v1/notes` takes `title`, up to 200 characters, and the content either as `content`, a TipTap JSON document, or as `markdown`, never both. All three are optional.
+- `POST /api/v1/notes` takes `title`, up to 200 characters, and the content either as `content`, a TipTap JSON document, or as `markdown`, never both, and `folder_id` to create the note in a folder. All are optional; an unknown folder is refused with `422`.
 - Content is checked against the editor's schema. Unknown node or mark types, links other than `http`, `https`, `mailto` and files of this Manifold, and images that are not files of this Manifold are refused with `422 validation_failed`. Raw HTML in Markdown is dropped. A note's content may have up to 2 MB as TipTap JSON.
 - To show an image, [upload it](#files) first and use its `url` in the Markdown, such as `![Floor plan](/files/9b2c1f10-58d1-4a7e-9a8c-2a3e3c7f1b11)`. Any other file goes in as a link to its `url`, which the editor writes as the name and size, such as `[report.pdf (1.2 MB)](/files/...)`. Either way the note then uses the file, so it is kept and cannot be deleted.
 - `PATCH /api/v1/notes/{id}` needs `version`, the version you last read, next to the `title`, `content` or `markdown` you change. What you leave out stays as it is. When the stored version differs, the answer is `409 version_conflict` with `current_version`: read the note again, merge your change and send it with that version.
+- `folder_id` in the same `PATCH` moves the note into that folder, or to the top level with `null`. Sent alone it needs no `version`, and a move changes neither the version nor `updated_at`. A note token cannot move its note.
 - Every successful change raises `version` by one and adds a revision written by the key, with `actor_type` `api_key` and the key's id as `actor_id`.
 - `DELETE /api/v1/notes/{id}` moves the note to the trash, which also hides its map features. `POST /api/v1/notes/{id}/restore` brings it back. A note in the trash cannot be changed until it is restored, and it is deleted for good after `TRASH_RETENTION_DAYS` days, 30 unless changed, see [Configuration](configuration.md).
+
+### Folders
+
+Folders of notes nest like the folders of the Files module: `parent_id` is null at the top level.
+
+```json
+{ "id": "6b1c0a52-9a1e-4c5e-8d0e-1f7f4a3b2c10", "name": "Projects", "parent_id": null }
+```
+
+- `GET /api/v1/note-folders` lists every folder by name, with `notes:read`. `parent_id` gives the tree.
+- `POST /api/v1/note-folders` creates one from `name`, up to 100 characters without slashes, and an optional `parent_id`. A second folder with the same name in the same place, whatever its case, is refused with `422`.
+- `PATCH /api/v1/note-folders/{id}` changes `name`, moves the folder with `parent_id`, or both. A folder cannot move into itself or a folder inside it.
+- `DELETE /api/v1/note-folders/{id}` deletes an empty folder. One with folders or notes outside the trash inside is refused with `422`; notes in the trash that were in it move to the top level.
+
+Writes need `notes:write` and are recorded in the audit log as `note_folder.create`, `note_folder.update` and `note_folder.delete`.
 
 ### Revisions
 

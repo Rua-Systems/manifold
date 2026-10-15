@@ -2,6 +2,7 @@ import { geometry4326 } from '$lib/server/db/geometry';
 import { sql } from 'drizzle-orm';
 import { file } from '$lib/server/db/schema';
 import {
+	type AnyPgColumn,
 	boolean,
 	customType,
 	index,
@@ -20,13 +21,28 @@ import type { FeatureKind } from './map/geometry';
 import type { NoteTokenAccess, RevisionActorType } from './types';
 
 // Mirror of migrations/0005_notes_init.sql, 0006_notes_map_feature.sql,
-// 0013_notes_map_basemap.sql and 0016_notes_note_token.sql. The SQL files are the source of truth.
+// 0013_notes_map_basemap.sql, 0016_notes_note_token.sql and 0019_notes_folders.sql. The SQL files
+// are the source of truth.
 
 function timestamptz(name: string) {
 	return timestamp(name, { withTimezone: true });
 }
 
 const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });
+
+export const noteFolder = pgTable(
+	'note_folder',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		parentId: uuid('parent_id').references((): AnyPgColumn => noteFolder.id, {
+			onDelete: 'restrict'
+		}),
+		name: text('name').notNull(),
+		createdAt: timestamptz('created_at').defaultNow().notNull(),
+		updatedAt: timestamptz('updated_at').defaultNow().notNull()
+	},
+	(table) => [index('note_folder_parent_id_idx').on(table.parentId)]
+);
 
 export const note = pgTable(
 	'note',
@@ -36,6 +52,7 @@ export const note = pgTable(
 		content: jsonb('content').$type<NoteContent>().notNull(),
 		contentText: text('content_text').notNull().default(''),
 		version: integer('version').notNull().default(1),
+		folderId: uuid('folder_id').references(() => noteFolder.id, { onDelete: 'set null' }),
 		deletedAt: timestamptz('deleted_at'),
 		createdAt: timestamptz('created_at').defaultNow().notNull(),
 		updatedAt: timestamptz('updated_at').defaultNow().notNull(),
@@ -46,7 +63,8 @@ export const note = pgTable(
 	},
 	(table) => [
 		index('note_updated_at_idx').on(table.updatedAt.desc()),
-		index('note_deleted_at_idx').on(table.deletedAt)
+		index('note_deleted_at_idx').on(table.deletedAt),
+		index('note_folder_id_idx').on(table.folderId)
 	]
 );
 
