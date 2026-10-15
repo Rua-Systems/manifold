@@ -42,20 +42,24 @@ The box is not ticked by default: a key without a copy exists nowhere but in the
 
 Each module has its own scopes, and the usage report has its own:
 
-| Scope            | Label in the form                   | Allows                                                                                   |
-| ---------------- | ----------------------------------- | ---------------------------------------------------------------------------------------- |
-| `services:read`  | **Read services**                   | Listing and reading services.                                                            |
-| `services:write` | **Change services**                 | Adding, changing, reordering and deleting services.                                      |
-| `notes:read`     | **Read notes**                      | Listing and reading notes and their revisions.                                           |
-| `notes:write`    | **Change notes**                    | Creating, changing, trashing and restoring notes, and restoring revisions.               |
-| `map:read`       | **Read map features**               | Listing and reading map features.                                                        |
-| `map:write`      | **Change map features**             | Adding, changing and deleting map features, and creating a note together with a feature. |
-| `vault:read`     | **Read vault names (never values)** | Listing and reading the name, address and description of vault entries.                  |
-| `files:read`     | **Read files**                      | Listing files and folders, reading their details and text, and downloading files.        |
-| `files:write`    | **Change files**                    | Uploading files, renaming, moving and deleting them, and managing folders.               |
-| `usage:read`     | **Read the usage report**           | Reading the usage report: counts and sizes, the database, the disk and the server.       |
+| Scope                 | Label in the form                                 | Allows                                                                                   |
+| --------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `services:read`       | **Read services**                                 | Listing and reading services.                                                            |
+| `services:write`      | **Change services**                               | Adding, changing, reordering and deleting services.                                      |
+| `notes:read`          | **Read notes**                                    | Listing and reading notes and their revisions.                                           |
+| `notes:write`         | **Change notes**                                  | Creating, changing, trashing and restoring notes, and restoring revisions.               |
+| `map:read`            | **Read map features**                             | Listing and reading map features.                                                        |
+| `map:write`           | **Change map features**                           | Adding, changing and deleting map features, and creating a note together with a feature. |
+| `vault:read`          | **Read vault names (never values)**               | Listing and reading the name, address and description of vault entries.                  |
+| `files:read`          | **Read files**                                    | Listing files and folders, reading their details and text, and downloading files.        |
+| `files:write`         | **Change files**                                  | Uploading files, renaming, moving and deleting them, and managing folders.               |
+| `datasources:read`    | **Read data sources (never their secrets)**       | Listing and reading data sources with their settings, without secrets.                   |
+| `datasources:secrets` | **Read the passwords and tokens of data sources** | Reading the secrets and the connection URL of a data source.                             |
+| `datasources:write`   | **Change and test data sources**                  | Adding, changing, deleting and testing data sources.                                     |
+| `usage:read`          | **Read the usage report**                         | Reading the usage report: counts and sizes, the database, the disk and the server.       |
 
 - A write scope does not include the read scope. A key with only `notes:write` can create and change notes, but it cannot list or read them.
+- `datasources:secrets` is the only scope that reads a password or a token of a data source, and every read is recorded in the audit log. It does not include `datasources:read`.
 - `vault:read` never sees a value. No API route and no MCP tool returns or accepts a vault value; values are revealed only in the app, after you confirm your identity. See [Vault](vault.md).
 - `GET /api/v1/me`, `GET /api/v1/search` and `GET /api/v1/openapi.json` work with any valid key. The search covers only the modules the key may read. Note tokens reach less, see [Note tokens](#note-tokens).
 
@@ -372,6 +376,53 @@ The Files module's files and folders:
 - `PATCH /api/v1/files/{id}` takes `name`, `folder_id` or both; `folder_id` null moves the file to the top level. Only files that the Files module keeps can be changed; others answer `422`.
 - `DELETE /api/v1/files/{id}` deletes a file for good. A file in use is refused with `422` until nothing shows it.
 - `/api/v1/file-folders` lists, creates, renames, moves and deletes folders. A name has up to 100 characters, no slashes, and is unique within its folder whatever its case; `parent_id` null puts a folder at the top. A folder cannot move into itself or a folder inside it, and only an empty folder can be deleted.
+
+## Data sources
+
+A data source carries its settings by type, in snake_case, and names its stored secrets without their values:
+
+```json
+{
+  "id": "0b8f1f8c-3c4e-4d5b-9f1e-6a7b8c9d0e1f",
+  "name": "Shop database",
+  "type": "postgresql",
+  "description": "Read replica; ask Ada for write access.",
+  "docs_url": null,
+  "settings": {
+    "host": "db.internal",
+    "port": 5432,
+    "database": "shop",
+    "username": "reporting",
+    "ssl": "require",
+    "ssh": {
+      "enabled": true,
+      "host": "bastion.example.com",
+      "port": 22,
+      "username": "deploy",
+      "auth": "key",
+      "fingerprint": "SHA256:..."
+    }
+  },
+  "secrets": ["password", "ssh_private_key"],
+  "last_test": {
+    "at": "2026-10-15T09:12:44.103Z",
+    "ok": true,
+    "message": "PostgreSQL 17.6 on x86_64-pc-linux-gnu"
+  },
+  "created_at": "2026-10-15T09:10:02.118Z",
+  "updated_at": "2026-10-15T09:10:02.118Z"
+}
+```
+
+- `type` is `postgresql`, `mysql`, `redis`, `s3`, `api` or `link`. [Data Sources](data-sources.md#types) lists the settings and secrets of each.
+- `GET /api/v1/data-sources` lists the sources by name, narrowed by `type` and by `q`, which matches the name, the notes and the settings. `GET /api/v1/data-sources/{id}` reads one.
+- `GET /api/v1/data-sources/{id}/secrets` needs `datasources:secrets` and answers `secrets`, such as `{ "password": "..." }`, and `connection_url`, null for S3. Each read is recorded as `data_source.reveal`.
+- `POST /api/v1/data-sources` takes `name`, `type`, `settings`, and optionally `description`, `docs_url` and `secrets`. Refused fields come back with `422` named as sent, such as `settings.ssh.host` or `secrets.ssh_password`.
+- `PATCH /api/v1/data-sources/{id}` changes what it is sent. `settings` replaces the settings as a whole; `secrets` sets the secrets it names, and `null` removes one. The type cannot change, and `ssh.fingerprint` is kept by the tests, whatever the request says.
+- `DELETE /api/v1/data-sources/{id}` deletes the source with its secrets.
+- `POST /api/v1/data-sources/{id}/test` runs a connection test and answers `ok`, `message` and `duration_ms`; the outcome becomes `last_test`.
+
+Writes are recorded as `data_source.create`, `data_source.update`, `data_source.delete` and `data_source.test`.
 
 ## Usage
 

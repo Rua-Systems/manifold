@@ -63,9 +63,9 @@ Required. Exactly 32 random bytes, base64 encoded:
 openssl rand -base64 32
 ```
 
-A hex value such as the output of `openssl rand -hex 32` is refused. The key encrypts the values in the [vault](vault.md) with AES-256-GCM. Backups never contain it, and nothing can recover the vault without it, so keep a copy outside the server and separately from your backups.
+A hex value such as the output of `openssl rand -hex 32` is refused. The key encrypts the values in the [vault](vault.md) and the secrets of [data sources](data-sources.md) with AES-256-GCM. Backups never contain it, and nothing can recover them without it, so keep a copy outside the server and separately from your backups.
 
-Never change it by simply replacing the value: the vault would become unreadable. `node cli.js vault:rotate-key` encrypts every value again with a new key, which it reads from `NEW_ENCRYPTION_KEY` or asks for; then you set `ENCRYPTION_KEY` to the new key and restart the app. [Operations](operations.md) describes the steps.
+Never change it by simply replacing the value: the vault and the data sources' secrets would become unreadable. `node cli.js vault:rotate-key` encrypts them all again with a new key, which it reads from `NEW_ENCRYPTION_KEY` or asks for; then you set `ENCRYPTION_KEY` to the new key and restart the app. [Operations](operations.md) describes the steps.
 
 ### Secrets from files
 

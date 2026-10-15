@@ -27,6 +27,9 @@ const ALL_SCOPES = [
 	'services:write',
 	'vault:read',
 	'files:read',
+	'datasources:read',
+	'datasources:secrets',
+	'datasources:write',
 	'usage:read'
 ];
 
