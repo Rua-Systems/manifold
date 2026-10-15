@@ -20,6 +20,10 @@ import {
 	searchMemories
 } from './memories.server';
 import { memory, memoryCategory, memoryRevision } from './schema.server';
+import { promptApiRoutes } from './prompts/api.server';
+import { promptMcpPrompts, promptMcpTools } from './prompts/mcp.server';
+import { countPrompts, searchPrompts } from './prompts/prompts.server';
+import { memoryPrompt } from './prompts/schema.server';
 import { memoryTree } from './sidebar';
 
 /** Memories read for the sidebar's tree, pinned and newest first; the filter searches beyond. */
@@ -29,9 +33,10 @@ const SIDEBAR_CATEGORY_MEMORIES = 25;
 const RECENT_MEMORIES = 6;
 
 async function memoryDashboard(): Promise<DashboardCard[]> {
-	const [counts, categories, recent] = await Promise.all([
+	const [counts, categories, prompts, recent] = await Promise.all([
 		countMemories(),
 		countMemoryCategories(),
+		countPrompts(),
 		listMemories({}, { limit: RECENT_MEMORIES })
 	]);
 	return [
@@ -59,6 +64,12 @@ async function memoryDashboard(): Promise<DashboardCard[]> {
 							id: 'categories',
 							label: m.memory_categories_title(),
 							value: categories,
+							unit: 'count'
+						},
+						{
+							id: 'prompts',
+							label: m.dashboard_prompts(),
+							value: prompts,
 							unit: 'count'
 						}
 					]
@@ -105,6 +116,11 @@ export const memoryServerManifest: ServerModuleManifest = {
 					label: m.memory_new(),
 					link: { kind: 'internal', path: '/memory/new' }
 				},
+				{
+					id: 'prompts',
+					label: m.prompts_title(),
+					link: { kind: 'internal', path: '/memory/prompts' }
+				},
 				...memoryItems,
 				{
 					id: 'all',
@@ -114,27 +130,49 @@ export const memoryServerManifest: ServerModuleManifest = {
 			]
 		};
 	},
-	api: memoryApiRoutes,
-	mcp: memoryMcpTools,
-	search: {
-		type: 'memory',
-		scope: 'memory:read',
-		search: async (query, limit, key) => {
-			let access = FULL_ACCESS;
-			if (key !== null) {
-				access = await memoryAccessFor(key);
+	api: [...memoryApiRoutes, ...promptApiRoutes],
+	mcp: [...memoryMcpTools, ...promptMcpTools],
+	mcpPrompts: { scope: 'prompts:read', list: promptMcpPrompts },
+	search: [
+		{
+			type: 'memory',
+			scope: 'memory:read',
+			search: async (query, limit, key) => {
+				let access = FULL_ACCESS;
+				if (key !== null) {
+					access = await memoryAccessFor(key);
+				}
+				return (await searchMemories(query, limit, access)).map((hit) => ({
+					type: 'memory',
+					id: hit.id,
+					title: hit.title,
+					snippet: hit.snippet,
+					href: `/memory/${hit.id}`,
+					external: false,
+					score: hit.score
+				}));
 			}
-			return (await searchMemories(query, limit, access)).map((hit) => ({
-				type: 'memory',
-				id: hit.id,
-				title: hit.title,
-				snippet: hit.snippet,
-				href: `/memory/${hit.id}`,
-				external: false,
-				score: hit.score
-			}));
+		},
+		{
+			type: 'prompt',
+			scope: 'prompts:read',
+			search: async (query, limit, key) => {
+				let access = FULL_ACCESS;
+				if (key !== null) {
+					access = await memoryAccessFor(key);
+				}
+				return (await searchPrompts(query, limit, access)).map((hit) => ({
+					type: 'prompt',
+					id: hit.id,
+					title: hit.title,
+					snippet: hit.snippet,
+					href: `/memory/prompts/${hit.id}`,
+					external: false,
+					score: hit.score
+				}));
+			}
 		}
-	},
+	],
 	housekeeping: [
 		{
 			name: 'memory.purge-trash',
@@ -144,17 +182,19 @@ export const memoryServerManifest: ServerModuleManifest = {
 		}
 	],
 	usage: async () => {
-		const [memories, categories, trash, revisions] = await Promise.all([
+		const [memories, categories, trash, revisions, prompts] = await Promise.all([
 			measureRows(memory, isNull(memory.deletedAt)),
 			measureRows(memoryCategory),
 			measureRows(memory, isNotNull(memory.deletedAt)),
-			measureRows(memoryRevision)
+			measureRows(memoryRevision),
+			measureRows(memoryPrompt)
 		]);
 		return [
 			{ id: 'memory.memories', label: m.usage_memories(), ...memories },
 			{ id: 'memory.categories', label: m.usage_memory_categories(), ...categories },
 			{ id: 'memory.trash', label: m.usage_memories_trash(), ...trash },
-			{ id: 'memory.revisions', label: m.usage_memories_revisions(), ...revisions }
+			{ id: 'memory.revisions', label: m.usage_memories_revisions(), ...revisions },
+			{ id: 'memory.prompts', label: m.usage_prompts(), ...prompts }
 		];
 	},
 	dashboard: () => memoryDashboard()

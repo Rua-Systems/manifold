@@ -106,6 +106,10 @@ The answer is a JSON-RPC result with the tools this key may use.
 | `update_memory`           | `memory:write`        | Changes a memory: the title or the text based on the version read, the category, tags or pin freely.      |
 | `trash_memory`            | `memory:write`        | Moves a memory to the trash.                                                                              |
 | `restore_memory`          | `memory:write`        | Takes a memory out of the trash.                                                                          |
+| `list_prompts`            | `prompts:read`        | Lists the saved prompts with their places, by words, category or tags.                                    |
+| `get_prompt`              | `prompts:read`        | Reads a prompt by its handle and fills in its places.                                                     |
+| `save_prompt`             | `prompts:write`       | Saves a prompt with its places.                                                                           |
+| `update_prompt`           | `prompts:write`       | Changes a prompt, based on the version read.                                                              |
 | `list_files`              | `files:read`          | Lists stored files, newest first, by folder, owner, name, kind or use.                                    |
 | `get_file`                | `files:read`          | Reads one file's details and the places that use it, without its content.                                 |
 | `read_file_text`          | `files:read`          | Reads the start of a text file, such as TXT, Markdown, CSV or JSON.                                       |
@@ -134,6 +138,10 @@ The memory tools give your agents a shared memory that you can read and correct 
 - `update_memory` with a new `title` or `markdown` needs `version`, as `update_note` does. `category_id`, `tags` and `pinned` change without it.
 - Tags go by name, in any case, and must be tags you made under **Settings → Tags**; agents cannot make new ones. Categories go by id from `get_memory_context` or `list_memory_categories`.
 - A key limited to some categories sees only those, and must file every memory in one of them.
+
+## Prompts
+
+Besides tools, the server offers your saved prompts as MCP prompts to keys with `prompts:read`, each under its handle and with its `{{name}}` places as arguments, all of them asked for. Clients show them as commands: in Claude Code, a prompt `code-review` of a server added as `manifold` is `/mcp__manifold__code-review`, and Claude Code asks for its places before it sends the filled text. A key limited to some categories gets only the prompts in them, and a note token gets none. The list follows your changes with the next request.
 
 ## Answers and errors
 

@@ -2,7 +2,9 @@
 
 AI Memory is what you and your AI agents keep for each other: decisions, preferences, facts about projects, how things are done. Agents with an API key read it at the start of their work and write to it as they learn, through the [MCP server](mcp.md) or the [REST API](api.md#ai-memory). You read and change everything they write, and every change keeps the earlier text in its history.
 
-The **AI Memory** group in the sidebar lists **New Memory**, a filter, your categories with their subcategories and newest memories, the memories without a category, and **Show all**.
+AI Memory also keeps your **Prompts**: ready instructions that you and your agents use again, which MCP clients such as Claude Code offer as commands.
+
+The **AI Memory** group in the sidebar lists **New Memory**, **Prompts**, a filter, your categories with their subcategories and newest memories, the memories without a category, and **Show all**.
 
 ## Memories
 
@@ -45,14 +47,28 @@ If an agent changed the memory while you were editing it, saving shows a notice.
 
 **Move to trash**, in the bar of a memory, moves it to the trash. **Trash** on the AI Memory page lists what is there; **Restore** brings a memory back, and **Delete Forever** deletes it with its history. Memories in the trash are deleted for good after `TRASH_RETENTION_DAYS` days, 30 unless configured otherwise. Agents can move memories to the trash and restore them, never delete them for good.
 
+## Prompts
+
+A prompt is an instruction you give again and again, such as a code review checklist or the way you want a meeting summed up. **Prompts**, in the sidebar or on the AI Memory page, lists them at `/memory/prompts`, with a filter by words, category and tag.
+
+- **New Prompt** opens an empty one. A prompt has a **Title**, a **Handle**, a **Description**, a **Category**, **Tags** and its **Text**.
+- The handle, such as `code-review`, is how agents and MCP clients call it: lower case letters and digits, with single hyphens between words, and unique. A new prompt's handle follows its title until you change it.
+- In the text, `{{name}}` marks a place that changes between uses, such as `{{file}}` or `{{ goal }}`: a letter or an underscore, then letters, digits or underscores, at most 20 different places. Everything else is handed over exactly as written.
+- **Try it**, beside the form, asks for each place and shows the filled text, which **Copy** puts on the clipboard.
+- **Save** writes a new version; a prompt changed elsewhere since you opened it is not overwritten. **Delete** removes a prompt for good; prompts have no trash.
+
+Prompts sit in the categories of memories, so a category with prompts in it cannot be deleted, and a key limited to some categories reaches only the prompts in them.
+
+The MCP server offers every prompt a key reaches as an MCP prompt, under its handle, with each place as an argument. Claude Code, for example, lists them as commands such as `/mcp__manifold__code-review` and asks for the places. Agents also get the tools `list_prompts`, `get_prompt`, which fills a prompt in, `save_prompt` and `update_prompt`. Prompts need the scopes `prompts:read` and `prompts:write`.
+
 ## Giving agents access
 
-An agent needs an API key with `memory:read` to read, and also `memory:write` to write. Create it under **Settings → API Keys**, see [MCP server](mcp.md).
+An agent needs an API key with `memory:read` to read memories, and also `memory:write` to write them; `prompts:read` and `prompts:write` do the same for prompts. Create it under **Settings → API Keys**, see [MCP server](mcp.md).
 
 With a memory scope chosen, the form also lists your categories under **Memory categories**. Leave them all unchecked for a key that reaches every memory. Check some, and the key reads and writes only the memories in those categories and their subcategories:
 
-- it does not see other memories in lists, the search, the context or by their id;
-- it must file every memory it writes in one of its categories, never without one;
+- it does not see other memories or prompts in lists, the search, the context, the MCP prompts or by their id;
+- it must file every memory and prompt it writes in one of its categories, never without one;
 - it sees only its categories in the list of categories.
 
 The list of keys shows such a key with **Memory limited to** and its categories. A limit is set when the key is created; for another limit, create another key.
@@ -64,6 +80,7 @@ The MCP server gives agents these tools, described in [MCP server](mcp.md#ai-mem
 - `get_memory_context`, the first call of a task: the pinned memories, the categories and the tags;
 - `search_memories`, `get_memory` and `list_memory_categories` to read;
 - `remember`, `update_memory`, `trash_memory` and `restore_memory` to write;
-- `list_memory_revisions` for the history.
+- `list_memory_revisions` for the history;
+- `list_prompts`, `get_prompt`, `save_prompt` and `update_prompt` for prompts, which are MCP prompts as well.
 
-The REST API has the same under `/api/v1/memories`, `/api/v1/memory-categories` and `/api/v1/memory/context`, with the text as Markdown and tags by name; see [REST API](api.md#ai-memory). Writes by agents are recorded in the audit log as `memory.create`, `memory.update`, `memory.trash` and `memory.restore`.
+The REST API has the same under `/api/v1/memories`, `/api/v1/memory-categories`, `/api/v1/memory/context` and `/api/v1/prompts`, with the text as Markdown and tags by name; see [REST API](api.md#ai-memory). Writes by agents are recorded in the audit log as `memory.create`, `memory.update`, `memory.trash` and `memory.restore`, and `prompt.create`, `prompt.update` and `prompt.delete`.

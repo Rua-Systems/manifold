@@ -25,6 +25,8 @@ const ALL_SCOPES = [
 	'map:write',
 	'memory:read',
 	'memory:write',
+	'prompts:read',
+	'prompts:write',
 	'services:read',
 	'services:write',
 	'vault:read',

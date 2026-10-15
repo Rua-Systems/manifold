@@ -9,6 +9,7 @@ import { file } from '$lib/server/db/schema';
 import { NotFoundError, ValidationError } from '$lib/server/errors';
 import { purgeUnreferencedFiles, storeUpload } from '$lib/server/files/files';
 import { receiveUploads } from '$lib/server/files/upload-stream';
+import { searchProviders } from '$lib/server/search';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
 	createFolder,
@@ -27,7 +28,6 @@ import {
 	renameFolder,
 	searchFiles
 } from './library.server';
-import { filesServerManifest } from './manifest.server';
 import { fileEntry, fileFolder } from './schema.server';
 
 const OWNER = ownerActor('owner-1');
@@ -234,7 +234,9 @@ describe('files', () => {
 
 		const hits = await searchFiles('annual', 5);
 		expect(hits.map((hit) => hit.id)).toEqual([report]);
-		const provided = await filesServerManifest.search?.search('annual', 5, null);
+		const provided = await searchProviders()
+			.find((provider) => provider.type === 'file')
+			?.search('annual', 5, null);
 		expect(provided?.[0]).toMatchObject({ type: 'file', href: `/files/view/${report}` });
 	});
 

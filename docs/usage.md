@@ -25,7 +25,7 @@ One table lists what each module keeps, in the order of the sidebar, followed by
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | **Services**     | **Services**                                                                                                             |
 | **Notes**        | **Notes**, **Note folders**, **Notes in the trash**, **Note revisions**, **Note tokens**, **Map features**, **Basemaps** |
-| **AI Memory**    | **Memories**, **Memory categories**, **Memories in the trash**, **Memory revisions**                                     |
+| **AI Memory**    | **Memories**, **Memory categories**, **Memories in the trash**, **Memory revisions**, **Prompts**                        |
 | **Files**        | **Folders**, **Files in the Files module**                                                                               |
 | **Data Sources** | **Data sources**                                                                                                         |
 | **Vault**        | **Vault entries**                                                                                                        |

@@ -4,6 +4,7 @@ import { getDb, type Transaction } from '$lib/server/db';
 import { ValidationError } from '$lib/server/errors';
 import { isUuid } from '$lib/utils/uuid';
 import { eq, inArray, sql, type SQL } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 import { categoryLabel, withSubcategories } from './categories';
 import { allMemoryCategories } from './categories.server';
 import { memory, memoryCategory, memoryKeyCategory } from './schema.server';
@@ -44,15 +45,23 @@ export async function memoryAccessFor(key: ApiKeyIdentity): Promise<MemoryAccess
 	return { all: false, categoryIds: [...reached] };
 }
 
-/** The condition on `memory` rows for this reach; undefined when it reaches every memory. */
-export function accessCondition(access: MemoryAccess): SQL | undefined {
+/**
+ * The condition on rows filed by this category column, such as a prompt's, for this reach;
+ * undefined when it reaches everything.
+ */
+export function accessConditionOn(column: PgColumn, access: MemoryAccess): SQL | undefined {
 	if (access.all) {
 		return undefined;
 	}
 	if (access.categoryIds.length === 0) {
 		return sql`false`;
 	}
-	return inArray(memory.categoryId, access.categoryIds);
+	return inArray(column, access.categoryIds);
+}
+
+/** The condition on `memory` rows for this reach; undefined when it reaches every memory. */
+export function accessCondition(access: MemoryAccess): SQL | undefined {
+	return accessConditionOn(memory.categoryId, access);
 }
 
 /** Whether a memory in this category, null for none, is within reach. */
