@@ -23,11 +23,11 @@ const searchTool = defineTool({
 	title: 'Search everything',
 	scope: null,
 	description:
-		"Searches the owner's notes, services, file names, data source names and vault entry names at once and returns the best hits first: type (note, service, file, data_source, secret), id, title, snippet and link. Only modules this key may read are searched. Use it to find a note's id before get_note or update_note.",
+		"Searches the owner's notes, memories, services, file names, data source names and vault entry names at once and returns the best hits first: type (note, memory, service, file, data_source, secret), id, title, snippet and link. Only modules this key may read are searched. Use it to find a note's id before get_note or update_note.",
 	input: z.object({
 		query: z.string().min(1).max(200).describe('Words to find.'),
 		types: z
-			.array(z.enum(['note', 'service', 'file', 'data_source', 'secret']))
+			.array(z.enum(['note', 'memory', 'service', 'file', 'data_source', 'secret']))
 			.optional()
 			.describe('Only these kinds of hits.'),
 		limit: z.number().int().min(1).max(SEARCH_LIMIT_MAX).optional()
@@ -36,6 +36,7 @@ const searchTool = defineTool({
 		const hits = await search(args.query, {
 			types: args.types,
 			scopes: context.key.scopes,
+			key: context.key,
 			limit: args.limit
 		});
 		return {

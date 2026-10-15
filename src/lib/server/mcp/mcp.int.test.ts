@@ -23,6 +23,8 @@ const ALL_SCOPES = [
 	'notes:write',
 	'map:read',
 	'map:write',
+	'memory:read',
+	'memory:write',
 	'services:read',
 	'services:write',
 	'vault:read',

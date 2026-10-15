@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import type { MemoryCategory } from '$lib/modules/memory/types';
 	import { readScopeFor, scopeGroups } from '$lib/modules/scopes';
 	import { m } from '$lib/paraglide/messages.js';
 	import { API_KEY_NAME_MAX_LENGTH } from '$lib/schemas/api-keys';
@@ -13,15 +14,22 @@
 		errors: FieldErrors;
 		/** Set when the owner could not use the dialog (no JavaScript). */
 		stepUpNeeded: boolean;
+		/** The categories a key with a memory scope can be limited to. */
+		memoryCategories: MemoryCategory[];
 	}
 
-	let { errors, stepUpNeeded }: Props = $props();
+	let { errors, stepUpNeeded, memoryCategories }: Props = $props();
 
 	const notifications = getNotifications();
 	const stepUp = getStepUp();
 	const groups = scopeGroups();
 
 	let selected = $state<string[]>([]);
+
+	const reachesMemory = $derived(selected.some((scope) => scope.startsWith('memory:')));
+	const topCategories = $derived(
+		memoryCategories.filter((category) => category.parentId === null)
+	);
 
 	/** Choosing a write scope chooses its read scope too; it can still be cleared by hand. */
 	function toggle(scopeId: string, checked: boolean): void {
@@ -86,6 +94,25 @@
 		{/each}
 	</fieldset>
 	<p class="error" id="apiKeyScopesError">{errors.scopes ?? ''}</p>
+	{#if reachesMemory && memoryCategories.length > 0}
+		<fieldset class="limits" aria-describedby="apiKeyMemoryHint apiKeyMemoryError">
+			<legend>{m.api_keys_memory_categories()}</legend>
+			<p class="hint" id="apiKeyMemoryHint">{m.api_keys_memory_categories_hint()}</p>
+			{#each topCategories as category (category.id)}
+				<label class="scope">
+					<input type="checkbox" name="memoryCategories" value={category.id} />
+					<span>{category.name}</span>
+				</label>
+				{#each memoryCategories.filter((child) => child.parentId === category.id) as child (child.id)}
+					<label class="scope sub">
+						<input type="checkbox" name="memoryCategories" value={child.id} />
+						<span>{category.name} / {child.name}</span>
+					</label>
+				{/each}
+			{/each}
+			<p class="error" id="apiKeyMemoryError">{errors.memoryCategories ?? ''}</p>
+		</fieldset>
+	{/if}
 	<div class="field">
 		<label for="apiKeyExpires">{m.api_keys_expires()}</label>
 		<input
@@ -215,6 +242,47 @@
 					font-size: 0.68rem;
 					color: clr.$textMutedColor;
 				}
+			}
+		}
+	}
+
+	.limits {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		margin: 0;
+		padding: 0.7rem 0.8rem;
+		border: 1px solid clr.$borderSubtleColor;
+		border-radius: vars.$radius;
+
+		> legend {
+			@include forms.fieldLabel;
+			padding: 0 0.3rem;
+		}
+
+		> .hint {
+			margin-bottom: 0.3rem;
+			font-size: 0.7rem;
+			color: clr.$textMutedColor;
+		}
+
+		> .scope {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			min-height: vars.$touchTarget;
+			font-size: 0.8rem;
+			color: clr.$textSecondaryColor;
+			cursor: pointer;
+
+			&.sub {
+				padding-left: 1.4rem;
+			}
+
+			> input {
+				width: 1.1rem;
+				height: 1.1rem;
+				accent-color: clr.$accentColor;
 			}
 		}
 	}

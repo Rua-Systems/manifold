@@ -1,3 +1,5 @@
+import { keyCategoryLabels, limitKeyToCategories } from '$lib/modules/memory/access.server';
+import { allMemoryCategories } from '$lib/modules/memory/categories.server';
 import { noteTokenSettingsActions } from '$lib/modules/notes/tokens.page.server';
 import { listNoteTokens } from '$lib/modules/notes/tokens.server';
 import { allScopeIds } from '$lib/modules/scopes';
@@ -14,7 +16,7 @@ import { ownerActor } from '$lib/server/actor';
 import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
 import { originOf, recordAudit } from '$lib/server/audit';
 import { getDb } from '$lib/server/db';
-import { NotFoundError } from '$lib/server/errors';
+import { NotFoundError, ValidationError } from '$lib/server/errors';
 import { requireUser } from '$lib/server/guard';
 import { isSteppedUp, stepUpRequired } from '$lib/server/step-up';
 import { isUuid } from '$lib/utils/uuid';
@@ -24,13 +26,23 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireUser(locals);
-	const [keys, copies, noteTokens] = await Promise.all([
+	const [keys, copies, noteTokens, memoryCategories, memoryLimits] = await Promise.all([
 		listApiKeys(),
 		apiKeysWithCopy(),
-		listNoteTokens()
+		listNoteTokens(),
+		allMemoryCategories(),
+		keyCategoryLabels()
 	]);
-	return { keys, copies, noteTokens };
+	return { keys, copies, noteTokens, memoryCategories, memoryLimits };
 };
+
+/** Memory categories only limit a key that may read or write memories. */
+function memoryLimitOf(data: FormData, scopes: string[]): string[] {
+	if (!scopes.some((scope) => scope.startsWith('memory:'))) {
+		return [];
+	}
+	return data.getAll('memoryCategories').filter((value) => typeof value === 'string');
+}
 
 /** A key with an expiry date works until the end of that day, UTC. */
 function expiryOf(date: string): Date | null {
@@ -75,27 +87,45 @@ export const actions = {
 			});
 		}
 
-		const { created, copy } = await getDb().transaction(async (tx) => {
-			const key = await createApiKey(
-				{ name: parsed.data.name, scopes: parsed.data.scopes, expiresAt },
-				tx
-			);
-			if (!parsed.data.vault) {
-				return { created: key, copy: null };
-			}
-			const stored = await storeApiKeyCopy(tx, {
-				apiKeyId: key.view.id,
-				keyName: key.view.name,
-				key: key.key,
-				scopes: key.view.scopes
+		const memoryCategories = memoryLimitOf(data, parsed.data.scopes);
+		let written;
+		try {
+			written = await getDb().transaction(async (tx) => {
+				const key = await createApiKey(
+					{ name: parsed.data.name, scopes: parsed.data.scopes, expiresAt },
+					tx
+				);
+				await limitKeyToCategories(tx, key.view.id, memoryCategories);
+				if (!parsed.data.vault) {
+					return { created: key, copy: null };
+				}
+				const stored = await storeApiKeyCopy(tx, {
+					apiKeyId: key.view.id,
+					keyName: key.view.name,
+					key: key.key,
+					scopes: key.view.scopes
+				});
+				return { created: key, copy: stored };
 			});
-			return { created: key, copy: stored };
-		});
+		} catch (cause) {
+			if (cause instanceof ValidationError) {
+				return fail(400, { form: 'create', errors: cause.fields, key: null });
+			}
+			throw cause;
+		}
+		const { created, copy } = written;
+		const metadata: Record<string, unknown> = {
+			name: created.view.name,
+			scopes: created.view.scopes
+		};
+		if (memoryCategories.length > 0) {
+			metadata.memoryCategories = memoryCategories;
+		}
 		await recordAudit({
 			actor: ownerActor(user.id),
 			action: 'api_key.create',
 			target: { type: 'api_key', id: created.view.id },
-			metadata: { name: created.view.name, scopes: created.view.scopes },
+			metadata,
 			origin: originOf(event)
 		});
 		if (copy !== null) {

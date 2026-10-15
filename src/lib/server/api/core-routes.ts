@@ -53,6 +53,7 @@ export const CORE_ROUTES: ApiRoute[] = [
 			const hits = await search(query.q, {
 				types: query.types,
 				scopes: key.scopes,
+				key,
 				limit: query.limit
 			});
 			return {

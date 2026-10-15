@@ -41,12 +41,12 @@
 		{#if newKey !== null}
 			<NewApiKey apiKey={newKey} {savedToVault} />
 		{/if}
-		<ApiKeyForm errors={createErrors} {stepUpNeeded} />
+		<ApiKeyForm errors={createErrors} {stepUpNeeded} memoryCategories={data.memoryCategories} />
 	</section>
 	<section class="section" aria-labelledby="apiKeyListHeading">
 		<h2 id="apiKeyListHeading">{m.api_keys_title()}</h2>
 		<p class="lead">{m.api_keys_lead()}</p>
-		<ApiKeyList keys={data.keys} copies={data.copies} />
+		<ApiKeyList keys={data.keys} copies={data.copies} memoryLimits={data.memoryLimits} />
 	</section>
 	<section class="section" aria-labelledby="noteTokenListHeading">
 		<h2 id="noteTokenListHeading">{m.note_tokens_section()}</h2>

@@ -1,15 +1,16 @@
 # Search and the command palette
 
-One search covers your notes, your services, the names of your files, the names of your data sources and the names of your vault entries. You reach it through the command palette, which also moves you between pages and runs common actions, and through a search page of its own.
+One search covers your notes, your memories, your services, the names of your files, the names of your data sources and the names of your vault entries. You reach it through the command palette, which also moves you between pages and runs common actions, and through a search page of its own.
 
 ## What is searched
 
-| Module   | What is searched                                               | Where a hit leads                |
-| -------- | -------------------------------------------------------------- | -------------------------------- |
-| Notes    | The title and the text of every note outside the trash         | The note                         |
-| Services | The alias and the address                                      | The service itself, in a new tab |
-| Files    | The name of every file, wherever it is kept                    | The page of the file             |
-| Vault    | The name and the service address, never the value or the notes | The Vault page                   |
+| Module    | What is searched                                               | Where a hit leads                |
+| --------- | -------------------------------------------------------------- | -------------------------------- |
+| Notes     | The title and the text of every note outside the trash         | The note                         |
+| AI Memory | The title and the text of every memory outside the trash       | The memory                       |
+| Services  | The alias and the address                                      | The service itself, in a new tab |
+| Files     | The name of every file, wherever it is kept                    | The page of the file             |
+| Vault     | The name and the service address, never the value or the notes | The Vault page                   |
 
 Pins, lines and polygons on the map have no text of their own; you find them through the notes they belong to. Notes in the trash are left out.
 
@@ -28,7 +29,7 @@ Services match when their alias or address contains what you typed or looks like
 - Words are not reduced to a stem, which treats Turkish and English text alike. In the text of a note, `kitap` finds "kitaplar" because it is the start of the word, but `books` does not find "book".
 - Only the first 200,000 characters of a note's text are searched.
 
-Hits of all modules are sorted together, best first. A title, alias or name that contains what you typed ranks near the top. Note hits come with a short passage of the text around the words you searched for.
+Hits of all modules are sorted together, best first. A title, alias or name that contains what you typed ranks near the top. Note and memory hits come with a short passage of the text around the words you searched for.
 
 ## The command palette
 
@@ -41,7 +42,7 @@ Press `Ctrl+K`, or `Cmd+K` on a Mac, on any page while you are signed in, or cho
 | **Services**       | Every service, with its address; choosing one opens it in a new tab                                                                                                    |
 | **Search results** | Hits of the search, from the second character you type on, and **All results for** what you typed                                                                      |
 
-Typing narrows the first three sections to entries whose text contains what you typed. From the second character on, the palette also asks the search, shortly after you stop typing, and lists up to ten hits under **Search results**, each with a short passage, an address or its kind (**Note**, **Service** or **Vault**). The last entry, **All results for** what you typed, opens the [search page](#the-search-page) with every hit. **Nothing matches.** means neither found anything.
+Typing narrows the first three sections to entries whose text contains what you typed. From the second character on, the palette also asks the search, shortly after you stop typing, and lists up to ten hits under **Search results**, each with a short passage, an address or its kind (**Note**, **Memory**, **Service**, **File**, **Data source** or **Vault**). The last entry, **All results for** what you typed, opens the [search page](#the-search-page) with every hit. **Nothing matches.** means neither found anything.
 
 **New Service** opens the Services page with its dialog open, and **New Note** starts a new note.
 
@@ -60,7 +61,7 @@ Typing highlights the first entry again. With a mouse, point at an entry to high
 
 ## The search page
 
-The page at `/search` runs the same search without the palette, and works without JavaScript. The palette's **All results for** entry opens it with what you typed. Enter your words and choose **Search**; the page lists up to 50 hits, each with its kind and its passage. The address keeps the query as `?q=`, and `types` limits the hits to some modules, for example `/search?q=ferry&types=note`. The types are `note`, `service` and `secret`.
+The page at `/search` runs the same search without the palette, and works without JavaScript. The palette's **All results for** entry opens it with what you typed. Enter your words and choose **Search**; the page lists up to 50 hits, each with its kind and its passage. The address keeps the query as `?q=`, and `types` limits the hits to some modules, for example `/search?q=ferry&types=note`. The types are `note`, `memory`, `service`, `file`, `data_source` and `secret`.
 
 ## Filtering notes
 

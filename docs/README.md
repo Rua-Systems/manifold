@@ -1,6 +1,6 @@
 # Manifold documentation
 
-Manifold is an open-source, self-hosted workspace for one person: the services you run, notes, notes on a map, your files, your data sources and a vault for passwords and keys, behind a single owner account. It runs as one container next to PostgreSQL with PostGIS, and shares your data with scripts and AI agents through a REST API and an MCP server.
+Manifold is an open-source, self-hosted workspace for one person: the services you run, notes, notes on a map, a memory shared with your AI agents, your files, your data sources and a vault for passwords and keys, behind a single owner account. It runs as one container next to PostgreSQL with PostGIS, and shares your data with scripts and AI agents through a REST API and an MCP server.
 
 ## Getting started
 
@@ -22,6 +22,7 @@ Manifold is an open-source, self-hosted workspace for one person: the services y
 - [Services](services.md): links to the services you run and the sidebar.
 - [Notes](notes.md): the editor, saving, conflicts, revisions, the trash and images.
 - [Map Notes](map-notes.md): pins, lines and polygons linked to notes.
+- [AI Memory](ai-memory.md): what you and your AI agents keep for each other, in categories and with tags, read and written through MCP.
 - [Files](files.md): every stored file, in folders, with previews of images, PDF, audio, video and text.
 - [Data Sources](data-sources.md): where your databases, APIs, buckets and links are, how to get in, and connection tests.
 - [Vault](vault.md): passwords and keys, revealing and copying values.
