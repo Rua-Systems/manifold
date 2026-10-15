@@ -1,5 +1,5 @@
 import { version } from '$app/environment';
-import { moduleMcpTools } from '$lib/modules/registry.server';
+import { moduleMcpPrompts, moduleMcpTools } from '$lib/modules/registry.server';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
@@ -11,7 +11,7 @@ import { consumeApiRequest } from '../rate-limit';
 import { search, SEARCH_LIMIT_MAX } from '../search';
 import { tagsMcpTools } from '../tags/mcp';
 import { usageMcpTools } from '../usage/mcp';
-import { defineTool, type McpContext, type McpTool } from './types';
+import { defineTool, type McpContext, type McpPrompt, type McpTool } from './types';
 import { log, logSecurityEvent } from '../log';
 
 // /mcp: the Model Context Protocol over streamable HTTP, stateless. Every request authenticates
@@ -23,11 +23,11 @@ const searchTool = defineTool({
 	title: 'Search everything',
 	scope: null,
 	description:
-		"Searches the owner's notes, memories, services, file names, data source names and vault entry names at once and returns the best hits first: type (note, memory, service, file, data_source, secret), id, title, snippet and link. Only modules this key may read are searched. Use it to find a note's id before get_note or update_note.",
+		"Searches the owner's notes, memories, prompts, services, file names, data source names and vault entry names at once and returns the best hits first: type (note, memory, prompt, service, file, data_source, secret), id, title, snippet and link. Only modules this key may read are searched. Use it to find a note's id before get_note or update_note.",
 	input: z.object({
 		query: z.string().min(1).max(200).describe('Words to find.'),
 		types: z
-			.array(z.enum(['note', 'memory', 'service', 'file', 'data_source', 'secret']))
+			.array(z.enum(['note', 'memory', 'prompt', 'service', 'file', 'data_source', 'secret']))
 			.optional()
 			.describe('Only these kinds of hits.'),
 		limit: z.number().int().min(1).max(SEARCH_LIMIT_MAX).optional()
@@ -59,8 +59,28 @@ function toolText(value: unknown): { type: 'text'; text: string } {
 	return { type: 'text', text: JSON.stringify(value, null, 2) };
 }
 
-function buildServer(context: McpContext): McpServer {
+/** Offers the prompts as MCP prompts; every place is an argument the client asks for. */
+function registerPrompts(server: McpServer, prompts: McpPrompt[]): void {
+	for (const prompt of prompts) {
+		const argsSchema = Object.fromEntries(
+			prompt.arguments.map((name) => [name, z.string().describe(name)])
+		);
+		server.registerPrompt(
+			prompt.name,
+			{ title: prompt.title, description: prompt.description, argsSchema },
+			(args: Record<string, string | undefined>) => ({
+				messages: [{ role: 'user', content: { type: 'text', text: prompt.render(args) } }]
+			})
+		);
+	}
+}
+
+async function buildServer(context: McpContext): Promise<McpServer> {
 	const server = new McpServer({ name: getEnv().ORGANIZATION_NAME, version });
+	// A note token reaches one note and nothing else, so it gets no prompts.
+	if (context.key.note === undefined) {
+		registerPrompts(server, await moduleMcpPrompts(context.key));
+	}
 	const allowed = mcpTools().filter(
 		(tool) =>
 			(tool.scope === null || context.key.scopes.includes(tool.scope)) &&
@@ -154,7 +174,7 @@ export async function handleMcpRequest(
 		});
 	}
 
-	const server = buildServer({ key, actor: credentialActor(key), origin: options.origin });
+	const server = await buildServer({ key, actor: credentialActor(key), origin: options.origin });
 	// Stateless: a transport and a server per request, answered as plain JSON.
 	const transport = new WebStandardStreamableHTTPServerTransport({
 		sessionIdGenerator: undefined,

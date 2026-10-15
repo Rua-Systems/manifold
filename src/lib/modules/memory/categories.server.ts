@@ -5,6 +5,7 @@ import { NotFoundError, ValidationError } from '$lib/server/errors';
 import { isUuid } from '$lib/utils/uuid';
 import { and, asc, count, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { memoryCategoryNameSchema } from './schemas';
+import { memoryPrompt } from './prompts/schema.server';
 import { memory, memoryCategory, memoryKeyCategory } from './schema.server';
 import type { MemoryCategory } from './types';
 
@@ -126,7 +127,8 @@ export async function renameMemoryCategory(id: string, name: string): Promise<Me
 }
 
 /**
- * Deletes an empty category: one with subcategories or memories outside the trash is refused, and
+ * Deletes an empty category: one with subcategories, prompts or memories outside the trash is
+ * refused, and
  * so is one an API key is limited to, since deleting it would change what the key reaches.
  * Memories in the trash that were in it lose their category.
  */
@@ -141,7 +143,7 @@ export async function deleteMemoryCategory(id: string): Promise<void> {
 				.from(memoryCategory)
 				.where(eq(memoryCategory.id, id))
 				.for('update');
-			const [[children], [live], [keys]] = await Promise.all([
+			const [[children], [live], [prompts], [keys]] = await Promise.all([
 				tx
 					.select({ total: count() })
 					.from(memoryCategory)
@@ -152,10 +154,14 @@ export async function deleteMemoryCategory(id: string): Promise<void> {
 					.where(and(eq(memory.categoryId, id), isNull(memory.deletedAt))),
 				tx
 					.select({ total: count() })
+					.from(memoryPrompt)
+					.where(eq(memoryPrompt.categoryId, id)),
+				tx
+					.select({ total: count() })
 					.from(memoryKeyCategory)
 					.where(eq(memoryKeyCategory.categoryId, id))
 			]);
-			if (children.total + live.total > 0) {
+			if (children.total + live.total + prompts.total > 0) {
 				throw new ValidationError({ category: m.memory_categories_error_not_empty() });
 			}
 			if (keys.total > 0) {

@@ -2,7 +2,8 @@ import type { CredentialProvider } from '$lib/server/api/credentials';
 import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
-import type { McpTool } from '$lib/server/mcp/types';
+import type { ApiKeyIdentity } from '$lib/server/api-keys';
+import type { McpPrompt, McpTool } from '$lib/server/mcp/types';
 import type { SearchProvider } from '$lib/server/search';
 import type { DashboardCard } from '$lib/types/dashboard';
 import type { FileUse } from '$lib/types/files';
@@ -20,10 +21,12 @@ export interface ServerModuleManifest {
 	housekeeping?: HousekeepingTask[];
 	/** REST routes under /api/v1. */
 	api?: ApiRoute[];
-	/** Answers the search and the command palette. */
-	search?: SearchProvider;
+	/** Answers the search and the command palette, with one provider per kind of hit. */
+	search?: SearchProvider | SearchProvider[];
 	/** Tools of the MCP server at /mcp. */
 	mcp?: McpTool[];
+	/** Prompts of the MCP server, for keys with `scope`, as the key reaches them. */
+	mcpPrompts?: { scope: string; list: (key: ApiKeyIdentity) => Promise<McpPrompt[]> };
 	/** What the module keeps, for the usage report: each kind of record, counted and sized. */
 	usage?: () => Promise<UsageItem[]>;
 	/** Tokens the module issues that authenticate on the API and MCP like API keys. */

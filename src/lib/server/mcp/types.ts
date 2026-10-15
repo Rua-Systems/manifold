@@ -35,6 +35,19 @@ export interface McpTool {
 	handler: (args: never, context: McpContext) => Promise<McpToolResult>;
 }
 
+/**
+ * An MCP prompt: a ready instruction that clients offer the user, such as a command in Claude
+ * Code. Its arguments are the places the user fills in; all of them are asked for.
+ */
+export interface McpPrompt {
+	/** The handle clients call it by, such as `code-review`. */
+	name: string;
+	title: string;
+	description: string;
+	arguments: string[];
+	render: (values: Record<string, string | undefined>) => string;
+}
+
 /** Declares a tool with its handler typed from its input schema. */
 export function defineTool<I extends z.ZodObject>(
 	tool: Omit<McpTool, 'input' | 'handler'> & {

@@ -125,10 +125,10 @@ async function tagsOf(ids: string[]): Promise<Map<string, Tag[]>> {
 }
 
 /**
- * Checks that a memory may go into this category: the category exists and is within the caller's
- * reach. A key limited to categories cannot leave a memory without one.
+ * Checks that a memory or a prompt may go into this category: the category exists and is within
+ * the caller's reach. A key limited to categories cannot leave one without a category.
  */
-async function requireCategoryFor(
+export async function requireCategoryFor(
 	categoryId: string | null,
 	access: MemoryAccess
 ): Promise<string | null> {

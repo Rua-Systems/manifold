@@ -1,6 +1,7 @@
 import type { ApiRoute } from '$lib/server/api/types';
 import type { FileReference } from '$lib/server/files/files';
-import type { McpTool } from '$lib/server/mcp/types';
+import type { ApiKeyIdentity } from '$lib/server/api-keys';
+import type { McpPrompt, McpTool } from '$lib/server/mcp/types';
 import type { HousekeepingTask } from '$lib/server/housekeeping';
 import type { DashboardCard } from '$lib/types/dashboard';
 import type { FileUse } from '$lib/types/files';
@@ -66,6 +67,19 @@ export function moduleApiRoutes(): ApiRoute[] {
 
 export function moduleMcpTools(): McpTool[] {
 	return SERVER_MODULES.flatMap((module) => module.mcp ?? []);
+}
+
+/** The MCP prompts every module offers this key, by the key's scopes and reach. */
+export async function moduleMcpPrompts(key: ApiKeyIdentity): Promise<McpPrompt[]> {
+	const lists = await Promise.all(
+		SERVER_MODULES.map((module) => {
+			if (module.mcpPrompts === undefined || !key.scopes.includes(module.mcpPrompts.scope)) {
+				return Promise.resolve([]);
+			}
+			return module.mcpPrompts.list(key);
+		})
+	);
+	return lists.flat();
 }
 
 /** The dashboard cards of every module that has some, in sidebar order. */

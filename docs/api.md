@@ -52,6 +52,8 @@ Each module has its own scopes, and the usage report has its own:
 | `map:write`           | **Change map features**                           | Adding, changing and deleting map features, and creating a note together with a feature. |
 | `memory:read`         | **Read memories**                                 | Reading memories, their revisions, the categories and the context of AI Memory.          |
 | `memory:write`        | **Change memories**                               | Writing, changing, trashing and restoring memories.                                      |
+| `prompts:read`        | **Read prompts**                                  | Listing, reading and filling in the prompts of AI Memory.                                |
+| `prompts:write`       | **Change prompts**                                | Saving, changing and deleting prompts.                                                   |
 | `vault:read`          | **Read vault names (never values)**               | Listing and reading the name, address and description of vault entries.                  |
 | `files:read`          | **Read files**                                    | Listing files and folders, reading their details and text, and downloading files.        |
 | `files:write`         | **Change files**                                  | Uploading files, renaming, moving and deleting them, and managing folders.               |
@@ -134,6 +136,12 @@ Always use an `https` address: a key sent over plain HTTP crosses the network in
 | `GET`    | `/api/v1/memories/{id}/revisions`                | `memory:read`    | A memory's revisions with their writers, newest first, paged.     |
 | `GET`    | `/api/v1/memories/{id}/revisions/{version}`      | `memory:read`    | One revision as Markdown.                                         |
 | `GET`    | `/api/v1/memory-categories`                      | `memory:read`    | The categories and subcategories within the key's reach.          |
+| `GET`    | `/api/v1/prompts`                                | `prompts:read`   | Prompts by title, paged; by words, category or tag.               |
+| `POST`   | `/api/v1/prompts`                                | `prompts:write`  | Save a prompt.                                                    |
+| `GET`    | `/api/v1/prompts/{id}`                           | `prompts:read`   | One prompt with its places.                                       |
+| `PATCH`  | `/api/v1/prompts/{id}`                           | `prompts:write`  | Change a prompt, based on the version you read.                   |
+| `DELETE` | `/api/v1/prompts/{id}`                           | `prompts:write`  | Delete a prompt.                                                  |
+| `POST`   | `/api/v1/prompts/{id}/render`                    | `prompts:read`   | Fill in a prompt's places.                                        |
 | `GET`    | `/api/v1/vault/secrets`                          | `vault:read`     | Vault entries by name, without their values, paged.               |
 | `GET`    | `/api/v1/vault/secrets/{id}`                     | `vault:read`     | One entry's name, address and description.                        |
 | `GET`    | `/api/v1/files`                                  | `files:read`     | Files, newest first, paged; by folder, owner, name, kind or use.  |
@@ -333,7 +341,9 @@ The routes of [AI Memory](ai-memory.md) take and answer the text as Markdown, an
 - `DELETE /api/v1/memories/{id}` moves the memory to the trash, and `POST /api/v1/memories/{id}/restore` brings it back. Only the owner deletes a memory for good, in the app.
 - Revisions name their writer: `actor_type` is `owner` or `api_key`, and `actor_name` the key's name while it exists.
 
-A key limited to some categories reaches only the memories in them: others answer `404`, lists and the search leave them out, and a write must name one of its categories in `category_id`. Writes are recorded as `memory.create`, `memory.update`, `memory.trash` and `memory.restore`.
+Prompts answer `id`, `name` (the handle), `title`, `description`, `body`, `variables` (the `{{name}}` places in order), `category_id`, `category`, `tags`, `version`, `created_at` and `updated_at`. `POST /api/v1/prompts` makes the handle from the title when `name` is left out. `PATCH` always needs `version`. `POST /api/v1/prompts/{id}/render` takes `arguments`, a value for each place, and answers the filled `text` and the places still `missing`.
+
+A key limited to some categories reaches only the memories and prompts in them: others answer `404`, lists and the search leave them out, and a write must name one of its categories in `category_id`. Writes are recorded as `memory.create`, `memory.update`, `memory.trash`, `memory.restore`, `prompt.create`, `prompt.update` and `prompt.delete`.
 
 ## Vault
 
