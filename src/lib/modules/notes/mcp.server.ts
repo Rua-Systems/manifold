@@ -3,9 +3,17 @@ import { defineTool, type McpTool } from '$lib/server/mcp/types';
 import { z } from 'zod';
 import { notesApiRoutes } from './api.server';
 
-// MCP tools for notes, running the /api/v1/notes handlers. Content goes both ways as Markdown.
+// MCP tools for notes, running the /api/v1/notes and /api/v1/note-folders handlers. Content goes
+// both ways as Markdown.
 
 const noteId = z.string().describe('The note id, a UUID as returned by list_notes.');
+
+const folderId = z.string().describe('The folder id, a UUID as returned by list_note_folders.');
+
+const targetFolder = z
+	.string()
+	.nullable()
+	.describe('A folder id from list_note_folders, or null for the top level.');
 
 /** Tools see Markdown only; the TipTap JSON would double every answer for nothing. */
 function withoutJson(body: unknown): unknown {
@@ -26,9 +34,14 @@ export const notesMcpTools: McpTool[] = [
 		title: 'List notes',
 		scope: 'notes:read',
 		description:
-			"Lists the owner's notes, most recently updated first. Pass `query` to keep only notes whose title or text match it (words match by their start, titles also by similarity). Returns `data` (id, title, excerpt, version, updated_at, deleted_at) and `next_cursor`; pass that as `cursor` for the next page. Notes in the trash are left out unless `include_trashed` is true. Needs the notes:read scope.",
+			"Lists the owner's notes, most recently updated first. Pass `query` to keep only notes whose title or text match it (words match by their start, titles also by similarity), and `folder_id` to keep only the notes directly in one folder (`root` for the top level). Returns `data` (id, title, excerpt, version, folder_id, updated_at, deleted_at) and `next_cursor`; pass that as `cursor` for the next page. Notes in the trash are left out unless `include_trashed` is true. Needs the notes:read scope.",
 		input: z.object({
 			query: z.string().max(200).optional().describe('Words to find in titles and text.'),
+			folder_id: z
+				.string()
+				.max(40)
+				.optional()
+				.describe('A folder id from list_note_folders, or `root` for the top level.'),
 			include_trashed: z.boolean().optional().describe('Also list notes in the trash.'),
 			limit: z
 				.number()
@@ -45,6 +58,7 @@ export const notesMcpTools: McpTool[] = [
 				{
 					query: {
 						q: args.query,
+						folder_id: args.folder_id,
 						include_trashed:
 							args.include_trashed === undefined
 								? undefined
@@ -80,10 +94,11 @@ export const notesMcpTools: McpTool[] = [
 		title: 'Create a note',
 		scope: 'notes:write',
 		description:
-			'Creates a note from a title and Markdown content. Headings, lists, task lists, quotes, code blocks, links (http, https, mailto), tables and images already stored on this instance are kept; raw HTML is dropped. Returns the new note with its id and version 1. Needs the notes:write scope.',
+			'Creates a note from a title and Markdown content, in a folder with `folder_id`, else at the top level. Headings, lists, task lists, quotes, code blocks, links (http, https, mailto), tables and images already stored on this instance are kept; raw HTML is dropped. Returns the new note with its id and version 1. Needs the notes:write scope.',
 		input: z.object({
 			title: z.string().max(200).optional().describe('The title; may be empty.'),
-			markdown: z.string().optional().describe('The content as Markdown.')
+			markdown: z.string().optional().describe('The content as Markdown.'),
+			folder_id: targetFolder.optional()
 		}),
 		audit: 'note.create',
 		handler: async (args, context) => {
@@ -167,6 +182,90 @@ export const notesMcpTools: McpTool[] = [
 				context
 			);
 			return { data: result.body };
+		}
+	}),
+	defineTool({
+		name: 'move_note',
+		title: 'Move a note into a folder',
+		scope: 'notes:write',
+		description:
+			'Moves a note that is not in the trash into a folder, or to the top level with `folder_id` null. A move changes neither the version nor the content. Needs the notes:write scope.',
+		input: z.object({ id: noteId, folder_id: targetFolder }),
+		audit: 'note.update',
+		handler: async (args, context) => {
+			const result = await callRoute(
+				route('PATCH', '/notes/{id}'),
+				{ params: { id: args.id }, body: { folder_id: args.folder_id } },
+				context
+			);
+			return { data: withoutJson(result.body), target: result.target };
+		}
+	}),
+	defineTool({
+		name: 'list_note_folders',
+		title: 'List folders of notes',
+		scope: 'notes:read',
+		description:
+			'Lists every folder of notes by name: id, name and parent_id (null at the top level), which together give the tree. Needs the notes:read scope.',
+		input: z.object({}),
+		handler: async (_args, context) => {
+			const result = await callRoute(route('GET', '/note-folders'), {}, context);
+			return { data: result.body };
+		}
+	}),
+	defineTool({
+		name: 'create_note_folder',
+		title: 'Create a folder of notes',
+		scope: 'notes:write',
+		description:
+			'Creates a folder of notes inside `parent_id`, or at the top level without it. A name has up to 100 characters, no slashes, and is unique within its folder whatever its case. Needs the notes:write scope.',
+		input: z.object({
+			name: z.string().max(100).describe('The folder name.'),
+			parent_id: targetFolder.optional()
+		}),
+		audit: 'note_folder.create',
+		handler: async (args, context) => {
+			const result = await callRoute(route('POST', '/note-folders'), { body: args }, context);
+			return { data: result.body, target: result.target };
+		}
+	}),
+	defineTool({
+		name: 'update_note_folder',
+		title: 'Rename or move a folder of notes',
+		scope: 'notes:write',
+		description:
+			'Renames a folder of notes, moves it into another folder (or to the top level with `parent_id` null), or both. A folder cannot move into itself or a folder inside it. Needs the notes:write scope.',
+		input: z.object({
+			id: folderId,
+			name: z.string().max(100).optional().describe('A new name.'),
+			parent_id: targetFolder.optional()
+		}),
+		audit: 'note_folder.update',
+		handler: async (args, context) => {
+			const { id, ...body } = args;
+			const result = await callRoute(
+				route('PATCH', '/note-folders/{id}'),
+				{ params: { id }, body },
+				context
+			);
+			return { data: result.body, target: result.target };
+		}
+	}),
+	defineTool({
+		name: 'delete_note_folder',
+		title: 'Delete an empty folder of notes',
+		scope: 'notes:write',
+		description:
+			'Deletes a folder of notes that holds no folders and no notes outside the trash; anything else fails. Notes in the trash that were in it move to the top level. Needs the notes:write scope.',
+		input: z.object({ id: folderId }),
+		audit: 'note_folder.delete',
+		handler: async (args, context) => {
+			const result = await callRoute(
+				route('DELETE', '/note-folders/{id}'),
+				{ params: args },
+				context
+			);
+			return { data: { id: args.id, deleted: true }, target: result.target };
 		}
 	})
 ];

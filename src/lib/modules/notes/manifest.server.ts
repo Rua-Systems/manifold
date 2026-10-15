@@ -1,6 +1,5 @@
 import { m } from '$lib/paraglide/messages.js';
 import { getEnv } from '$lib/server/env';
-import type { SidebarItem } from '../types';
 import type { ServerModuleManifest } from '../types.server';
 import { notesApiRoutes } from './api.server';
 import { mapApiRoutes } from './map/api.server';
@@ -15,21 +14,31 @@ import {
 	searchNotes
 } from './notes.server';
 import { notesDashboard } from './dashboard.server';
+import { allNoteFolders, noteCountsByFolder } from './folders.server';
+import { noteTree } from './sidebar';
 import { noteTokenCredentials } from './tokens.server';
 import { notesUsage } from './usage.server';
 
-const SIDEBAR_NOTE_LIMIT = 100;
+/** Notes read for the sidebar's tree, newest first; the filter searches beyond them. */
+const SIDEBAR_NOTE_LIMIT = 500;
+const SIDEBAR_TOP_LEVEL_NOTES = 100;
+const SIDEBAR_FOLDER_NOTES = 25;
 
 export const notesServerManifest: ServerModuleManifest = {
 	id: NOTES_MODULE,
 	sidebarGroup: async () => {
-		const notes = await listNotes({ limit: SIDEBAR_NOTE_LIMIT });
-		const noteItems: SidebarItem[] = notes.map((item) => ({
-			id: item.id,
-			label: item.title || m.notes_untitled(),
-			link: { kind: 'internal', path: `/notes/${item.id}` },
-			filterable: true
-		}));
+		const [folders, notes, counts] = await Promise.all([
+			allNoteFolders(),
+			listNotes({ limit: SIDEBAR_NOTE_LIMIT }),
+			noteCountsByFolder()
+		]);
+		const noteItems = noteTree(
+			folders,
+			notes,
+			counts,
+			{ topLevel: SIDEBAR_TOP_LEVEL_NOTES, perFolder: SIDEBAR_FOLDER_NOTES },
+			{ untitled: m.notes_untitled(), more: (folder) => m.notes_sidebar_more({ folder }) }
+		);
 
 		return {
 			filterLabel: m.notes_filter(),

@@ -13,6 +13,7 @@
 	import { deLocalizeHref } from '$lib/paraglide/runtime.js';
 	import { getPalette } from '$lib/state/palette.svelte';
 	import { getSidebarState } from '$lib/state/sidebar.svelte';
+	import FolderIcon from '@lucide/svelte/icons/folder';
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import Search from '@lucide/svelte/icons/search';
 	import type { SearchHit } from '$lib/types/search';
@@ -78,10 +79,11 @@
 		const query = (filters[module.id] ?? '').trim().toLocaleLowerCase();
 		let middle = items.slice(first, last + 1);
 		if (query.length > 0) {
-			// Until the search answers, the listed items are narrowed right away.
+			// Until the search answers, the listed items are narrowed right away, out of their
+			// folders.
 			middle =
 				searched[module.id] ??
-				middle.filter((item) => item.label.toLocaleLowerCase().includes(query));
+				leaves(middle).filter((item) => item.label.toLocaleLowerCase().includes(query));
 		}
 		return {
 			before: items.slice(0, first),
@@ -130,6 +132,38 @@
 		return currentPath === module.href || currentPath.startsWith(`${module.href}/`);
 	}
 
+	/** The filterable items that are not folders, from inside the folders too. */
+	function leaves(items: SidebarItem[]): SidebarItem[] {
+		return items.flatMap((item) => {
+			if (item.children !== undefined) {
+				return leaves(item.children);
+			}
+			if (item.filterable === true) {
+				return [item];
+			}
+			return [];
+		});
+	}
+
+	/** Folders opened or closed by hand; the others are open when they hold the current page. */
+	let folderOpen = $state<Record<string, boolean>>({});
+
+	function holdsCurrent(item: SidebarItem): boolean {
+		return (item.children ?? []).some(
+			(child) =>
+				(child.link.kind === 'internal' && child.link.path === currentPath) ||
+				holdsCurrent(child)
+		);
+	}
+
+	function isFolderOpen(item: SidebarItem): boolean {
+		return folderOpen[item.id] ?? holdsCurrent(item);
+	}
+
+	function toggleFolder(item: SidebarItem): void {
+		folderOpen = { ...folderOpen, [item.id]: !isFolderOpen(item) };
+	}
+
 	function onGroupClick(event: MouseEvent, module: ModuleManifest): void {
 		if (module.sidebar !== 'group') {
 			return;
@@ -160,6 +194,48 @@
 <svelte:window onkeydown={onWindowKeydown} />
 
 {#snippet childItem(item: SidebarItem)}
+	{#if item.children !== undefined}
+		{@render folderItem(item, item.children)}
+	{:else}
+		{@render linkItem(item)}
+	{/if}
+{/snippet}
+
+{#snippet folderItem(item: SidebarItem, children: SidebarItem[])}
+	{@const open = isFolderOpen(item)}
+	<li class="folder">
+		<div class="folder-row">
+			<button
+				type="button"
+				class="folder-toggle"
+				class:open
+				aria-expanded={open}
+				aria-label={open
+					? m.sidebar_folder_collapse({ folder: item.label })
+					: m.sidebar_folder_expand({ folder: item.label })}
+				onclick={() => toggleFolder(item)}
+			>
+				<ChevronIcon size="0.8rem" />
+			</button>
+			<a
+				class="child"
+				href={localizedHref(item.link.kind === 'internal' ? item.link.path : '/notes')}
+			>
+				<span class="item-icon" aria-hidden="true"><FolderIcon size="0.95rem" /></span>
+				<span class="child-label">{item.label}</span>
+			</a>
+		</div>
+		{#if open}
+			<ul class="nested">
+				{#each children as child (child.id)}
+					{@render childItem(child)}
+				{/each}
+			</ul>
+		{/if}
+	</li>
+{/snippet}
+
+{#snippet linkItem(item: SidebarItem)}
 	<li>
 		{#if item.link.kind === 'external'}
 			<a
@@ -617,6 +693,57 @@
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
+	}
+
+	// A folder of a group: a toggle beside its link, and its items indented below it.
+	.folder-row {
+		display: flex;
+		align-items: center;
+
+		> .child {
+			flex: 1;
+			min-width: 0;
+			padding-left: 0.2rem;
+		}
+	}
+
+	.folder-toggle {
+		display: flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		width: 1.6rem;
+		height: vars.$touchTarget;
+		margin-left: -0.4rem;
+		padding: 0;
+		color: clr.$textMutedColor;
+		background: none;
+		border: 0;
+		border-radius: vars.$radius;
+		cursor: pointer;
+
+		&:hover {
+			color: clr.$accentColor;
+		}
+
+		> :global(svg) {
+			transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+		}
+
+		&.open > :global(svg) {
+			transform: rotate(90deg);
+		}
+	}
+
+	.nested {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		margin: 0;
+		padding: 0 0 0 0.9rem;
+		list-style: none;
+		border-left: 1px solid clr.$borderSubtleColor;
+		margin-left: 0.4rem;
 	}
 
 	.filter > input {

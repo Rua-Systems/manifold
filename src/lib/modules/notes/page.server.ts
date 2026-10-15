@@ -28,13 +28,15 @@ import {
 	trashNote,
 	updateNote
 } from './notes.server';
+import { folderValue, moveNoteAction } from './folders.page.server';
+import { allNoteFolders, getNoteFolder, listNoteFolders, noteFolderPath } from './folders.server';
 import { mapConfig } from './map/basemaps.server';
 import { listNoteFeatures } from './map/features.server';
 import { NEW_NOTE_ID } from './paths';
 import { noteVersionSchema } from './schemas';
 import { createNoteTokenAction } from './tokens.page.server';
 import { listNoteTokens } from './tokens.server';
-import type { AttachedFile, NotePreview, NoteSummary } from './types';
+import type { AttachedFile, NoteFolderPath, NotePreview, NoteSummary } from './types';
 import { isUploadLimited } from '$lib/server/rate-limit';
 
 /** The notes page shows at most this many search hits. */
@@ -75,21 +77,44 @@ function notFoundAsPage(cause: unknown): never {
 	throw cause;
 }
 
-/** Newest first; with `?q=` the search's hits instead, best first. */
+/**
+ * A folder of notes, or the top level: its folders by name and its notes, newest first. With
+ * `?q=` the search's hits from every folder instead, best first.
+ */
 export async function loadNotesList(url: URL) {
 	const query = (url.searchParams.get('q') ?? '').trim().slice(0, 200);
-	if (query.length === 0) {
-		return { notes: await listNotes(), query };
+	const allFolders = await allNoteFolders();
+	if (query.length > 0) {
+		const hits = await searchNotes(query, SEARCH_PAGE_LIMIT);
+		const notes: NoteSummary[] = hits.map((hit) => ({
+			id: hit.id,
+			title: hit.title,
+			excerpt: hit.snippet,
+			folderId: hit.folderId,
+			updatedAt: hit.updatedAt,
+			deletedAt: null
+		}));
+		return { notes, query, folder: null, path: [], folders: [], allFolders };
 	}
-	const hits = await searchNotes(query, SEARCH_PAGE_LIMIT);
-	const notes: NoteSummary[] = hits.map((hit) => ({
-		id: hit.id,
-		title: hit.title,
-		excerpt: hit.snippet,
-		updatedAt: hit.updatedAt,
-		deletedAt: null
-	}));
-	return { notes, query };
+
+	const folderId = folderValue(url.searchParams.get('folder'));
+	if (folderId === null) {
+		const [notes, folders] = await Promise.all([
+			listNotes({ folderId: null }),
+			listNoteFolders(null)
+		]);
+		return { notes, query, folder: null, path: [], folders, allFolders };
+	}
+	const folder = await getNoteFolder(folderId);
+	if (folder === null) {
+		error(404, { message: m.folders_error_missing() });
+	}
+	const [notes, folders, path] = await Promise.all([
+		listNotes({ folderId: folder.id }),
+		listNoteFolders(folder.id),
+		noteFolderPath(folder.id)
+	]);
+	return { notes, query, folder, path, folders, allFolders };
 }
 
 export async function loadTrash() {
@@ -117,8 +142,18 @@ export async function loadNoteData(id: string, revision: number | null) {
  * turns into a saved one, so the editor is not rebuilt under the owner's cursor.
  */
 export async function loadNotePage(id: string, url: URL) {
-	const shared = { map: await mapConfig(), uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES };
+	const shared = {
+		map: await mapConfig(),
+		uploadMaxBytes: getEnv().UPLOAD_MAX_BYTES,
+		folders: await allNoteFolders()
+	};
 	if (id === NEW_NOTE_ID) {
+		// A note started inside a folder is created there; an unknown folder means the top level.
+		const folder = await getNoteFolder(url.searchParams.get('folder') ?? '');
+		let path: NoteFolderPath = [];
+		if (folder !== null) {
+			path = await noteFolderPath(folder.id);
+		}
 		return {
 			note: null,
 			revisions: [],
@@ -126,6 +161,8 @@ export async function loadNotePage(id: string, url: URL) {
 			features: [],
 			tokens: [],
 			draftKey: crypto.randomUUID(),
+			newNoteFolderId: folder?.id ?? null,
+			path,
 			...shared
 		};
 	}
@@ -134,8 +171,20 @@ export async function loadNotePage(id: string, url: URL) {
 	const revision = url.searchParams.has('revision') && requested.success ? requested.data : null;
 	try {
 		const data = await loadNoteData(id, revision);
-		const [features, tokens] = await Promise.all([listNoteFeatures(id), listNoteTokens(id)]);
-		return { ...data, features, tokens, draftKey: id, ...shared };
+		const [features, tokens, path] = await Promise.all([
+			listNoteFeatures(id),
+			listNoteTokens(id),
+			noteFolderPath(data.note.folderId ?? '')
+		]);
+		return {
+			...data,
+			features,
+			tokens,
+			draftKey: id,
+			newNoteFolderId: null,
+			path,
+			...shared
+		};
 	} catch (cause) {
 		return notFoundAsPage(cause);
 	}
@@ -205,7 +254,8 @@ export const noteActions = {
 			const created = await createNote(
 				{
 					title: textValue(data, 'title'),
-					content: parseContent(textValue(data, 'content'))
+					content: parseContent(textValue(data, 'content')),
+					folderId: folderValue(textValue(data, 'folder'))
 				},
 				ownerActor(user.id)
 			);
@@ -240,16 +290,24 @@ export const noteActions = {
 
 	upload: uploadFile,
 
+	moveNote: moveNoteAction,
+
 	createToken: createNoteTokenAction,
 
 	trash: async ({ locals, params }: RequestEvent) => {
 		requireUser(locals);
+		// Back to the folder the note was in.
+		let back = '/notes';
 		try {
-			await trashNote(params.id ?? '');
+			const found = await getNote(params.id ?? '');
+			await trashNote(found.id);
+			if (found.folderId !== null) {
+				back = `/notes?folder=${found.folderId}`;
+			}
 		} catch (cause) {
 			notFoundAsPage(cause);
 		}
-		redirect(303, localizeHref('/notes'));
+		redirect(303, localizeHref(back));
 	},
 
 	restoreRevision: async ({ request, locals, params }: RequestEvent) => {

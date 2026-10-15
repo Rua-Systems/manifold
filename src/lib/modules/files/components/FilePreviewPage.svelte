@@ -14,9 +14,9 @@
 	import { kindLabel } from '../labels';
 	import { fileNameSchema } from '../schemas';
 	import type { FileDetail, FilesAction, FilesFormState, FolderSummary } from '../types';
-	import MoveForm from './MoveForm.svelte';
+	import MoveForm from '$lib/components/Folders/MoveForm.svelte';
 	import ImageEditor from './ImageEditor.svelte';
-	import NameForm from './NameForm.svelte';
+	import NameForm from '$lib/components/Folders/NameForm.svelte';
 	import PdfViewer from './PdfViewer.svelte';
 	import TextPreview from './TextPreview.svelte';
 
@@ -215,6 +215,7 @@
 			action="?/moveFile"
 			fields={{ id: file.id }}
 			{folders}
+			rootLabel={m.files_title()}
 			current={file.folderId}
 			moving={null}
 			serverMessage={serverMessage('moveFile')}

@@ -3,7 +3,7 @@ import { createNote, trashNote } from '$lib/modules/notes/notes.server';
 import { allScopeIds } from '$lib/modules/scopes';
 import { mapBasemap, note } from '$lib/modules/notes/schema.server';
 import { service } from '$lib/modules/services/schema.server';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '../api-keys';
 import { getDb } from '../db';
@@ -612,6 +612,115 @@ describe('the Files module', () => {
 			'Moved',
 			'Outer'
 		]);
+	});
+});
+
+describe('note folders', () => {
+	beforeEach(async () => {
+		await getDb().execute(sql`truncate note_folder cascade`);
+	});
+
+	it('creates, renames, moves and deletes folders', async () => {
+		const created = await call('POST', '/note-folders', everything, { name: 'Work' });
+		expect(created.status).toBe(201);
+		const work = await json(created);
+		expect(work).toMatchObject({ name: 'Work', parent_id: null });
+
+		const inner = await json(
+			await call('POST', '/note-folders', everything, { name: 'Atlas', parent_id: work.id })
+		);
+		expect(inner.parent_id).toBe(work.id);
+		const taken = await call('POST', '/note-folders', everything, { name: 'work' });
+		expect(taken.status).toBe(422);
+
+		const renamed = await call('PATCH', `/note-folders/${String(inner.id)}`, everything, {
+			name: 'Maps',
+			parent_id: null
+		});
+		expect(renamed.status).toBe(200);
+		expect(await json(renamed)).toMatchObject({ name: 'Maps', parent_id: null });
+		const intoItself = await call('PATCH', `/note-folders/${String(work.id)}`, everything, {
+			parent_id: work.id
+		});
+		expect(intoItself.status).toBe(422);
+
+		const list = await json(await call('GET', '/note-folders', everything));
+		expect((list.data as { name: string }[]).map((item) => item.name)).toEqual([
+			'Maps',
+			'Work'
+		]);
+		expect((await call('DELETE', `/note-folders/${String(work.id)}`, everything)).status).toBe(
+			204
+		);
+		expect((await call('DELETE', `/note-folders/${String(work.id)}`, everything)).status).toBe(
+			404
+		);
+		expect(
+			(await call('PATCH', `/note-folders/${crypto.randomUUID()}`, everything, { name: 'X' }))
+				.status
+		).toBe(404);
+	});
+
+	it('creates notes in folders, lists them by folder and moves them', async () => {
+		const work = await json(await call('POST', '/note-folders', everything, { name: 'Work' }));
+		const inFolder = await json(
+			await call('POST', '/notes', everything, { title: 'Plan', folder_id: work.id })
+		);
+		expect(inFolder.folder_id).toBe(work.id);
+		const atTop = await json(await call('POST', '/notes', everything, { title: 'Loose' }));
+		expect(atTop.folder_id).toBeNull();
+		const lost = await call('POST', '/notes', everything, {
+			title: 'Lost',
+			folder_id: crypto.randomUUID()
+		});
+		expect(lost.status).toBe(422);
+
+		const inWork = await json(
+			await call('GET', `/notes?folder_id=${String(work.id)}`, everything)
+		);
+		expect((inWork.data as { id: string }[]).map((item) => item.id)).toEqual([inFolder.id]);
+		const top = await json(await call('GET', '/notes?folder_id=root', everything));
+		expect((top.data as { id: string; folder_id: string | null }[])[0]).toMatchObject({
+			id: atTop.id,
+			folder_id: null
+		});
+
+		// A move alone needs no version and makes none.
+		const moved = await call('PATCH', `/notes/${String(atTop.id)}`, everything, {
+			folder_id: work.id
+		});
+		expect(moved.status).toBe(200);
+		expect(await json(moved)).toMatchObject({ folder_id: work.id, version: 1 });
+
+		// A change of content still needs its version, and can move at the same time.
+		const missingVersion = await call('PATCH', `/notes/${String(atTop.id)}`, everything, {
+			title: 'No version'
+		});
+		expect(missingVersion.status).toBe(400);
+		const both = await call('PATCH', `/notes/${String(atTop.id)}`, everything, {
+			version: 1,
+			title: 'Loose no more',
+			folder_id: null
+		});
+		expect(await json(both)).toMatchObject({
+			title: 'Loose no more',
+			version: 2,
+			folder_id: null
+		});
+		expect((await call('PATCH', `/notes/${String(atTop.id)}`, everything, {})).status).toBe(
+			400
+		);
+
+		const notEmpty = await call('DELETE', `/note-folders/${String(work.id)}`, everything);
+		expect(notEmpty.status).toBe(422);
+	});
+
+	it('needs the notes scopes', async () => {
+		const reader = await keyWith(['notes:read']);
+		expect((await call('GET', '/note-folders', reader)).status).toBe(200);
+		expect((await call('POST', '/note-folders', reader, { name: 'No' })).status).toBe(403);
+		const other = await keyWith(['files:read']);
+		expect((await call('GET', '/note-folders', other)).status).toBe(403);
 	});
 });
 

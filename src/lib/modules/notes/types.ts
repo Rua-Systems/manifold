@@ -1,9 +1,12 @@
+import type { FolderOption } from '$lib/types/folders';
 import type { NoteContent } from './content';
 
 export interface NoteSummary {
 	id: string;
 	title: string;
 	excerpt: string;
+	/** Null for a note at the top level. */
+	folderId: string | null;
 	updatedAt: Date;
 	deletedAt: Date | null;
 }
@@ -13,6 +16,8 @@ export interface NoteDetail {
 	title: string;
 	content: NoteContent;
 	version: number;
+	/** Null for a note at the top level. */
+	folderId: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 	deletedAt: Date | null;
@@ -91,3 +96,19 @@ export interface SharedNote {
 	access: NoteTokenAccess;
 	expiresAt: Date;
 }
+
+/** A folder of notes with what it holds directly. */
+export interface NoteFolderSummary extends FolderOption {
+	/** Notes outside the trash directly in the folder. */
+	noteCount: number;
+	folderCount: number;
+}
+
+/** One step of the path from the top level down to a folder. */
+export interface NoteFolderCrumb {
+	id: string;
+	name: string;
+}
+
+/** Where a note or a folder sits: the folders from the top down, empty at the top level. */
+export type NoteFolderPath = NoteFolderCrumb[];
