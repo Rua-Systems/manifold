@@ -25,7 +25,13 @@ describe('module registry', () => {
 	it('names scopes after their module', () => {
 		for (const module of MODULES) {
 			for (const scope of module.scopes) {
-				expect(scope.id).toMatch(/^[a-z]+:(read|write)$/);
+				// Next to read and write, a module may keep the reading of its secrets apart.
+				expect(scope.id).toMatch(/^[a-z]+:(read|write|secrets)$/);
+				let access = 'read';
+				if (scope.id.endsWith(':write')) {
+					access = 'write';
+				}
+				expect(scope.access, scope.id).toBe(access);
 			}
 		}
 	});

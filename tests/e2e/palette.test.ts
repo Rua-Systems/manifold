@@ -159,9 +159,7 @@ test('the sidebar and the notes page filters find text inside notes', async ({
 test('the palette leads to the data settings', async ({ page, isMobile }) => {
 	await openPalette(page, isMobile);
 	await input(page).fill('data');
-	await palette(page)
-		.getByRole('option', { name: /Go to Data/ })
-		.click();
+	await palette(page).getByRole('option', { name: 'Go to Data', exact: true }).click();
 	await expect(page).toHaveURL(/\/settings\/data$/);
 });
 

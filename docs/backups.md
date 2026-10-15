@@ -33,10 +33,10 @@ The archive is not encrypted. It holds your notes, the password hash, the sessio
 
 No environment variable is ever part of an archive. Two of them decide whether a restored backup is fully usable:
 
-| Variable             | Needed for                              | Without the value from the time of the backup                                                                                                                            |
-| -------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ENCRYPTION_KEY`     | The values in the vault.                | The vault lists its entries, but no value can be revealed or copied. Nothing can recover them.                                                                           |
-| `BETTER_AUTH_SECRET` | Sessions and two factor authentication. | Every browser is signed out, and the authenticator codes and backup codes of the backup do not work. Run `owner:disable-2fa` and set two factor authentication up again. |
+| Variable             | Needed for                                               | Without the value from the time of the backup                                                                                                                            |
+| -------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ENCRYPTION_KEY`     | The values in the vault and the secrets of data sources. | The vault and the data sources list their entries, but no secret can be revealed, copied or used for a connection test. Nothing can recover them.                        |
+| `BETTER_AUTH_SECRET` | Sessions and two factor authentication.                  | Every browser is signed out, and the authenticator codes and backup codes of the backup do not work. Run `owner:disable-2fa` and set two factor authentication up again. |
 
 Keep copies of `ENCRYPTION_KEY` and `BETTER_AUTH_SECRET` somewhere safe on their own, for example in a password manager, and not next to the archives. The rest of your configuration, such as `ORIGIN` and the SMTP settings, is not in the archive either: keep a copy of `.env`.
 
