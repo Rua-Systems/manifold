@@ -2,7 +2,7 @@
 
 **Data Sources** keeps where your databases, APIs, buckets and links are, and how to get in: the address, the user, the passwords and tokens, a link to the documentation and your own notes. Passwords and tokens are encrypted like vault values. Manifold can test each connection for you, and scripts and AI agents can read the sources through the REST API and the MCP server, the secrets only with a scope of their own.
 
-**Data Sources** in the sidebar opens the list. Each source shows its type, where it points and the outcome of its last connection test.
+**Data Sources** in the sidebar opens the list. Each source shows its type, where it points and the outcome of its last connection test. The field above the list narrows it by words in the name, the notes or the settings, and the menu beside it by type. **New Data Source** is also in the command palette.
 
 ## Types
 
@@ -15,7 +15,7 @@
 | **HTTP API**         | Base address, path for the test, authentication (none, bearer token, a token in a header, user name and password) | Token or password                     |
 | **Link or CDN**      | Address, authentication (none or bearer token)                                                                    | Token                                 |
 
-Every source also has a **Name**, unique whatever its case, **Notes** for anything worth knowing, such as how to connect when there is no documentation, and a **Documentation** link.
+Every source also has a **Name** of up to 100 characters, unique whatever its case, **Notes** of up to 5,000 characters for anything worth knowing, such as how to connect when there is no documentation, and a **Documentation** link.
 
 ## Adding and changing a source
 
@@ -27,7 +27,7 @@ Every source also has a **Name**, unique whatever its case, **Notes** for anythi
 
 ## TLS
 
-For PostgreSQL and MySQL, **TLS** is **Off**, **Encrypted, certificate not checked**, or **Encrypted, certificate checked**, where the server's certificate must be valid for its host name. Redis has a **TLS** switch, which always checks the certificate.
+For PostgreSQL and MySQL, **TLS** is **Off**, **Encrypted, certificate not checked**, or **Encrypted, certificate checked**, where the server's certificate must be valid for its host name. For MySQL the certificate chain is checked, but not the host name. Redis has a **TLS** switch, which always checks the certificate.
 
 ## SSH tunnels
 
@@ -49,9 +49,9 @@ Nothing is written to the source. A test follows no redirects and gives up after
 
 ## Secrets
 
-Secrets stay hidden on the page. **Reveal the secrets** shows them, and the **Connection URL** with the password in it, for 30 seconds; the copy buttons put one of them on the clipboard without showing it. Both ask you to confirm your identity if you have not in the last ten minutes, and every reveal and copy is recorded in the audit log. The connection URL takes the form your tools take, such as `postgresql://user:password@host:5432/database?sslmode=require`; S3 has none, since its clients take the keys and the bucket.
+Secrets stay hidden on the page. **Reveal the secrets** shows them, and the **Connection URL** with the password in it, for 30 seconds; the copy buttons put one of them on the clipboard without showing it. Both ask you to confirm your identity if you have not in the last ten minutes, and every reveal and copy is recorded in the audit log as `data_source.reveal` or `data_source.copy`. An edit that sets or removes a secret is recorded as `data_source.update_secrets`, and the rest as `data_source.create`, `data_source.update`, `data_source.delete` and `data_source.test`. The connection URL takes the form your tools take, such as `postgresql://user:password@host:5432/database?sslmode=require`; S3 has none, since its clients take the keys and the bucket.
 
-Secrets are encrypted with AES-256-GCM under `ENCRYPTION_KEY`, like vault values, so `node cli.js vault:rotate-key` encrypts them again together with the vault, see [Operations](operations.md#rotating-the-vault-key). Without `ENCRYPTION_KEY` a restored backup cannot open them.
+Secrets are encrypted with AES-256-GCM under `ENCRYPTION_KEY`, like vault values, so `node cli.js vault:rotate-key` encrypts them again together with the vault, see [Operations](operations.md#rotating-the-vault-key). Without `ENCRYPTION_KEY` a restored backup cannot open them. With another `ENCRYPTION_KEY` than the one that wrote them, the Data Sources pages and the API and MCP reads of sources fail; the search still finds them by name.
 
 ## Through the API and MCP
 

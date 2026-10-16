@@ -1,6 +1,6 @@
 # Usage report
 
-**Settings → Usage** shows what Manifold keeps and the resources it uses: how many notes, revisions, map features, services and vault entries there are and how much space they take, the uploaded files, the database and its tables, the disk that holds the uploads, and the running server. Open it from the settings tabs or with **Go to Usage** in the command palette.
+**Settings → Usage** shows what Manifold keeps and the resources it uses: how many notes, revisions, map features, memories, prompts, services, files, data sources and vault entries there are and how much space they take, the uploaded files, the database and its tables, the disk that holds the uploads, and the running server. Open it from the settings tabs or with **Go to Usage** in the command palette.
 
 The report is measured when the page loads; nothing is collected in the background or kept between visits. **Measure Again** measures once more without leaving the page, and the line above it says when the report was measured, in UTC. Scripts and agents read the same report through the REST API and MCP, see [Through the API and MCP](#through-the-api-and-mcp).
 
@@ -31,13 +31,13 @@ One table lists what each module keeps, in the order of the sidebar, followed by
 | **Vault**        | **Vault entries**                                                                                                        |
 | **System**       | **Audit log events**, **API keys**, **Sessions**                                                                         |
 
-**Count** is the number of records, and **Size** the space their data takes as the database stores it: long texts such as the content of a note are stored compressed and counted compressed, and indexes are left out. A bar under each size compares it with the largest row of the table. Images in notes and service icons are uploaded files, which the next section counts.
+**Count** is the number of records, and **Size** the space their data takes as the database stores it: long texts such as the content of a note are stored compressed and counted compressed, and indexes are left out. A bar under each size compares it with the largest row of the table. Images and attached files in notes and service icons are uploaded files, which the next section counts.
 
 Revisions are often the largest row: each note keeps its whole history, see [Notes](notes.md). Emptying the trash removes trashed notes with their revisions, and the audit log shrinks as its retention removes old events, see [Your account](account.md).
 
 ## Uploaded files
 
-The files table lists the uploads by the module that owns them, largest first: **Files** for the files uploaded on the Files page, **Notes** for images in notes, **Services** for service icons, and **Uploaded through the API** for files uploaded with `POST /api/v1/files` that no note or service uses yet. A file nothing uses is deleted by the daily housekeeping once it is a day old, see [Operations](operations.md); files on the Files page stay until you delete them, see [Files](files.md).
+The files table lists the uploads by the module that owns them, largest first: **Files** for the files uploaded on the Files page, **Notes** for images and attached files in notes, **Services** for service icons, and **Uploaded through the API** for files uploaded with `POST /api/v1/files` without a folder, whether a note or a service uses them or not. A file nothing uses is deleted by the daily housekeeping once it is a day old, see [Operations](operations.md); files on the Files page stay until you delete them, see [Files](files.md).
 
 The sizes here come from the database's records of the files, the readout under [Overview](#overview) from the files on disk.
 
@@ -99,6 +99,7 @@ The database table lists every table of Manifold's schema, largest first, with i
 
 - The example is shortened: `content` holds a group for every module and `system`, and `database.tables` every table.
 - `id` of a group is a module id or `system`, and `id` of an item names the kind of record, such as `notes.trash`. Both stay the same across versions; `label` is English text for display, so scripts should go by `id`.
+- `owner` of a file group is a module id, or `api` for files uploaded through the REST API without a folder.
 - `disk_bytes` and `disk_free_bytes` are `null` where the system cannot tell.
 - The report contains counts and sizes only, never the content of a record or a vault value.
 
