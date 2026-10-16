@@ -55,8 +55,13 @@ npm run dev
 src/
   hooks.server.ts          startup and the request pipeline: sessions, origin check, body limits, headers
   routes/
-    (app)/                 signed-in pages: services, notes, map, memory, files, data sources, vault, search, settings, step-up
-    login/                 sign-in, forgot-password/ and logout/
+    (app)/                 signed-in pages: dashboard, services, notes, map, memory, files, data sources, vault, search, settings, sidebar, step-up
+    login/                 sign-in
+    forgot-password/       the password reset
+    logout/                sign-out
+    shared/                shared notes opened with a note token
+    theme/                 the theme form
+    dev/mail/              mail previews, development only
     api/v1/                the REST API, one route that hands every request to the router
     mcp/                   the MCP server
     files/                 uploaded files
@@ -82,7 +87,7 @@ docker/                    the container health check and the development databa
 docs/                      this documentation
 ```
 
-The app's own pages talk to the server through `load` functions and form actions. `+server.ts` endpoints exist only for outside callers: `/api/v1`, `/mcp`, `/healthz`, `/files/<id>` and the export download. Widgets that save or read on their own, such as the note editor, the map and the command palette, call form actions with `fetch` and `deserialize`.
+The app's own pages talk to the server through `load` functions and form actions. `+server.ts` endpoints exist only for outside callers: `/api/v1`, `/mcp`, `/healthz`, `/files/<id>` and the export download, and, in development only, `/dev/mail/<template>`. Widgets that save or read on their own, such as the note editor, the map and the command palette, call form actions with `fetch` and `deserialize`.
 
 Better Auth runs only on the server. Its HTTP handler is not mounted; pages call `auth.api.*` from form actions and hooks.
 
@@ -103,9 +108,9 @@ Every feature is a module under `src/lib/modules/<id>/`: `services`, `notes` (wi
 A module has two manifests:
 
 - `manifest.ts` is safe for the browser: `id`, `label`, `icon`, `href`, the sidebar `position` and kind (`link` or `group`), its API `scopes` and optional palette `commands`.
-- `manifest.server.ts` holds the server half: the sidebar group contents, the file references that keep uploads alive, housekeeping tasks, API routes, MCP tools and the search provider.
+- `manifest.server.ts` holds the server half: the sidebar group contents, the file references that keep uploads alive and the file uses shown on the Files page, housekeeping tasks, API routes, MCP tools and prompts, the search providers, usage report items, dashboard cards and extra credentials such as note tokens.
 
-The sidebar, the command palette, the scope list, the OpenAPI document, the API router, the MCP tools and the search are all built from the registry in `src/lib/modules/registry.ts` and `registry.server.ts`. Adding a module never touches them.
+The sidebar, the command palette, the scope list, the OpenAPI document, the API router, the MCP tools and prompts, the search, the dashboard and the usage report are all built from the registry in `src/lib/modules/registry.ts` and `registry.server.ts`. Adding a module never touches them.
 
 ### Adding a module
 
@@ -196,11 +201,11 @@ Dependabot proposes updates for npm packages, GitHub Actions and the Docker base
 
 ## Releasing
 
-1. Open a pull request that sets the new version with `npm version <version> --no-git-tag-version`, adds its section to `CHANGELOG.md`, and updates the version in the examples of `docs/installation.md` and `docs/deployment.md`.
+1. Open a pull request that sets the new version with `npm version <version> --no-git-tag-version`, adds its section to `CHANGELOG.md`, and updates the version in the examples of `docs/installation.md`, `docs/deployment.md`, `docs/configuration.md`, `docs/operations.md` and `.env.example`.
 2. Merge it once continuous integration passes.
 3. Publish a GitHub release with the tag `v<version>` on the merge commit and the notes from the changelog.
 
-Publishing the release starts `.github/workflows/release.yml`. It builds the image from the tagged commit for `linux/amd64` and `linux/arm64`, each on a native runner of its architecture, combines both into one multi-platform image, pushes it to `ghcr.io/<owner>/manifold` as `<version>`, `<major>.<minor>` and `latest`, with the owner in lower case (`ghcr.io/rua-systems/manifold`), and attaches a signed build provenance attestation when the repository is public; outside GitHub Enterprise Cloud, GitHub keeps no attestations for private repositories. Its last job calls the Coolify deploy webhook when the repository secrets `COOLIFY_WEBHOOK` and `COOLIFY_TOKEN` are set, see [Deployment](deployment.md). To build the image of an existing tag again, run the workflow by hand under **Actions → Release image** with that tag.
+Publishing the release starts `.github/workflows/release.yml`. It builds the image from the tagged commit for `linux/amd64` and `linux/arm64`, each on a native runner of its architecture, combines both into one multi-platform image, pushes it to `ghcr.io/<owner>/manifold` as `<version>`, `<major>.<minor>` and `latest`, with the owner in lower case (`ghcr.io/rua-systems/manifold`), and attaches a signed build provenance attestation when the repository is public; outside GitHub Enterprise Cloud, GitHub keeps no attestations for private repositories. Its last job calls the Coolify deploy webhook when the repository secrets `COOLIFY_WEBHOOK` and `COOLIFY_TOKEN` are set, see [Deployment](deployment.md). To build the image of an existing tag again, run the workflow by hand under **Actions → Release image** with that tag. A manual run tags the image as `latest` and as its minor line as well, and calls the Coolify webhook, so rebuild only the newest release this way.
 
 ## Branch rules
 

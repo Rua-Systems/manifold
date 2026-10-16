@@ -8,7 +8,7 @@
 [![CI](https://github.com/Rua-Systems/manifold/actions/workflows/ci.yml/badge.svg)](https://github.com/Rua-Systems/manifold/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-Manifold is an open-source, self-hosted workspace for one person. It keeps the links to the services you run, your notes, notes pinned to places on a map and your passwords and keys behind a single owner account, and it lets your scripts and AI agents work with them through a REST API and an MCP server. It runs as one container next to a PostgreSQL database with PostGIS.
+Manifold is an open-source, self-hosted workspace for one person. It keeps the links to the services you run, your notes, notes pinned to places on a map, a memory shared with your AI agents, your files, your data sources and your passwords and keys behind a single owner account, and it lets your scripts and AI agents work with them through a REST API and an MCP server. It runs as one container next to a PostgreSQL database with PostGIS.
 
 Manifold is developed by [Rua Systems](https://rua.systems).
 
@@ -19,15 +19,16 @@ Manifold is developed by [Rua Systems](https://rua.systems).
 - **Services:** links to the services you run, with icons and an order you choose; they also fill the sidebar.
 - **Notes:** a rich text editor with headings, lists, task lists, quotes, code blocks, links, tables and images, automatic saving, conflict handling between tabs and devices, a revision history with restore, and a trash.
 - **Map Notes:** pins, lines and polygons on an OpenLayers map, each linked to a note, with the note editor next to the map.
+- **AI Memory:** what you and your AI agents keep for each other, in categories and with tags, and reusable prompts that MCP clients offer as commands.
 - **Files:** every file kept in Manifold in one place, in folders of your own: upload any type, preview images, PDF, audio, video and text, and see which notes and services use a file.
 - **Data Sources:** where your PostgreSQL, MySQL and Redis databases, S3 buckets, HTTP APIs and links are, with their passwords and tokens encrypted, SSH tunnels and connection tests. Agents read them through MCP, the secrets only with a scope of their own.
 - **Vault:** passwords and keys encrypted with AES-256-GCM, revealed or copied only after you confirm your identity.
-- **Search and command palette:** one search over notes, services, file names and vault names, and a palette on Ctrl+K or Cmd+K for pages, actions and results.
+- **Search and command palette:** one search over notes, memories, prompts, services, file names, data sources and vault names, and a palette on Ctrl+K or Cmd+K for pages, actions and results.
 
 ### Integrations
 
 - A REST API under `/api/v1` with API keys scoped per module, cursor paging, per-key rate limits and an OpenAPI 3.1 description.
-- An MCP server at `/mcp` on the same keys, so AI agents such as Claude Code can search, read and write your notes, services and map features.
+- An MCP server at `/mcp` on the same keys, so AI agents such as Claude Code can search, read and write your notes, memories, prompts, services and map features, and read your files, data sources and vault names.
 
 ### Security and operations
 
@@ -63,7 +64,7 @@ The documentation lives in [docs/](docs/README.md).
 
 - **Getting started**: [Concepts](docs/getting-started.md), [Installation](docs/installation.md) and [Configuration](docs/configuration.md).
 - **Deployment and operations**: [Deployment](docs/deployment.md) behind Caddy, Nginx or Coolify, [Operations](docs/operations.md) with the command line, recovery and key rotation, [Backups and restores](docs/backups.md), and [Email](docs/email.md).
-- **Using Manifold**: [Your account](docs/account.md), [Services](docs/services.md), [Notes](docs/notes.md), [Map Notes](docs/map-notes.md), [Files](docs/files.md), [Data Sources](docs/data-sources.md), [Vault](docs/vault.md) and [Search and the command palette](docs/search.md).
+- **Using Manifold**: [Dashboard](docs/dashboard.md), [Your account](docs/account.md), [Services](docs/services.md), [Notes](docs/notes.md), [Map Notes](docs/map-notes.md), [AI Memory](docs/ai-memory.md), [Files](docs/files.md), [Data Sources](docs/data-sources.md), [Vault](docs/vault.md), [Search and the command palette](docs/search.md) and the [Usage report](docs/usage.md).
 - **Integrations**: the [REST API](docs/api.md) and the [MCP server](docs/mcp.md).
 - **Reference**: [Security](docs/security.md), [Troubleshooting](docs/troubleshooting.md), [Development](docs/development.md) and the [Decisions](docs/decisions.md) behind the design.
 

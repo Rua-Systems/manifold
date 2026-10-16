@@ -4,8 +4,8 @@ Notes are rich text documents with headings, lists, tables, code and images. The
 
 ## Finding your notes
 
-- **The sidebar**: the **Notes** group lists **Map Notes**, **New Note**, a filter, your folders, up to 100 of the most recently changed notes outside folders, and **Show all**. A folder opens and closes with the arrow beside it and lists its folders and up to 25 of its newest notes; when it holds more, **More in** leads to its page. The folder of the note you are reading opens by itself.
-- **The Notes page**: **Show all**, or **Go to Notes** in the command palette, opens `/notes` with your folders and the notes outside folders, most recently changed first, each note with the beginning of its text and when it was last updated. **Trash**, **New Folder** and **New Note** sit at the top. See [Folders](#folders).
+- **The sidebar**: the **Notes** group lists **Map Notes**, **New Note**, a filter, your folders, up to 100 of the most recently changed notes outside folders, taken from your 500 most recently changed notes, and **Show all**. A folder opens and closes with the arrow beside it and lists its folders and up to 25 of its newest notes; when it holds more, **More in** leads to its page. The folder of the note you are reading opens by itself.
+- **The Notes page**: **Show all**, or **Go to Notes** in the command palette, opens `/notes` with your folders and the notes outside folders, most recently changed first, each note with the beginning of its text and when it was last updated. A folder lists up to 1,000 notes; the filter reaches the rest. **Trash**, **New Folder** and **New Note** sit at the top. See [Folders](#folders).
 - **The search**: the command palette and the search page find notes by words in their title and text; see [Search and the command palette](search.md).
 
 Both filters, **Filter notes** in the sidebar and on the Notes page, use the rules of the search, so they find words inside notes and not only in titles. The sidebar filter narrows the listed notes as you type and then shows up to ten matches from the search, which also finds notes beyond the hundred it lists. The filter on the Notes page searches every folder, updates the list shortly after you stop typing and shows up to 100 matches, best first; the address keeps the filter as `?q=`, so a filtered list can be bookmarked.
@@ -47,7 +47,7 @@ The toolbar above the text holds every kind of content a note can have. Hover ov
 | Formatting    | **Bold** (`Ctrl+B`), **Italic** (`Ctrl+I`), **Strikethrough** (`Ctrl+Shift+S`) and **Inline code** (`Ctrl+E`) |
 | Lists         | **Bulleted list**, **Numbered list** and **Task list**                                                        |
 | Blocks        | **Quote**, **Code block**, **Divider** and **Insert table**                                                   |
-| Insert        | **Link** and **Insert image**                                                                                 |
+| Insert        | **Link**, **Insert image**, **Attach file** and **Insert from Files**                                         |
 
 - **Task lists** have a checkbox per item, and items can be nested.
 - **Code blocks** are highlighted. The **Code language** menu above a block sets its language from a list of common ones; while it shows **Plain text**, the language is guessed from the code. **Copy code** copies the block.
@@ -64,7 +64,7 @@ Any other file goes into a note the same way: **Attach file** in the toolbar, pa
 
 While you read a note, a file link opens the file's page in **Files**, with its preview; `Ctrl`-clicking it opens the file itself in a new tab. On a [shared note](#sharing-a-note), the link opens or downloads the file for the visitor, and a PDF is downloaded.
 
-- PNG, JPEG, WebP and GIF images of up to 10 MB, or `UPLOAD_MAX_BYTES` when it is smaller, are accepted. The format is recognised from the content of the file, never from its name. SVG is not accepted in notes.
+- PNG, JPEG, WebP and GIF images of up to 10 MB, or `UPLOAD_MAX_BYTES` when it is smaller, are accepted. The format is recognised from the content of the file, never from its name. SVG is never shown as an image in a note: an SVG file added like any other file becomes a link.
 - Every image must be uploaded to Manifold. A note that shows an image from another site cannot be saved and reports **Images must be uploaded to this instance.**
 - Images and files are served only to you while you are signed in, to API keys with the `files:read` scope, and to the note tokens of the notes that show them.
 - A file stays stored as long as the note or any version in its history shows it, so restoring an old version brings its images and links back, and [Files](files.md) will not delete it meanwhile. Once nothing shows a file uploaded in a note any more, the daily housekeeping deletes it, at the earliest a day after it was uploaded; a file kept in Files stays.
@@ -136,4 +136,4 @@ The token sits after the `#` of the link, a part browsers never send to a server
 
 ## Through the API and MCP
 
-API keys with `notes:read` read notes, their folders and their history; keys with `notes:write` create and change notes and folders, move notes between folders, move them to the trash and back, and restore versions. Neither can delete a note for good. A note token works as a key for its own note alone: it reads the note, and with **Read and edit** it changes it, but it never sees or changes folders, see [Note tokens](api.md#note-tokens). Scripts and agents can send and receive notes as Markdown; [REST API](api.md) and [MCP server](mcp.md) describe how.
+API keys with `notes:read` read notes, their folders and their history; keys with `notes:write` create and change notes and folders, move notes between folders, move them to the trash and back, and restore versions. Neither can delete a note for good. A note token works as a key for its own note alone: it reads the note, and with **Read and edit** it changes it, but it never sees or changes folders, see [Note tokens](api.md#note-tokens). Scripts and agents can send and receive notes as Markdown; [REST API](api.md) and [MCP server](mcp.md) describe how. Reading a single version and restoring one are REST only; through MCP an agent lists the history with `list_note_revisions`.

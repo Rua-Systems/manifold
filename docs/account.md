@@ -64,14 +64,15 @@ A backup code replaces the app's code once, when the app is not at hand. While t
 
 Some actions ask for your password again, even though you are signed in. This protects the account if someone gets hold of an unlocked device.
 
-| Action                                       | Where                   |
-| -------------------------------------------- | ----------------------- |
-| Changing your email address or your password | **Settings → Profile**  |
-| Creating an API key                          | **Settings → API Keys** |
-| Creating a note token                        | **Share** on a note     |
-| Downloading the export                       | **Settings → Data**     |
-| Revealing, copying or changing a vault value | **Vault**               |
-| Ending one or all other sessions             | **Settings → Security** |
+| Action                                                      | Where                   |
+| ----------------------------------------------------------- | ----------------------- |
+| Changing your email address or your password                | **Settings → Profile**  |
+| Creating an API key                                         | **Settings → API Keys** |
+| Creating a note token                                       | **Share** on a note     |
+| Downloading the export                                      | **Settings → Data**     |
+| Revealing, copying or changing a vault value                | **Vault**               |
+| Revealing, copying or changing the secrets of a data source | **Data Sources**        |
+| Ending one or all other sessions                            | **Settings → Security** |
 
 The dialog **Confirm Your Identity** asks for your **Password**, and for an **Authenticator code** when two factor authentication is on; a backup code is not accepted here. Choose **Confirm**, and the action you started continues by itself. Closing the dialog cancels the action.
 
@@ -86,7 +87,7 @@ Turning off two factor authentication and creating new backup codes ask for the 
 
 ## Sessions
 
-**Settings → Security → Sessions** lists every browser that is signed in, most recently active first. Each entry shows the browser and operating system, the **IP** address, when it **Signed in** and when it was **Last active**; **This session** marks the browser you are using.
+**Settings → Security → Sessions** lists every browser that is signed in, most recently active first. Each entry shows the browser and operating system, the **IP** address, when it **Signed in** and when it was **Last active**; **This session** marks the browser you are using. **Last active** is accurate to about a day, because a session is extended at most once a day.
 
 - **Sign Out** next to another session ends it, after you confirm your identity. That browser is sent to the sign in page with its next request.
 - **Sign Out All Other Sessions** ends every session but yours, after you confirm your identity. It appears when there are others.
@@ -99,7 +100,7 @@ A session ends after seven days without use, and 30 days after its sign in at th
 
 - **Display Name** and **Username**, saved with **Save**. The display name has up to 100 characters and appears in the account menu. The username is what you sign in with: 3 to 32 lowercase letters, digits, dots, underscores or hyphens.
 - **Email**, saved with **Change Email**. The address is used for signing in, for codes and for notices. The change applies at once, without a confirmation mail, and asks you to confirm your identity first.
-- **Current Password**, **New Password** and **Confirm Password**, saved with **Change Password**. A password has 8 to 128 characters; common passwords, and passwords that contain `manifold`, the organization name, your username or your email address, are refused. The change asks you to confirm your identity, checks the current password, signs out your other sessions and, when mail is set up, mails you a notice.
+- **Current Password**, **New Password** and **Confirm Password**, saved with **Change Password**. A password has 8 to 128 characters; common passwords, and passwords that contain `manifold`, the organization name or one of its words, your username, or your email address or its part before the `@`, are refused; words shorter than four characters are not checked. The change asks you to confirm your identity, checks the current password, signs out your other sessions and, when mail is set up, mails you a notice.
 
 ## Preferences
 
@@ -121,17 +122,18 @@ Other choices belong to the address or to the browser:
 
 **Settings → Security → Audit Log** records who did what and from where. It is meant for noticing anything you did not do.
 
-| Area        | Recorded actions                                                                                                           |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Signing in  | Sign ins, failed sign ins, sign outs, confirmations of your identity and failed ones, password resets                      |
-| Account     | Email and password changes, two factor authentication turned on or off, new backup codes, sessions signed out              |
-| API keys    | Keys created, revoked and deleted                                                                                          |
-| Note tokens | Tokens created, revoked and deleted, and every change saved through a shared note's page                                   |
-| Vault       | Entries added, changed, deleted, values changed, revealed and copied, key rotations                                        |
-| API and MCP | Every write through the REST API or the MCP server, such as `note.update` or `service.create`; MCP writes carry `via: mcp` |
-| Data        | The export, and backups, restores and migrations run from the command line                                                 |
+| Area         | Recorded actions                                                                                                                                                      |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signing in   | Sign ins, failed sign ins, sign outs, confirmations of your identity and failed ones, password resets and failed reset codes, sessions that reached their maximum age |
+| Account      | Email and password changes, two factor authentication turned on or off, new backup codes, sessions signed out                                                         |
+| API keys     | Keys created, revoked and deleted                                                                                                                                     |
+| Note tokens  | Tokens created, revoked and deleted, and every change saved through a shared note's page                                                                              |
+| Vault        | Entries added, changed, deleted, values changed, revealed and copied, key rotations                                                                                   |
+| Data Sources | Sources added, changed, deleted and tested, secrets changed, revealed and copied                                                                                      |
+| API and MCP  | Every write through the REST API or the MCP server, such as `note.update` or `service.create`; MCP writes carry `via: mcp`                                            |
+| Data         | The export, and backups, restores and migrations run from the command line                                                                                            |
 
-Changes you make to notes, map geometries and services in the app itself are not recorded; the same changes through the API or MCP are. No event ever holds a password, a code, a key or a vault value.
+Changes you make in the app itself to notes, map geometries, services, memories, prompts, files, folders, tags and basemaps are not recorded; the same changes through the API or MCP are. Vault and data source changes are recorded either way. No event ever holds a password, a code, a key or a vault value.
 
 The table shows the **Time** in UTC, the **Actor**, the **Action**, **Details** such as the target of the action, and the **Origin**, which is the IP address and the browser. The filters above it narrow the list:
 

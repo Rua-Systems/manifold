@@ -22,7 +22,7 @@ Manifold is an open-source, self-hosted workspace for one person: the services y
 - [Services](services.md): links to the services you run and the sidebar.
 - [Notes](notes.md): the editor, saving, conflicts, revisions, the trash and images.
 - [Map Notes](map-notes.md): pins, lines and polygons linked to notes.
-- [AI Memory](ai-memory.md): what you and your AI agents keep for each other, in categories and with tags, read and written through MCP.
+- [AI Memory](ai-memory.md): what you and your AI agents keep for each other, in categories and with tags, and your saved prompts, read and written through MCP and the REST API.
 - [Files](files.md): every stored file, in folders, with previews of images, PDF, audio, video and text.
 - [Data Sources](data-sources.md): where your databases, APIs, buckets and links are, how to get in, and connection tests.
 - [Vault](vault.md): passwords and keys, revealing and copying values.
@@ -37,6 +37,7 @@ Manifold is an open-source, self-hosted workspace for one person: the services y
 ## Reference
 
 - [Security](security.md) summarizes how Manifold protects the account and the data.
+- [Security review](SECURITY-REVIEW.md) lists every OWASP ASVS 5.0 level 1 and 2 requirement and how Manifold meets it.
 - [Troubleshooting](troubleshooting.md) collects common problems and their fixes.
 - [Development](development.md) is for people who want to change Manifold itself.
 - [Decisions](decisions.md) records the choices made while building Manifold, with the reason for each.

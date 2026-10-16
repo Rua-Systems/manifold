@@ -253,7 +253,7 @@ The app must be reachable only through the proxy. Otherwise a client could choos
 
 Manifold sets its own security headers on every response, the static files of the build included: its server entry adds them before anything else, and the app completes them for the responses it renders:
 
-- `Content-Security-Policy`: on pages, scripts, fonts and connections only from Manifold itself, styles from Manifold itself and inline, images also from `data:`, `blob:` and any `https` address for the map tiles, no framing, no plugins, no change of the base address, and forms that submit only to Manifold. Every other response gets a policy that allows nothing.
+- `Content-Security-Policy`: on pages, scripts, fonts and connections only from Manifold itself, styles from Manifold itself and inline, images also from `data:`, `blob:` and any `https` address for the map tiles, no framing, no plugins, no change of the base address, and forms that submit only to Manifold. Uploaded files get a sandboxed policy that allows only inline styles, and every other response gets a policy that allows nothing.
 - `X-Frame-Options: DENY`.
 - `X-Content-Type-Options: nosniff`.
 - `Referrer-Policy: strict-origin-when-cross-origin`.
