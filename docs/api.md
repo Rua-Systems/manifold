@@ -1,13 +1,13 @@
 # REST API
 
-The REST API under `/api/v1` gives scripts and other applications access to your services, notes, map features, uploaded files, the names in your vault and the usage report. It speaks JSON with snake_case field names, authenticates every request with an API key and is described in OpenAPI 3.1 at `/api/v1/openapi.json`. AI agents use the same keys through the [MCP server](mcp.md).
+The REST API under `/api/v1` gives scripts and other applications access to your services, notes and their folders, map features and basemaps, AI Memory and its prompts, uploaded files, data sources, the global tags, the names in your vault and the usage report. It speaks JSON with snake_case field names, authenticates every request with an API key and is described in OpenAPI 3.1 at `/api/v1/openapi.json`. AI agents use the same keys through the [MCP server](mcp.md).
 
 ## API keys
 
 Every request needs an API key. You create keys under **Settings → API Keys**:
 
 1. Enter a **Name** that tells where the key is used, for example the name of a script. It may have up to 100 characters.
-2. Choose the **Scopes** the key needs, see [Scopes](#scopes). Choosing a write scope also selects the read scope that goes with it; clear that one by hand if the key should not read.
+2. Choose the **Scopes** the key needs, see [Scopes](#scopes). Choosing a write scope also selects the read scope that goes with it; clear that one by hand if the key should not read. With `memory:read` or `memory:write` chosen, tick categories under **Memory categories** to limit the key to them and their subcategories, see [Giving agents access](ai-memory.md#giving-agents-access); leave all unticked for every memory.
 3. Choose a date under **Expires after** if the key should stop working. It works until the end of that day in UTC. Leave the field empty for a key that does not expire.
 4. Tick **Save a copy in the Vault** if you want to read the key again later, see [Copies in the vault](#copies-in-the-vault).
 5. Choose **Create Key**. If you have not confirmed your identity in the last ten minutes, the **Confirm Your Identity** dialog asks for your password, and for a code from your authenticator app when two-factor authentication is on.
@@ -23,7 +23,7 @@ A note token, created with **Share** on a note's page as described in [Sharing a
 
 - It reaches `GET /api/v1/me`, `GET /api/v1/notes/{id}` and, with **Read and edit**, `PATCH /api/v1/notes/{id}` without `folder_id`, for its own note only. Another note's id answers `404 not_found`, as if the note did not exist, and every other route `403 insufficient_scope`.
 - `GET /api/v1/me` answers its name, the scopes its access stands for (`notes:read`, and `notes:write` with edit access), its last day and `note` with the note's `id` and `access`. For an API key, `note` is `null`.
-- `/files/{id}` serves it the images its note shows, and no other file.
+- `/files/{id}` serves it the files its note shows, images and attached files alike, including those an older version of the note still shows, and no other file.
 - It has its own rate limit of `API_RATE_LIMIT_PER_MINUTE`, shared with the share link's page and its saves. Changes are recorded with `note_token` as the actor type.
 - Every note token expires, on the day chosen when it was created. Unknown, revoked and expired tokens, and those of a note in the trash, get the same `401 invalid_key` as an invalid API key.
 
@@ -42,31 +42,31 @@ The box is not ticked by default: a key without a copy exists nowhere but in the
 
 Each module has its own scopes, and the usage report has its own:
 
-| Scope                 | Label in the form                                 | Allows                                                                                   |
-| --------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `services:read`       | **Read services**                                 | Listing and reading services.                                                            |
-| `services:write`      | **Change services**                               | Adding, changing, reordering and deleting services.                                      |
-| `notes:read`          | **Read notes**                                    | Listing and reading notes and their revisions.                                           |
-| `notes:write`         | **Change notes**                                  | Creating, changing, trashing and restoring notes, and restoring revisions.               |
-| `map:read`            | **Read map features**                             | Listing and reading map features.                                                        |
-| `map:write`           | **Change map features**                           | Adding, changing and deleting map features, and creating a note together with a feature. |
-| `memory:read`         | **Read memories**                                 | Reading memories, their revisions, the categories and the context of AI Memory.          |
-| `memory:write`        | **Change memories**                               | Writing, changing, trashing and restoring memories.                                      |
-| `prompts:read`        | **Read prompts**                                  | Listing, reading and filling in the prompts of AI Memory.                                |
-| `prompts:write`       | **Change prompts**                                | Saving, changing and deleting prompts.                                                   |
-| `vault:read`          | **Read vault names (never values)**               | Listing and reading the name, address and description of vault entries.                  |
-| `files:read`          | **Read files**                                    | Listing files and folders, reading their details and text, and downloading files.        |
-| `files:write`         | **Change files**                                  | Uploading files, renaming, moving and deleting them, and managing folders.               |
-| `datasources:read`    | **Read data sources (never their secrets)**       | Listing and reading data sources with their settings, without secrets.                   |
-| `datasources:secrets` | **Read the passwords and tokens of data sources** | Reading the secrets and the connection URL of a data source.                             |
-| `datasources:write`   | **Change and test data sources**                  | Adding, changing, deleting and testing data sources.                                     |
-| `usage:read`          | **Read the usage report**                         | Reading the usage report: counts and sizes, the database, the disk and the server.       |
+| Scope                 | Label in the form                                 | Allows                                                                                                                          |
+| --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `services:read`       | **Read services**                                 | Listing and reading services.                                                                                                   |
+| `services:write`      | **Change services**                               | Adding, changing, reordering and deleting services.                                                                             |
+| `notes:read`          | **Read notes**                                    | Listing and reading notes, their folders and their revisions.                                                                   |
+| `notes:write`         | **Change notes**                                  | Creating, changing, moving, trashing and restoring notes, restoring revisions, and managing folders of notes.                   |
+| `map:read`            | **Read map features**                             | Listing and reading map features and basemaps.                                                                                  |
+| `map:write`           | **Change map features**                           | Adding, changing and deleting map features and basemaps, putting a basemap in use, and creating a note together with a feature. |
+| `memory:read`         | **Read memories**                                 | Reading memories, their revisions, the categories and the context of AI Memory.                                                 |
+| `memory:write`        | **Change memories**                               | Writing, changing, trashing and restoring memories.                                                                             |
+| `prompts:read`        | **Read prompts**                                  | Listing, reading and filling in the prompts of AI Memory.                                                                       |
+| `prompts:write`       | **Change prompts**                                | Saving, changing and deleting prompts.                                                                                          |
+| `vault:read`          | **Read vault names (never values)**               | Listing and reading the name, address and description of vault entries.                                                         |
+| `files:read`          | **Read files**                                    | Listing files and folders, reading their details and text, and downloading files.                                               |
+| `files:write`         | **Change files**                                  | Uploading files, renaming, moving and deleting them, and managing folders.                                                      |
+| `datasources:read`    | **Read data sources (never their secrets)**       | Listing and reading data sources with their settings, without secrets.                                                          |
+| `datasources:secrets` | **Read the passwords and tokens of data sources** | Reading the secrets and the connection URL of a data source.                                                                    |
+| `datasources:write`   | **Change and test data sources**                  | Adding, changing, deleting and testing data sources.                                                                            |
+| `usage:read`          | **Read the usage report**                         | Reading the usage report: counts and sizes, the database, the disk and the server.                                              |
 
 - A write scope does not include the read scope. A key with only `notes:write` can create and change notes, but it cannot list or read them.
 - `datasources:secrets` is the only scope that reads a password or a token of a data source, and every read is recorded in the audit log. It does not include `datasources:read`.
-- A key with a memory scope can be limited to some categories of AI Memory when it is created; it then reaches only the memories in them. See [Giving agents access](ai-memory.md#giving-agents-access).
+- A key with a memory scope can be limited to some categories of AI Memory when it is created; it then reaches only the memories and prompts in them. The limit is offered only with `memory:read` or `memory:write`; a key with prompt scopes alone reaches every prompt. See [Giving agents access](ai-memory.md#giving-agents-access).
 - `vault:read` never sees a value. No API route and no MCP tool returns or accepts a vault value; values are revealed only in the app, after you confirm your identity. See [Vault](vault.md).
-- `GET /api/v1/me`, `GET /api/v1/search` and `GET /api/v1/openapi.json` work with any valid key. The search covers only the modules the key may read. Note tokens reach less, see [Note tokens](#note-tokens).
+- `GET /api/v1/me`, `GET /api/v1/search`, `GET /api/v1/tags` and `GET /api/v1/openapi.json` work with any valid API key. The search covers only the modules the key may read. Note tokens reach less, see [Note tokens](#note-tokens).
 
 ## Authentication
 
@@ -91,71 +91,82 @@ curl -H "Authorization: Bearer mfd_your_key" "https://manifold.example.com/api/v
 - The API never reads cookies. Being signed in to Manifold in the browser grants no API access.
 - Every accepted request records when and from which address the key was last used.
 
-Always use an `https` address: a key sent over plain HTTP crosses the network in clear text. Reverse proxies set up as in [Deployment](deployment.md) refuse plain HTTP requests that carry a key.
+Always use an `https` address: a key sent over plain HTTP crosses the network in clear text. The Caddy and Nginx setups in [Deployment](deployment.md) refuse plain HTTP requests that carry a key; behind Coolify, give clients `https` addresses.
 
 ## Endpoints
 
-| Method   | Path                                             | Scope            | Purpose                                                           |
-| -------- | ------------------------------------------------ | ---------------- | ----------------------------------------------------------------- |
-| `GET`    | `/api/v1/me`                                     | any key          | The key itself: name, scopes and expiry.                          |
-| `GET`    | `/api/v1/openapi.json`                           | any key          | The OpenAPI 3.1 document of this API.                             |
-| `GET`    | `/api/v1/search`                                 | any key          | Search across the modules the key may read.                       |
-| `GET`    | `/api/v1/tags`                                   | any key          | The global tags by name, paged.                                   |
-| `GET`    | `/api/v1/services`                               | `services:read`  | Services in their sidebar order, paged.                           |
-| `POST`   | `/api/v1/services`                               | `services:write` | Add a service at the end.                                         |
-| `PUT`    | `/api/v1/services/order`                         | `services:write` | Put all services in a new order.                                  |
-| `GET`    | `/api/v1/services/{id}`                          | `services:read`  | One service.                                                      |
-| `PATCH`  | `/api/v1/services/{id}`                          | `services:write` | Change the alias, the address or both.                            |
-| `DELETE` | `/api/v1/services/{id}`                          | `services:write` | Delete a service.                                                 |
-| `GET`    | `/api/v1/notes`                                  | `notes:read`     | Notes by last update, newest first, paged.                        |
-| `POST`   | `/api/v1/notes`                                  | `notes:write`    | Create a note.                                                    |
-| `GET`    | `/api/v1/notes/{id}`                             | `notes:read`     | One note with its content, also from the trash.                   |
-| `PATCH`  | `/api/v1/notes/{id}`                             | `notes:write`    | Change a note, based on the version you read.                     |
-| `DELETE` | `/api/v1/notes/{id}`                             | `notes:write`    | Move a note to the trash.                                         |
-| `POST`   | `/api/v1/notes/{id}/restore`                     | `notes:write`    | Take a note out of the trash.                                     |
-| `GET`    | `/api/v1/notes/{id}/revisions`                   | `notes:read`     | A note's revisions, newest first, paged.                          |
-| `GET`    | `/api/v1/notes/{id}/revisions/{version}`         | `notes:read`     | One revision with its content.                                    |
-| `POST`   | `/api/v1/notes/{id}/revisions/{version}/restore` | `notes:write`    | Restore a revision as a new version.                              |
-| `GET`    | `/api/v1/map/features`                           | `map:read`       | Map features as a GeoJSON FeatureCollection, oldest first, paged. |
-| `POST`   | `/api/v1/map/features`                           | `map:write`      | Add a feature, linked to an existing or a new note.               |
-| `GET`    | `/api/v1/map/features/{id}`                      | `map:read`       | One feature.                                                      |
-| `PATCH`  | `/api/v1/map/features/{id}`                      | `map:write`      | Replace a feature's geometry.                                     |
-| `DELETE` | `/api/v1/map/features/{id}`                      | `map:write`      | Delete a feature. Its note stays.                                 |
-| `GET`    | `/api/v1/map/basemaps`                           | `map:read`       | The basemaps added to the map, in their order, paged.             |
-| `POST`   | `/api/v1/map/basemaps`                           | `map:write`      | Add a basemap at the end.                                         |
-| `GET`    | `/api/v1/map/basemaps/{id}`                      | `map:read`       | One basemap.                                                      |
-| `PATCH`  | `/api/v1/map/basemaps/{id}`                      | `map:write`      | Change a basemap, or put it in use.                               |
-| `DELETE` | `/api/v1/map/basemaps/{id}`                      | `map:write`      | Delete a basemap.                                                 |
-| `GET`    | `/api/v1/memory/context`                         | `memory:read`    | The pinned memories, the categories and the tags.                 |
-| `GET`    | `/api/v1/memories`                               | `memory:read`    | Memories by last update, paged; by words, category, tag or pin.   |
-| `POST`   | `/api/v1/memories`                               | `memory:write`   | Write a memory.                                                   |
-| `GET`    | `/api/v1/memories/{id}`                          | `memory:read`    | One memory as Markdown, also from the trash.                      |
-| `PATCH`  | `/api/v1/memories/{id}`                          | `memory:write`   | Change a memory, based on the version you read.                   |
-| `DELETE` | `/api/v1/memories/{id}`                          | `memory:write`   | Move a memory to the trash.                                       |
-| `POST`   | `/api/v1/memories/{id}/restore`                  | `memory:write`   | Take a memory out of the trash.                                   |
-| `GET`    | `/api/v1/memories/{id}/revisions`                | `memory:read`    | A memory's revisions with their writers, newest first, paged.     |
-| `GET`    | `/api/v1/memories/{id}/revisions/{version}`      | `memory:read`    | One revision as Markdown.                                         |
-| `GET`    | `/api/v1/memory-categories`                      | `memory:read`    | The categories and subcategories within the key's reach.          |
-| `GET`    | `/api/v1/prompts`                                | `prompts:read`   | Prompts by title, paged; by words, category or tag.               |
-| `POST`   | `/api/v1/prompts`                                | `prompts:write`  | Save a prompt.                                                    |
-| `GET`    | `/api/v1/prompts/{id}`                           | `prompts:read`   | One prompt with its places.                                       |
-| `PATCH`  | `/api/v1/prompts/{id}`                           | `prompts:write`  | Change a prompt, based on the version you read.                   |
-| `DELETE` | `/api/v1/prompts/{id}`                           | `prompts:write`  | Delete a prompt.                                                  |
-| `POST`   | `/api/v1/prompts/{id}/render`                    | `prompts:read`   | Fill in a prompt's places.                                        |
-| `GET`    | `/api/v1/vault/secrets`                          | `vault:read`     | Vault entries by name, without their values, paged.               |
-| `GET`    | `/api/v1/vault/secrets/{id}`                     | `vault:read`     | One entry's name, address and description.                        |
-| `GET`    | `/api/v1/files`                                  | `files:read`     | Files, newest first, paged; by folder, owner, name, kind or use.  |
-| `POST`   | `/api/v1/files`                                  | `files:write`    | Upload a file, into a folder of the Files module when asked.      |
-| `GET`    | `/api/v1/files/{id}`                             | `files:read`     | Download a file.                                                  |
-| `GET`    | `/api/v1/files/{id}/metadata`                    | `files:read`     | A file without its content, with where it is used.                |
-| `GET`    | `/api/v1/files/{id}/text`                        | `files:read`     | The start of a text file as a string.                             |
-| `PATCH`  | `/api/v1/files/{id}`                             | `files:write`    | Rename a file of the Files module or move it to another folder.   |
-| `DELETE` | `/api/v1/files/{id}`                             | `files:write`    | Delete a file that nothing uses.                                  |
-| `GET`    | `/api/v1/file-folders`                           | `files:read`     | Every folder of the Files module.                                 |
-| `POST`   | `/api/v1/file-folders`                           | `files:write`    | Create a folder.                                                  |
-| `PATCH`  | `/api/v1/file-folders/{id}`                      | `files:write`    | Rename a folder or move it.                                       |
-| `DELETE` | `/api/v1/file-folders/{id}`                      | `files:write`    | Delete an empty folder.                                           |
-| `GET`    | `/api/v1/usage`                                  | `usage:read`     | The usage report, measured now.                                   |
+| Method   | Path                                             | Scope                 | Purpose                                                               |
+| -------- | ------------------------------------------------ | --------------------- | --------------------------------------------------------------------- |
+| `GET`    | `/api/v1/me`                                     | any key               | The key itself: name, scopes, expiry and, for a note token, its note. |
+| `GET`    | `/api/v1/openapi.json`                           | any key               | The OpenAPI 3.1 document of this API.                                 |
+| `GET`    | `/api/v1/search`                                 | any key               | Search across the modules the key may read.                           |
+| `GET`    | `/api/v1/tags`                                   | any key               | The global tags by name, paged.                                       |
+| `GET`    | `/api/v1/services`                               | `services:read`       | Services in their sidebar order, paged.                               |
+| `POST`   | `/api/v1/services`                               | `services:write`      | Add a service at the end.                                             |
+| `PUT`    | `/api/v1/services/order`                         | `services:write`      | Put all services in a new order.                                      |
+| `GET`    | `/api/v1/services/{id}`                          | `services:read`       | One service.                                                          |
+| `PATCH`  | `/api/v1/services/{id}`                          | `services:write`      | Change the alias, the address or both.                                |
+| `DELETE` | `/api/v1/services/{id}`                          | `services:write`      | Delete a service.                                                     |
+| `GET`    | `/api/v1/notes`                                  | `notes:read`          | Notes by last update, newest first, paged.                            |
+| `POST`   | `/api/v1/notes`                                  | `notes:write`         | Create a note.                                                        |
+| `GET`    | `/api/v1/notes/{id}`                             | `notes:read`          | One note with its content, also from the trash.                       |
+| `PATCH`  | `/api/v1/notes/{id}`                             | `notes:write`         | Change a note, based on the version you read.                         |
+| `DELETE` | `/api/v1/notes/{id}`                             | `notes:write`         | Move a note to the trash.                                             |
+| `POST`   | `/api/v1/notes/{id}/restore`                     | `notes:write`         | Take a note out of the trash.                                         |
+| `GET`    | `/api/v1/notes/{id}/revisions`                   | `notes:read`          | A note's revisions, newest first, paged.                              |
+| `GET`    | `/api/v1/notes/{id}/revisions/{version}`         | `notes:read`          | One revision with its content.                                        |
+| `POST`   | `/api/v1/notes/{id}/revisions/{version}/restore` | `notes:write`         | Restore a revision as a new version.                                  |
+| `GET`    | `/api/v1/note-folders`                           | `notes:read`          | Every folder of notes, by name.                                       |
+| `POST`   | `/api/v1/note-folders`                           | `notes:write`         | Create a folder of notes.                                             |
+| `PATCH`  | `/api/v1/note-folders/{id}`                      | `notes:write`         | Rename a folder of notes or move it.                                  |
+| `DELETE` | `/api/v1/note-folders/{id}`                      | `notes:write`         | Delete an empty folder of notes.                                      |
+| `GET`    | `/api/v1/map/features`                           | `map:read`            | Map features as a GeoJSON FeatureCollection, oldest first, paged.     |
+| `POST`   | `/api/v1/map/features`                           | `map:write`           | Add a feature, linked to an existing or a new note.                   |
+| `GET`    | `/api/v1/map/features/{id}`                      | `map:read`            | One feature.                                                          |
+| `PATCH`  | `/api/v1/map/features/{id}`                      | `map:write`           | Replace a feature's geometry.                                         |
+| `DELETE` | `/api/v1/map/features/{id}`                      | `map:write`           | Delete a feature. Its note stays.                                     |
+| `GET`    | `/api/v1/map/basemaps`                           | `map:read`            | The basemaps added to the map, in their order, paged.                 |
+| `POST`   | `/api/v1/map/basemaps`                           | `map:write`           | Add a basemap at the end.                                             |
+| `GET`    | `/api/v1/map/basemaps/{id}`                      | `map:read`            | One basemap.                                                          |
+| `PATCH`  | `/api/v1/map/basemaps/{id}`                      | `map:write`           | Change a basemap, or put it in use.                                   |
+| `DELETE` | `/api/v1/map/basemaps/{id}`                      | `map:write`           | Delete a basemap.                                                     |
+| `GET`    | `/api/v1/memory/context`                         | `memory:read`         | The pinned memories, the categories and the tags.                     |
+| `GET`    | `/api/v1/memories`                               | `memory:read`         | Memories by last update, paged; by words, category, tag or pin.       |
+| `POST`   | `/api/v1/memories`                               | `memory:write`        | Write a memory.                                                       |
+| `GET`    | `/api/v1/memories/{id}`                          | `memory:read`         | One memory as Markdown, also from the trash.                          |
+| `PATCH`  | `/api/v1/memories/{id}`                          | `memory:write`        | Change a memory, based on the version you read.                       |
+| `DELETE` | `/api/v1/memories/{id}`                          | `memory:write`        | Move a memory to the trash.                                           |
+| `POST`   | `/api/v1/memories/{id}/restore`                  | `memory:write`        | Take a memory out of the trash.                                       |
+| `GET`    | `/api/v1/memories/{id}/revisions`                | `memory:read`         | A memory's revisions with their writers, newest first, paged.         |
+| `GET`    | `/api/v1/memories/{id}/revisions/{version}`      | `memory:read`         | One revision as Markdown.                                             |
+| `GET`    | `/api/v1/memory-categories`                      | `memory:read`         | The categories and subcategories within the key's reach.              |
+| `GET`    | `/api/v1/prompts`                                | `prompts:read`        | Prompts by title, paged; by words, category or tag.                   |
+| `POST`   | `/api/v1/prompts`                                | `prompts:write`       | Save a prompt.                                                        |
+| `GET`    | `/api/v1/prompts/{id}`                           | `prompts:read`        | One prompt with its places.                                           |
+| `PATCH`  | `/api/v1/prompts/{id}`                           | `prompts:write`       | Change a prompt, based on the version you read.                       |
+| `DELETE` | `/api/v1/prompts/{id}`                           | `prompts:write`       | Delete a prompt.                                                      |
+| `POST`   | `/api/v1/prompts/{id}/render`                    | `prompts:read`        | Fill in a prompt's places.                                            |
+| `GET`    | `/api/v1/vault/secrets`                          | `vault:read`          | Vault entries by name, without their values, paged.                   |
+| `GET`    | `/api/v1/vault/secrets/{id}`                     | `vault:read`          | One entry's name, address and description.                            |
+| `GET`    | `/api/v1/files`                                  | `files:read`          | Files, newest first, paged; by folder, owner, name, kind or use.      |
+| `POST`   | `/api/v1/files`                                  | `files:write`         | Upload a file, into a folder of the Files module when asked.          |
+| `GET`    | `/api/v1/files/{id}`                             | `files:read`          | Download a file.                                                      |
+| `GET`    | `/api/v1/files/{id}/metadata`                    | `files:read`          | A file without its content, with where it is used.                    |
+| `GET`    | `/api/v1/files/{id}/text`                        | `files:read`          | The start of a text file as a string.                                 |
+| `PATCH`  | `/api/v1/files/{id}`                             | `files:write`         | Rename a file of the Files module or move it to another folder.       |
+| `DELETE` | `/api/v1/files/{id}`                             | `files:write`         | Delete a file that nothing uses.                                      |
+| `GET`    | `/api/v1/file-folders`                           | `files:read`          | Every folder of the Files module.                                     |
+| `POST`   | `/api/v1/file-folders`                           | `files:write`         | Create a folder.                                                      |
+| `PATCH`  | `/api/v1/file-folders/{id}`                      | `files:write`         | Rename a folder or move it.                                           |
+| `DELETE` | `/api/v1/file-folders/{id}`                      | `files:write`         | Delete an empty folder.                                               |
+| `GET`    | `/api/v1/data-sources`                           | `datasources:read`    | Data sources by name; by type or words.                               |
+| `POST`   | `/api/v1/data-sources`                           | `datasources:write`   | Add a data source.                                                    |
+| `GET`    | `/api/v1/data-sources/{id}`                      | `datasources:read`    | One data source, without its secrets.                                 |
+| `GET`    | `/api/v1/data-sources/{id}/secrets`              | `datasources:secrets` | The secrets and connection URL of a source, audited.                  |
+| `PATCH`  | `/api/v1/data-sources/{id}`                      | `datasources:write`   | Change a data source.                                                 |
+| `DELETE` | `/api/v1/data-sources/{id}`                      | `datasources:write`   | Delete a data source with its secrets.                                |
+| `POST`   | `/api/v1/data-sources/{id}/test`                 | `datasources:write`   | Test the connection of a data source.                                 |
+| `GET`    | `/api/v1/usage`                                  | `usage:read`          | The usage report, measured now.                                       |
 
 A method that a path does not accept is answered with `405 method_not_allowed` and an `Allow` header that lists the accepted methods. An unknown path is answered with `404 not_found`.
 
@@ -176,7 +187,7 @@ curl -H "Authorization: Bearer mfd_your_key" -o manifold-openapi.json "https://m
 
 ## Paging
 
-The lists of services, notes, revisions, map features and vault entries page with a cursor and accept two query parameters:
+The lists of services, notes, note and memory revisions, map features, basemaps, memories, prompts, files, tags and vault entries page with a cursor and accept two query parameters:
 
 | Parameter | Meaning                                                                  |
 | --------- | ------------------------------------------------------------------------ |
@@ -193,6 +204,7 @@ A page holds `data` and `next_cursor`, which is `null` on the last page:
       "title": "Trip",
       "excerpt": "Ferries leave every hour.",
       "version": 2,
+      "folder_id": null,
       "updated_at": "2026-09-29T17:42:10.512Z",
       "deleted_at": null
     }
@@ -205,7 +217,7 @@ Pass cursors back unchanged. A cursor the API did not hand out is answered with 
 
 ## Services
 
-A service looks like this; `icon_url` is `null` when the service has no icon, and `position` counts from 0 in sidebar order:
+A service looks like this; `icon_url` is `null` when the service has no icon, and `position` is the sort key in sidebar order, starting at 0; after a delete it can skip a number until the next reorder:
 
 ```json
 {
@@ -219,7 +231,7 @@ A service looks like this; `icon_url` is `null` when the service has no icon, an
 
 - `POST /api/v1/services` takes `alias`, up to 60 characters, and `url`, an `http` or `https` address. Any other scheme, such as `javascript:`, is refused with `422 validation_failed`.
 - `PATCH /api/v1/services/{id}` takes `alias`, `url` or both. What you leave out stays as it is.
-- `PUT /api/v1/services/order` takes `{ "ids": [] }` with every service id exactly once, in the new order, and answers the services in that order as `{ "data": [] }`.
+- `PUT /api/v1/services/order` takes `{ "ids": [] }` with every service id exactly once, in the new order, and answers the services in that order as `{ "data": [] }`. A list that leaves out an id, repeats one or names an unknown one is refused with `422 validation_failed` under `fields.order`.
 - Icons are uploaded on the Services page, see [Services](services.md). With `files:read`, a key can download the icon from `icon_url`.
 
 ## Notes
@@ -260,8 +272,8 @@ A note carries its content in two forms: `content` is the TipTap JSON document t
 - Content is checked against the editor's schema. Unknown node or mark types, links other than `http`, `https`, `mailto` and files of this Manifold, and images that are not files of this Manifold are refused with `422 validation_failed`. Raw HTML in Markdown is dropped. A note's content may have up to 2 MB as TipTap JSON.
 - To show an image, [upload it](#files) first and use its `url` in the Markdown, such as `![Floor plan](/files/9b2c1f10-58d1-4a7e-9a8c-2a3e3c7f1b11)`. Any other file goes in as a link to its `url`, which the editor writes as the name and size, such as `[report.pdf (1.2 MB)](/files/...)`. Either way the note then uses the file, so it is kept and cannot be deleted.
 - `PATCH /api/v1/notes/{id}` needs `version`, the version you last read, next to the `title`, `content` or `markdown` you change. What you leave out stays as it is. When the stored version differs, the answer is `409 version_conflict` with `current_version`: read the note again, merge your change and send it with that version.
-- `folder_id` in the same `PATCH` moves the note into that folder, or to the top level with `null`. Sent alone it needs no `version`, and a move changes neither the version nor `updated_at`. A note token cannot move its note.
-- Every successful change raises `version` by one and adds a revision written by the key, with `actor_type` `api_key` and the key's id as `actor_id`.
+- `folder_id` in the same `PATCH` moves the note into that folder, or to the top level with `null`; an unknown folder answers `404 not_found`. Sent alone it needs no `version`, and a move changes neither the version nor `updated_at`. A note token cannot move its note.
+- Every successful change raises `version` by one and adds a revision written by the key, with `actor_type` `api_key`, or `note_token` for a note token, and its id as `actor_id`.
 - `DELETE /api/v1/notes/{id}` moves the note to the trash, which also hides its map features. `POST /api/v1/notes/{id}/restore` brings it back. A note in the trash cannot be changed until it is restored, and it is deleted for good after `TRASH_RETENTION_DAYS` days, 30 unless changed, see [Configuration](configuration.md).
 
 ### Folders
@@ -273,15 +285,15 @@ Folders of notes nest like the folders of the Files module: `parent_id` is null 
 ```
 
 - `GET /api/v1/note-folders` lists every folder by name, with `notes:read`. `parent_id` gives the tree.
-- `POST /api/v1/note-folders` creates one from `name`, up to 100 characters without slashes, and an optional `parent_id`. A second folder with the same name in the same place, whatever its case, is refused with `422`.
+- `POST /api/v1/note-folders` creates one from `name`, up to 100 characters without slashes, and an optional `parent_id`; an unknown `parent_id` answers `404 not_found`. A second folder with the same name in the same place, whatever its case, is refused with `422`.
 - `PATCH /api/v1/note-folders/{id}` changes `name`, moves the folder with `parent_id`, or both. A folder cannot move into itself or a folder inside it.
 - `DELETE /api/v1/note-folders/{id}` deletes an empty folder. One with folders or notes outside the trash inside is refused with `422`; notes in the trash that were in it move to the top level.
 
-Writes need `notes:write` and are recorded in the audit log as `note_folder.create`, `note_folder.update` and `note_folder.delete`.
+Refusals name the field `folder` for an unknown or non-empty folder and `target` for a move into itself. Writes need `notes:write` and are recorded in the audit log as `note_folder.create`, `note_folder.update` and `note_folder.delete`.
 
 ### Revisions
 
-`GET /api/v1/notes/{id}/revisions` lists a note's revisions, newest first, with `version`, `title`, `actor_type` (`owner`, `api_key` or `system`), `actor_id`, `created_at` and `updated_at`. `POST /api/v1/notes/{id}/revisions/{version}/restore` writes the title and content of that revision as a new version, so the history keeps every step. See [Notes](notes.md) for how revisions work in the app.
+`GET /api/v1/notes/{id}/revisions` lists a note's revisions, newest first, with `version`, `title`, `actor_type` (`owner`, `api_key`, `note_token` or `system`), `actor_id`, `created_at` and `updated_at`. `POST /api/v1/notes/{id}/revisions/{version}/restore` writes the title and content of that revision as a new version, so the history keeps every step. See [Notes](notes.md) for how revisions work in the app.
 
 ## Map features
 
@@ -300,8 +312,8 @@ Map features are GeoJSON Features in EPSG:4326, with positions as `[longitude, l
 }
 ```
 
-- A geometry is a `Point`, a `LineString` with at least 2 positions, or a `Polygon` whose rings have at least 4 positions and are closed, with the first position repeated at the end. Positions have two numbers within the ranges of longitude and latitude, and a geometry has at most 10,000 of them. Other geometry types are refused with `400 invalid_request`; shapes that cross themselves or rings that are not closed with `422 validation_failed`.
-- `GET /api/v1/map/features` lists features oldest first. `bbox=west,south,east,north`, in degrees, keeps the features that intersect the box, and `note_id` keeps the features of one note. Features of notes in the trash are left out.
+- A geometry is a `Point`, a `LineString` with at least 2 positions, or a `Polygon` whose rings have at least 4 positions and are closed, with the first position repeated at the end. Positions have two numbers within the ranges of longitude and latitude, and a geometry has at most 10,000 of them. A body that breaks these rules of form, such as another geometry type, too few positions or a position out of range, is refused with `400 invalid_request`; more than 10,000 positions, shapes that cross themselves and rings that are not closed with `422 validation_failed`.
+- `GET /api/v1/map/features` lists features oldest first. `bbox=west,south,east,north`, in degrees, keeps the features that intersect the box; west may not be greater than east, nor south than north, so for a box across the 180th meridian ask for its two halves. `note_id` keeps the features of one note. Features of notes in the trash are left out.
 - `POST /api/v1/map/features` takes a Feature with `geometry` and exactly one of `note_id`, an existing note outside the trash, or `note`, an object with `title` and `content` or `markdown` for a new note that is created in the same request. `properties` is ignored.
 - `PATCH /api/v1/map/features/{id}` takes `{ "geometry": {} }` and replaces the geometry. The kind stays: a point stays a point, a line a line and a polygon a polygon. A geometry of another kind is refused with `422 validation_failed`.
 - `DELETE /api/v1/map/features/{id}` removes the feature. Its note stays.
@@ -329,6 +341,7 @@ Basemaps are the tile sources added under **Settings → Map**. The **Standard**
 - `POST /api/v1/map/basemaps` adds the basemap at the end without putting it in use.
 - `PATCH /api/v1/map/basemaps/{id}` changes the fields it is sent. `in_use: true` puts the basemap in use instead of the one before; `in_use: false` on the basemap in use returns the maps to **Standard**.
 - `DELETE /api/v1/map/basemaps/{id}` removes the basemap; when it was in use, the maps go back to **Standard**.
+- `position` is read only; the order is changed under **Settings → Map**.
 
 ## AI Memory
 
@@ -336,12 +349,12 @@ The routes of [AI Memory](ai-memory.md) take and answer the text as Markdown, an
 
 - `GET /api/v1/memory/context` is what an agent reads first: `pinned`, the pinned memories in full, newest first and at most 50; `categories`, with their `path` and `memory_count`; `tags`; and `limited`, whether the key reaches only some categories.
 - `GET /api/v1/memories` takes `q` for words, `category_id` for a category with its subcategories or `none` for memories without one, `tags` as comma separated names that a memory must all have, `pinned` and `trashed`.
-- `POST /api/v1/memories` takes `title` and optionally `markdown`, `category_id`, `tags` and `pinned`. A tag name that is not a tag is refused with `422` on `tags`, and an image in the Markdown on `markdown`.
+- `POST /api/v1/memories` takes `title` and optionally `markdown`, `category_id`, `tags` and `pinned`. A tag name that is not a tag is refused with `422` on `tags`, and an image in the Markdown on `markdown`. A memory takes at most 20 tags.
 - `PATCH /api/v1/memories/{id}` with `title` or `markdown` writes a new version and needs `version`, the version you read; a different stored version answers `409 version_conflict` with `current_version`. `category_id`, `tags`, which replace the tags, and `pinned` change without a new version and need no `version` when sent alone.
 - `DELETE /api/v1/memories/{id}` moves the memory to the trash, and `POST /api/v1/memories/{id}/restore` brings it back. Only the owner deletes a memory for good, in the app.
 - Revisions name their writer: `actor_type` is `owner` or `api_key`, and `actor_name` the key's name while it exists.
 
-Prompts answer `id`, `name` (the handle), `title`, `description`, `body`, `variables` (the `{{name}}` places in order), `category_id`, `category`, `tags`, `version`, `created_at` and `updated_at`. `POST /api/v1/prompts` makes the handle from the title when `name` is left out. `PATCH` always needs `version`. `POST /api/v1/prompts/{id}/render` takes `arguments`, a value for each place, and answers the filled `text` and the places still `missing`.
+Prompts answer `id`, `name` (the handle), `title`, `description`, `body`, `variables` (the `{{name}}` places in order), `category_id`, `category`, `tags`, `version`, `created_at` and `updated_at`. `POST /api/v1/prompts` makes the handle from the title when `name` is left out. `PATCH` always needs `version` and overwrites the prompt, which keeps no revisions. `name` is lower case letters and digits joined by single hyphens, up to 60 characters and unique; `title` has up to 200 characters, `description` up to 1000 and `body` up to 50,000 with at most 20 different places, and a prompt takes at most 20 tags. `GET /api/v1/prompts` takes `q`, matching the title, the handle, the description and the text, `category_id` (or `none`) and `tags`. `POST /api/v1/prompts/{id}/render` takes `arguments`, a value for each place, and answers the filled `text` and the places still `missing`.
 
 A key limited to some categories reaches only the memories and prompts in them: others answer `404`, lists and the search leave them out, and a write must name one of its categories in `category_id`. Writes are recorded as `memory.create`, `memory.update`, `memory.trash`, `memory.restore`, `prompt.create`, `prompt.update` and `prompt.delete`.
 
@@ -351,13 +364,13 @@ A key limited to some categories reaches only the memories and prompts in them: 
 
 ## Search
 
-`GET /api/v1/search` searches notes, services and vault entry names at once, with the same ranking as the search in the app:
+`GET /api/v1/search` searches notes, memories, prompts, services, file names, data source names and vault entry names at once, with the same ranking as the search in the app:
 
-| Parameter | Meaning                                                                          |
-| --------- | -------------------------------------------------------------------------------- |
-| `q`       | The words to find, up to 200 characters. Required.                               |
-| `types`   | Comma-separated types: `note`, `service`, `file` or `secret`. All when left out. |
-| `limit`   | Hits, 20 by default and at most 50.                                              |
+| Parameter | Meaning                                                                                                             |
+| --------- | ------------------------------------------------------------------------------------------------------------------- |
+| `q`       | The words to find, up to 200 characters. Required.                                                                  |
+| `types`   | Comma-separated types: `note`, `memory`, `prompt`, `service`, `file`, `data_source` or `secret`. All when left out. |
+| `limit`   | Hits, 20 by default and at most 50.                                                                                 |
 
 ```bash
 curl -H "Authorization: Bearer mfd_your_key" "https://manifold.example.com/api/v1/search?q=grafana&types=note,service"
@@ -378,7 +391,7 @@ curl -H "Authorization: Bearer mfd_your_key" "https://manifold.example.com/api/v
 }
 ```
 
-Hits are sorted best first, with a `score` from 0 to 1. `link` is a path in the app for notes (`/notes/{id}`) and vault entries (`/vault`), and the address of the service for services. Types whose read scope the key lacks (`notes:read`, `services:read` or `vault:read`) are left out without an error. See [Search and the command palette](search.md).
+Hits are sorted best first, with a `score` from 0 to 1. `link` is a path in the app for notes (`/notes/{id}`), memories (`/memory/{id}`), prompts (`/memory/prompts/{id}`), files (`/files/view/{id}`), data sources (`/data-sources/{id}`) and vault entries (`/vault`), and the address of the service for services. Types whose read scope the key lacks (`notes:read`, `memory:read`, `prompts:read`, `services:read`, `files:read`, `datasources:read` or `vault:read`) are left out without an error, and a key limited to some memory categories finds only the memories and prompts in them. A note token cannot search. See [Search and the command palette](search.md).
 
 ## Files
 
@@ -400,7 +413,8 @@ Hits are sorted best first, with a `score` from 0 to 1. `link` is a path in the 
 }
 ```
 
-- Manifold accepts any file and recognizes its type from the content, never from the file name or the type the client sends: PNG, JPEG, WebP, GIF and safe SVG images, PDF, MP3, WAV, OGG, FLAC and M4A audio, MP4, WebM and QuickTime video, and, with a `.txt`, `.log`, `.md`, `.csv` or `.json` name and UTF-8 content, text. Any other file is stored as `application/octet-stream` and always sent as a download. An empty file is refused with `422 file_empty`.
+- Manifold accepts any file and recognizes its type from the content, never from the file name or the type the client sends: PNG, JPEG, WebP and GIF images and safe SVG images of up to 1 MB, PDF, MP3, WAV, OGG, FLAC and M4A audio, MP4, WebM and QuickTime video, and, with a `.txt`, `.log`, `.md`, `.markdown`, `.csv` or `.json` name and UTF-8 content, text. Any other file is stored as `application/octet-stream` and always sent as a download. An empty file is refused with `422 file_empty`.
+- A body that is not `multipart/form-data`, or one without a `file` field, is answered with `400 invalid_request`, and an unknown `folder_id` with `404 not_found`; the file then stays a loose upload. The name is kept without folders or control characters and cut to 200 characters.
 - A file may be as large as `UPLOAD_MAX_BYTES`, 100 MB unless changed, see [Configuration](configuration.md). A larger file is refused with `413 file_too_large`. The upload is written to disk as it arrives, so a large file never sits in memory.
 - `GET /api/v1/files/{id}` answers the file with its type, inline for the types above and as a download for any other. It answers a `Range` header with `206` and that part, as players seeking in audio and video ask. The address in `url` works with the same key too, as long as it has `files:read`, and for you in the browser while you are signed in.
 - Without `folder_id` the file is a loose upload with the owner `api`: a file that no note and no service refers to is deleted by the daily housekeeping once it is a day old, so use it in a note soon after, or keep it in the Files module.
@@ -410,7 +424,7 @@ The Files module's files and folders:
 
 - `GET /api/v1/files` lists every stored file, newest first and paged. `folder_id` keeps the files of one folder of the Files module, `root` those at its top level; `owner` keeps the files a module keeps (`files`, `notes`, `services` or `api`); `q` matches part of the name, `kind` one kind, and `unused=true` keeps the files that nothing uses.
 - `GET /api/v1/files/{id}/metadata` answers a file without its content. `GET /api/v1/files/{id}/text` answers the start of a file of kind `text` as `text`, up to `max_bytes` (100 KB unless given, at most 1 MB), with `truncated` when the file goes on; any other kind is answered with `422 not_text`.
-- `PATCH /api/v1/files/{id}` takes `name`, `folder_id` or both; `folder_id` null moves the file to the top level. Only files that the Files module keeps can be changed; others answer `422`.
+- `PATCH /api/v1/files/{id}` takes `name`, `folder_id` or both; `folder_id` null moves the file to the top level. A name has up to 200 characters and no slashes. Only files that the Files module keeps can be changed; others answer `422 validation_failed`.
 - `DELETE /api/v1/files/{id}` deletes a file for good. A file in use is refused with `422` until nothing shows it.
 - `/api/v1/file-folders` lists, creates, renames, moves and deletes folders. A name has up to 100 characters, no slashes, and is unique within its folder whatever its case; `parent_id` null puts a folder at the top. A folder cannot move into itself or a folder inside it, and only an empty folder can be deleted.
 
@@ -455,7 +469,7 @@ A data source carries its settings by type, in snake_case, and names its stored 
 - `GET /api/v1/data-sources` lists the sources by name, narrowed by `type` and by `q`, which matches the name, the notes and the settings. `GET /api/v1/data-sources/{id}` reads one.
 - `GET /api/v1/data-sources/{id}/secrets` needs `datasources:secrets` and answers `secrets`, such as `{ "password": "..." }`, and `connection_url`, null for S3. Each read is recorded as `data_source.reveal`.
 - `POST /api/v1/data-sources` takes `name`, `type`, `settings`, and optionally `description`, `docs_url` and `secrets`. Refused fields come back with `422` named as sent, such as `settings.ssh.host` or `secrets.ssh_password`.
-- `PATCH /api/v1/data-sources/{id}` changes what it is sent. `settings` replaces the settings as a whole; `secrets` sets the secrets it names, and `null` removes one. The type cannot change, and `ssh.fingerprint` is kept by the tests, whatever the request says.
+- `PATCH /api/v1/data-sources/{id}` changes what it is sent. `settings` replaces the settings as a whole; `secrets` sets the secrets it names, and `null` removes one; an empty string keeps a stored secret, and secrets the type does not use are dropped. The type cannot change, and `ssh.fingerprint` is kept by the tests, whatever the request says.
 - `DELETE /api/v1/data-sources/{id}` deletes the source with its secrets.
 - `POST /api/v1/data-sources/{id}/test` runs a connection test and answers `ok`, `message` and `duration_ms`; the outcome becomes `last_test`.
 
@@ -480,7 +494,7 @@ Every error has the same shape. `code` is meant for programs, and `message` is E
 Some errors add a field:
 
 - `fields` names the invalid parameters or body fields with a message for each, on `invalid_request` and `validation_failed`.
-- `current_version` holds the stored version of the note on `version_conflict`.
+- `current_version` holds the stored version of the note, memory or prompt on `version_conflict`.
 
 ```json
 {
@@ -499,24 +513,25 @@ Some errors add a field:
 | 400    | `invalid_cursor`     | The `cursor` was not handed out by the API.                                                |
 | 401    | `missing_key`        | The request has no `Authorization: Bearer` header.                                         |
 | 401    | `invalid_key`        | The key is unknown, malformed, revoked or expired.                                         |
-| 403    | `insufficient_scope` | The key lacks the scope the endpoint needs.                                                |
+| 403    | `insufficient_scope` | The key lacks the scope the endpoint needs, or a note token asks for more than its note.   |
 | 404    | `not_found`          | There is no such endpoint or record.                                                       |
 | 405    | `method_not_allowed` | The path does not accept this method. `Allow` lists the methods it accepts.                |
-| 409    | `version_conflict`   | The note changed since the `version` you sent.                                             |
+| 409    | `version_conflict`   | The record changed since the `version` you sent.                                           |
 | 411    | `length_required`    | A body was sent in chunks without a `Content-Length` header.                               |
 | 413    | `payload_too_large`  | The body is larger than 5 MB, or an upload is larger than the upload limit.                |
 | 413    | `file_too_large`     | The file is larger than `UPLOAD_MAX_BYTES`.                                                |
 | 422    | `validation_failed`  | The input has the right form but was not accepted, such as a geometry that crosses itself. |
 | 422    | `file_type`          | The route accepts only some types of file, and this is not one of them.                    |
 | 422    | `file_empty`         | The upload is empty.                                                                       |
+| 422    | `not_text`           | The file is not of kind `text`, on `GET /api/v1/files/{id}/text`.                          |
 | 429    | `rate_limited`       | The key used up its requests for the current minute.                                       |
 | 500    | `internal_error`     | An unexpected error. It is logged on the server.                                           |
 
-Manifold checks a request in a fixed order and answers the first problem it finds: the path and the method, the key, the rate limit, the scope, the parameters and the body, and finally the operation itself.
+Manifold checks a request in a fixed order and answers the first problem it finds: the size of the body, the path and the method, the key, the rate limit, the scope, the parameters and the body, and finally the operation itself.
 
 ## Rate limits
 
-Each key may make `API_RATE_LIMIT_PER_MINUTE` requests per minute, 120 unless changed, see [Configuration](configuration.md). The count is per key and shared by the REST API, the [MCP server](mcp.md) and file downloads from `/files/<id>` with the key. Every answer after the key was accepted reports the state of the current window:
+Each key may make `API_RATE_LIMIT_PER_MINUTE` requests per minute, 120 unless changed, see [Configuration](configuration.md). The count is per key and shared by the REST API, the [MCP server](mcp.md) and file downloads from `/files/<id>` with the key. Every answer of the REST API and the MCP server after the key was accepted reports the state of the current window; downloads from `/files/<id>` count but carry no such headers, and their `429` has no `Retry-After`:
 
 | Header                | Meaning                                         |
 | --------------------- | ----------------------------------------------- |
@@ -529,7 +544,7 @@ A window starts with the key's first request and lasts one minute. The counters 
 
 ## Audit log
 
-Every successful write through the API is recorded in the audit log under **Settings → Security**, with the key as the actor (shown as **API key**), the action, such as `note.update` or `map_feature.create`, the record it changed, and the client's address and user agent. Reads are not recorded; they only update the key's last use. See [Your account](account.md).
+Every successful write through the API, and every read of a data source's secrets, is recorded in the audit log under **Settings → Security**, with the key as the actor (shown as **API key**, or **Note token** for a note token), the action, such as `note.update` or `map_feature.create`, the record it touched, and the client's address and user agent. Other reads are not recorded; they only update the key's last use. See [Your account](account.md).
 
 ## Examples
 

@@ -24,13 +24,13 @@ docker compose up -d
 On Coolify, set the same variables in the environment settings of the service and restart it.
 
 - `SMTP_HOST` turns email on. Without it, every email feature is off in production.
-- `SMTP_PORT` defaults to `587` and `SMTP_SECURE` to `false`: the connection starts in plain text and is upgraded with STARTTLS when the server offers it. For port `465`, set `SMTP_SECURE=true` to use TLS from the start. `SMTP_SECURE` accepts only `true` or `false`; any other value stops the app at start.
+- `SMTP_PORT` defaults to `587` and `SMTP_SECURE` to `false`: the connection starts in plain text and must be upgraded with STARTTLS; a server that does not offer it makes every mail fail, unless it runs on the same machine (see below). For port `465`, set `SMTP_SECURE=true` to use TLS from the start. `SMTP_SECURE` accepts only `true` or `false`; any other value stops the app at start.
 - `SMTP_USER` and `SMTP_PASSWORD` are the login at the server. Without `SMTP_USER`, Manifold sends without logging in, for example through a relay that trusts your server.
 - `MAIL_FROM` is the sender. A value with a display name, such as `Manifold <no-reply@example.com>`, is used as it is. A plain address gets `ORGANIZATION_NAME` as its display name. Set `MAIL_FROM` whenever `SMTP_HOST` is set: Manifold does not make up a sender of its own. Most providers accept only a sender address that belongs to the account in `SMTP_USER`.
 
 To make sure your messages arrive, publish SPF, DKIM and DMARC records for the sender's domain as your provider describes. [Configuration](configuration.md) lists every variable.
 
-The connection to the SMTP server must use TLS 1.2 or newer with a valid certificate: implicit TLS with `SMTP_SECURE=true`, or STARTTLS on port 587, which Manifold then requires. Only a relay on the same machine (`localhost`, `127.0.0.1` or `::1`) may be reached without TLS. A server without TLS, or with a certificate that does not match its name, makes every mail fail, and the log says why.
+The connection to the SMTP server must use TLS 1.2 or newer with a valid certificate: implicit TLS with `SMTP_SECURE=true`, or STARTTLS, which Manifold requires on any port. Only a relay on the same machine (`localhost`, `127.0.0.1` or `::1`) may be reached without TLS. A server without TLS, or with a certificate that does not match its name, makes every mail fail, and the log says why.
 
 ## What Manifold sends
 
@@ -72,7 +72,7 @@ The audit log under **Settings → Security → Audit Log** records every sign i
 
 ## When sending fails
 
-Mails are sent in the background, and a failure never blocks or changes the action that triggered it: the login page says that a code was sent even when the mail server refused it. The failure is written to the log as `Sending a mail failed.` with the error, never with the content of the mail:
+Mails are sent in the background, and a failure never blocks or changes the action that triggered it: the login page says that a code was sent even when the mail server refused it. The failure is written to the log as `Sending a mail failed` with the error, never with the content of the mail:
 
 ```bash
 docker compose logs --tail 100 app

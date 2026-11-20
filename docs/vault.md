@@ -14,7 +14,7 @@ Open **Vault** in the sidebar, or **Go to Vault** in the command palette. Entrie
 4. Enter the **Value**, up to 10,000 characters. The field hides what you type.
 5. Choose **Add Secret**.
 
-Adding a secret reveals nothing, so it does not ask you to confirm your identity.
+Adding a secret reveals nothing, so it does not ask you to confirm your identity. It is recorded in the audit log as `vault.create`.
 
 ## Revealing and copying
 
@@ -25,13 +25,13 @@ Both ask you to confirm your identity first: your password, and a code from your
 
 Every reveal and every copy is recorded in the audit log as `vault.reveal` or `vault.copy`, without the value.
 
+Without JavaScript, **Reveal** shows the value on the page that comes back, where it stays until you leave the page. **Copy** does the same, since only a script can write to the clipboard. A link to the confirmation page appears when a confirmation is due.
+
 ## Copies of API keys
 
 When you create an API key under **Settings → API Keys**, **Save a copy in the Vault** adds the key to the vault as an entry named **API key:** followed by the key's name. Its card says **Copy of an API key. Revoking the key under Settings → API Keys deletes it.** You reveal, copy, edit and delete it like any other entry.
 
 Revoking or deleting the key deletes its copy at once, and the audit log records `vault.delete` for it. A key that expires keeps its copy until you delete it. [REST API](api.md#copies-in-the-vault) describes the option.
-
-Without JavaScript, **Reveal** shows the value on the page that comes back, where it stays until you leave the page. **Copy** does the same, since only a script can write to the clipboard. A link to the confirmation page appears when a confirmation is due.
 
 ## Editing
 
@@ -40,7 +40,7 @@ Without JavaScript, **Reveal** shows the value on the page that comes back, wher
 - Changing only the name, the address or the notes needs no confirmation.
 - A **New value** replaces the stored value and asks you to confirm your identity. Leave the field empty to keep the current value.
 
-Choose **Save**. The audit log records `vault.update` for the details and `vault.update_value` when the value changed.
+Choose **Save**. The audit log records `vault.update` when only the details changed, and `vault.update_value` alone when a new value was saved, whether or not the details changed too.
 
 ## Deleting
 
@@ -67,9 +67,9 @@ Values are encrypted with AES-256-GCM under `ENCRYPTION_KEY`, 32 random bytes in
 
 `node cli.js vault:rotate-key` encrypts every value again with a new key, together with the secrets of [data sources](data-sources.md). It takes the new key from `NEW_ENCRYPTION_KEY`, or asks for it without showing what you type.
 
-1. Run the command. It decrypts every value with the current key and encrypts it with the new one in a single transaction: if the current key cannot open every value, nothing changes.
+1. Run the command. It decrypts every value with the current key and encrypts it with the new one in a single transaction: if the current key cannot open every value, nothing changes. A new key equal to the current one is refused, and nothing changes either.
 2. Set `ENCRYPTION_KEY` to the new key where the app reads it.
-3. Restart the app. Until the restart, the running app holds the old key and cannot read the vault.
-4. Discard the old key once the restart is done.
+3. Recreate the app container so it reads the new key, with `docker compose up -d` (`docker compose restart` is not enough). Until then, the running app holds the old key: it cannot reveal vault values, and the Data Sources pages, routes and tools fail.
+4. Discard the old key once the app runs with the new one.
 
 The rotation is recorded in the audit log as `vault.rotate_key` by **Command line**. [Operations](operations.md) describes the command line in full.

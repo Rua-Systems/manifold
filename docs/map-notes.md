@@ -12,17 +12,18 @@ Each browser remembers where you left the map and opens there next time. A brows
 
 The toolbar, **Map tools**, sits in the top left corner of the map on a desktop and in a row below the map on a phone.
 
-| Tool                  | What it does                                                                        |
-| --------------------- | ----------------------------------------------------------------------------------- |
-| **Select**            | Click a geometry to open its note in the panel. Click empty map to close the panel. |
-| **Drop a pin**        | Places a pin where you click.                                                       |
-| **Draw a line**       | Draws a line through the points you click.                                          |
-| **Draw a polygon**    | Draws an area from the corners you click.                                           |
-| **Move points**       | Drag a pin, or any point of a line or polygon, to a new place.                      |
-| **Delete a geometry** | Click a geometry to delete it, after a confirmation.                                |
-| **Undo last point**   | Removes the last point of the drawing in progress.                                  |
-| **Cancel drawing**    | Drops the drawing in progress. `Escape` does the same on a keyboard.                |
-| **My location**       | Moves the map to where your device is, after your browser asks for permission.      |
+| Tool                  | What it does                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Select**            | Click a geometry to open its note in the panel. Click empty map to close the panel.                          |
+| **Drop a pin**        | Places a pin where you click.                                                                                |
+| **Draw a line**       | Draws a line through the points you click.                                                                   |
+| **Draw a polygon**    | Draws an area from the corners you click.                                                                    |
+| **Move points**       | Drag a pin, or any point of a line or polygon, to a new place.                                               |
+| **Delete a geometry** | Click a geometry to delete it, after a confirmation.                                                         |
+| **Undo last point**   | Removes the last point of the drawing in progress.                                                           |
+| **Cancel drawing**    | Drops the drawing in progress. `Escape` does the same on a keyboard.                                         |
+| **My location**       | Moves the map to where your device is, after your browser asks for permission.                               |
+| **Basemap**           | Opens **Basemap**, where you choose the basemap the maps show; **Manage basemaps** opens **Settings → Map**. |
 
 **Undo last point** and **Cancel drawing** work only while you draw. If the browser cannot tell your location, or you refuse it, **My location** reports **Your location is not available.**
 
@@ -35,9 +36,9 @@ The toolbar, **Map tools**, sits in the top left corner of the map on a desktop 
 While you draw, and while you move points, a point near an existing geometry snaps onto it, which makes shapes meet exactly. When a drawing is finished, the tool goes back to **Select** and the panel **New Location** asks what the geometry belongs to:
 
 - **New Note** creates an untitled note with this geometry and opens it in the panel, ready for a title and text.
-- **Link to Existing Note** lists your notes, most recently changed first, with **Find a note** to narrow them by title. The list shows up to 50 notes; type part of the title to find others. Choose a note to link the geometry to it.
+- **Link to Existing Note** lists your notes, most recently changed first, with **Find a note** to narrow them by title. The list shows up to 50 notes; type part of the title to find others among your 1,000 most recently changed notes. Choose a note to link the geometry to it.
 
-Closing the panel with the close button drops the drawing without saving it.
+Closing the panel with the close button, or clicking empty map, drops the drawing without saving it.
 
 ## The note panel
 
@@ -57,7 +58,7 @@ On a phone the sheet starts at half the height of the screen. Tap its handle, or
 Every geometry belongs to exactly one note, and a note can have any number of geometries. Besides drawing on the map page, two links on a note's own page connect it with the map. Below the text, **Location** shows a small, still map of the note's geometries, or **This note has no location yet.**
 
 - **Add Location** opens the map ready to draw for this note: **Draw a location for** and the note's title appear on the map, with **Cancel**. The next geometry you finish belongs to that note right away, and its panel opens.
-- **Show on Map** opens the map zoomed to the note's geometries, with the panel open on the first one.
+- **Show on Map**, there once the note has a geometry, opens the map zoomed to the note's geometries, with the panel open on the first one.
 
 To move a geometry to another note, delete it and draw it again for the other note.
 
@@ -80,7 +81,7 @@ Moving a note to the trash hides its geometries from the map. Restoring the note
 
 The map beneath the geometries is the basemap. **Standard**, the instance's own, comes from `MAP_TILE_URL` and is always there; more can be added under **Settings → Map**.
 
-- **New Basemap** asks for a **Name**, the **Tile address**, an **Attribution** and a **Maximum zoom**. The tile address is an XYZ template over `https` with `{z}`, `{x}` and `{y}`, such as `https://tile.example.com/{z}/{x}/{y}.png`. `{-y}` counts rows from the bottom, `{a-c}` or `{1-4}` spreads the requests over subdomains, and Leaflet's `{s}` is read as `{a-c}`. The attribution is plain text shown in the corner of the map. The maximum zoom, 19 unless you change it, is the deepest level the tiles exist for; the map does not zoom further.
+- **New Basemap** asks for a **Name**, the **Tile address**, an **Attribution** and a **Maximum zoom**. The tile address is an XYZ template over `https` with `{z}`, `{x}` and `{y}`, such as `https://tile.example.com/{z}/{x}/{y}.png`. `{-y}` counts rows from the bottom, `{a-c}` or `{1-4}` spreads the requests over subdomains, and Leaflet's `{s}` is read as `{a-c}`; the address may not contain a user name or password. The name may have up to 60 characters and the attribution up to 300. The attribution is plain text shown in the corner of the map. The maximum zoom, 19 unless you change it, is the deepest level the tiles exist for; the map does not zoom further.
 - One basemap is in use at a time, on the map page and on the small map of every note page. **Use** on the settings page or **Basemap** in the map tools switches it; the choice is stored with the account, so every browser shows the same basemap.
 - The settings page orders, edits and deletes the added basemaps. Deleting the basemap in use brings back **Standard**.
 - A tile address with a key in it, such as `?access_token=`, is visible to every API key with `map:read` and in the browser, which requests the tiles itself.

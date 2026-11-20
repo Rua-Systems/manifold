@@ -1,6 +1,6 @@
 # Backups and restores
 
-A backup contains the whole installation: the database with every note, map feature, service, vault entry, API key, setting and the audit log, and every uploaded file. You create backups with the `backup` command or download one in the browser under **Settings → Data**, and bring one back with the `restore` command. The [command line](operations.md) runs inside the app container.
+A backup contains the whole installation: the database with every note, map feature, service, memory, prompt, file and folder, data source, vault entry, API key, setting and the audit log, and every uploaded file. You create backups with the `backup` command or download one in the browser under **Settings → Data**, and bring one back with the `restore` command. The [command line](operations.md) runs inside the app container.
 
 ## What a backup contains
 
@@ -35,7 +35,7 @@ No environment variable is ever part of an archive. Two of them decide whether a
 
 | Variable             | Needed for                                               | Without the value from the time of the backup                                                                                                                            |
 | -------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ENCRYPTION_KEY`     | The values in the vault and the secrets of data sources. | The vault and the data sources list their entries, but no secret can be revealed, copied or used for a connection test. Nothing can recover them.                        |
+| `ENCRYPTION_KEY`     | The values in the vault and the secrets of data sources. | The vault lists its entries but reveals no value, and the Data Sources pages, routes and tools fail. Nothing can recover them.                                           |
 | `BETTER_AUTH_SECRET` | Sessions and two factor authentication.                  | Every browser is signed out, and the authenticator codes and backup codes of the backup do not work. Run `owner:disable-2fa` and set two factor authentication up again. |
 
 Keep copies of `ENCRYPTION_KEY` and `BETTER_AUTH_SECRET` somewhere safe on their own, for example in a password manager, and not next to the archives. The rest of your configuration, such as `ORIGIN` and the SMTP settings, is not in the archive either: keep a copy of `.env`.
@@ -65,7 +65,7 @@ The command never overwrites a file, and it stops before doing any work when the
 
 ## Downloading an export
 
-Under **Settings → Data**, **Download Export** streams the same archive to your browser as `manifold-backup-<date>.tar.gz`. Nothing is kept on the server.
+Under **Settings → Data**, **Download Export** streams the same archive to your browser as `manifold-backup-<date>.tar.gz`. Nothing is kept on the server. Only one export runs at a time; a second download meanwhile is refused with **An export is already running.**
 
 The download is a sensitive action. Unless you confirmed your identity in the last ten minutes, the app first asks for your password on **Confirm Your Identity**, and for a code from your authenticator app when two factor authentication is on; the download starts after **Confirm**. Every export is recorded in the audit log as `data.export`.
 
@@ -149,6 +149,9 @@ Restore only archives that you made yourself: the database dump is applied as it
 | `The database is not empty. Use --force to replace it.`                                       | Add `--force` to replace the current data.                                              |
 | `The archive does not fit into the free space of the volume.`                                 | Free space on the volume, or restore on a larger disk.                                  |
 | `The archive holds entries that are not part of a Manifold backup.`                           | The archive was changed or made by something else; use an archive Manifold wrote.       |
+| `The archive holds more entries than a Manifold backup can have.`                             | The archive has more than a million entries; use an archive Manifold wrote.             |
+| `pg_restore is not installed. ...`                                                            | Run the command in the app container, or install the PostgreSQL 17 client tools.        |
+| `pg_restore failed: ...`                                                                      | The dump could not be applied; the rest of the message is PostgreSQL's reason.          |
 
 ### After a restore
 

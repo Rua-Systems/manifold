@@ -1,6 +1,6 @@
 # AI Memory
 
-AI Memory is what you and your AI agents keep for each other: decisions, preferences, facts about projects, how things are done. Agents with an API key read it at the start of their work and write to it as they learn, through the [MCP server](mcp.md) or the [REST API](api.md#ai-memory). You read and change everything they write, and every change keeps the earlier text in its history.
+AI Memory is what you and your AI agents keep for each other: decisions, preferences, facts about projects, how things are done. Agents with an API key read it at the start of their work and write to it as they learn, through the [MCP server](mcp.md) or the [REST API](api.md#ai-memory). You read and change everything they write, and every change to a memory's text keeps the earlier text in its history.
 
 AI Memory also keeps your **Prompts**: ready instructions that you and your agents use again, which MCP clients such as Claude Code offer as commands.
 
@@ -11,7 +11,7 @@ The **AI Memory** group in the sidebar lists **New Memory**, **Prompts**, a filt
 A memory is a title and a text, written in the same editor as [notes](notes.md), with headings, lists, tables, links and code. Memories hold text only: images stay in notes or files, and a memory links to them.
 
 - **New Memory**, in the sidebar, on the AI Memory page or in the command palette, opens an empty memory at `/memory/new`. It is saved the first time you choose **Save** or press `Ctrl+S` (`Cmd+S` on a Mac), and then has an address of its own. A title is required.
-- A memory has a **Category**, any number of **Tags** and a **Pinned** switch, chosen above the text.
+- A memory has a **Category**, up to 20 **Tags** and a **Pinned** switch, chosen above the text.
 - **Save** writes your changes. Until then the page shows **Unsaved changes**, and leaving it asks first.
 - **Last changed by** under the text names who wrote the current version: you, or the API key by its name.
 
@@ -37,7 +37,7 @@ A pinned memory is what every agent should know before it starts: who you are, h
 
 ## History
 
-Every save of a new title or text is a version. **History**, in the bar of a memory, lists them, newest first, with who wrote each and when. Your own saves within five minutes of each other share one entry; every write by an agent has an entry of its own.
+Every save of a new title or text is a version. **History**, in the bar of a memory, lists them, newest first, with who wrote each and when. Your own saves within five minutes of an entry's first save share that entry; restoring a version and every write by an agent get an entry of their own.
 
 Choose a version to read it; **Restore This Version** writes it back as a new version, so nothing is lost. Changing the category, the tags or the pin is not a new version.
 
@@ -49,13 +49,13 @@ If an agent changed the memory while you were editing it, saving shows a notice.
 
 ## Prompts
 
-A prompt is an instruction you give again and again, such as a code review checklist or the way you want a meeting summed up. **Prompts**, in the sidebar or on the AI Memory page, lists them at `/memory/prompts`, with a filter by words, category and tag.
+A prompt is an instruction you give again and again, such as a code review checklist or the way you want a meeting summed up. **Prompts**, in the sidebar or in the command palette, lists them at `/memory/prompts`, with a filter by words, category and tag.
 
 - **New Prompt** opens an empty one. A prompt has a **Title**, a **Handle**, a **Description**, a **Category**, **Tags** and its **Text**.
-- The handle, such as `code-review`, is how agents and MCP clients call it: lower case letters and digits, with single hyphens between words, and unique. A new prompt's handle follows its title until you change it.
-- In the text, `{{name}}` marks a place that changes between uses, such as `{{file}}` or `{{ goal }}`: a letter or an underscore, then letters, digits or underscores, at most 20 different places. Everything else is handed over exactly as written.
+- The handle, such as `code-review`, is how agents and MCP clients call it: lower case letters and digits, with single hyphens between words, up to 60 characters, and unique. A new prompt's handle follows its title until you change it.
+- In the text, `{{name}}` marks a place that changes between uses, such as `{{file}}` or `{{ goal }}`: a letter or an underscore, then letters, digits or underscores, up to 40 characters in all, and at most 20 different places. Everything else is handed over exactly as written.
 - **Try it**, beside the form, asks for each place and shows the filled text, which **Copy** puts on the clipboard.
-- **Save** writes a new version; a prompt changed elsewhere since you opened it is not overwritten. **Delete** removes a prompt for good; prompts have no trash.
+- **Save** writes the prompt over the last one, without a history of earlier texts; a prompt changed elsewhere since you opened it is not overwritten. **Delete** removes a prompt for good; prompts have no trash.
 
 Prompts sit in the categories of memories, so a category with prompts in it cannot be deleted, and a key limited to some categories reaches only the prompts in them.
 
@@ -65,7 +65,7 @@ The MCP server offers every prompt a key reaches as an MCP prompt, under its han
 
 An agent needs an API key with `memory:read` to read memories, and also `memory:write` to write them; `prompts:read` and `prompts:write` do the same for prompts. Create it under **Settings → API Keys**, see [MCP server](mcp.md).
 
-With a memory scope chosen, the form also lists your categories under **Memory categories**. Leave them all unchecked for a key that reaches every memory. Check some, and the key reads and writes only the memories in those categories and their subcategories:
+With `memory:read` or `memory:write` chosen, the form also lists your categories under **Memory categories**; a key with prompt scopes alone cannot be limited and reaches every prompt. Leave them all unchecked for a key that reaches every memory. Check some, and the key reads and writes only the memories in those categories and their subcategories:
 
 - it does not see other memories or prompts in lists, the search, the context, the MCP prompts or by their id;
 - it must file every memory and prompt it writes in one of its categories, never without one;

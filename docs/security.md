@@ -6,7 +6,7 @@ Manifold keeps your notes, your places and the passwords in your vault, so it is
 
 - There is exactly one account, the owner. Manifold creates it from `OWNER_USERNAME`, `OWNER_EMAIL` and `OWNER_PASSWORD` on the first start, when no user exists, and ignores these variables afterwards. There is no sign-up: it is turned off, and a check before every account creation refuses a second user.
 - You sign in with your username or email address and your password or, when email is set up, with a six-digit code that is sent to your address and is valid for five minutes. Emailed codes are stored only as hashes. See [Your account](account.md) and [Email](email.md).
-- Passwords have 8 to 128 characters. A new password is refused when it is among the most common passwords (the 10,000 most common ones, and the entries of 12 characters and more among the million most common, from SecLists) or contains the product name, the organization name, the username or the email address. This applies to the first owner password, to password changes and resets, and to `owner:reset-password`.
+- Passwords have 8 to 128 characters. A new password is refused when it is among the most common passwords (the 10,000 most common ones, and the entries of 12 characters and more among the million most common, from SecLists) or contains the product name, the organization name or one of its words, the username, or the email address or its part before the `@`; words shorter than four characters are not checked. This applies to the first owner password, to password changes and resets, and to `owner:reset-password`.
 - Passwords are hashed with scrypt at N = 2^15, r = 8 and p = 3, in a format that names these parameters. Hashes from earlier versions of Manifold keep working and are replaced at the next sign-in with the password.
 - Sign-in attempts are limited to 5 per minute per client address. The limit covers passwords, emailed codes, second-factor codes and password resets. Requests for emailed codes are limited to 3 per minute. These limits need the real client address, so set up the reverse proxy as described in [Deployment](deployment.md).
 - A wrong username and a wrong password get the same answer. Emailed codes are sent in the background, so the response time does not tell whether an address belongs to the owner.
@@ -16,9 +16,9 @@ Manifold keeps your notes, your places and the passwords in your vault, so it is
 
 ## Two-factor authentication
 
-- Two-factor authentication uses authenticator apps (TOTP). You turn it on under **Settings → Security**: choose **Set Up**, enter your password, scan the QR code, enter the first code and choose **Turn On**.
+- Two-factor authentication uses authenticator apps (TOTP). You turn it on under **Settings → Security**: enter your password and choose **Set Up**, scan the QR code, enter the first code and choose **Turn On**.
 - Turning it on gives you 10 backup codes of 24 random characters (120 bits) each, every one of which signs you in once when the authenticator app is not at hand. They are shown only once. **Create New Codes** replaces all of them.
-- Once it is on, every sign-in asks for a code after the password or the emailed code. The second step must be finished within ten minutes and allows five wrong codes before you have to start over. After 10 wrong codes in a row, the second step is locked for 15 minutes.
+- Once it is on, every sign-in asks for a code after the password or the emailed code. The second step must be finished within ten minutes and allows five wrong codes before you have to start over. After 10 wrong codes in a row, across sign-in attempts, the second step of the account is locked for 15 minutes.
 - A code from the authenticator app is accepted only once: the same code is refused for two minutes afterwards, at sign-in and everywhere else a code is asked for.
 - Turning two-factor authentication off and creating new backup codes ask for your password and a current code in the same form.
 - The authenticator secret and the backup codes are stored encrypted under `BETTER_AUTH_SECRET`.
@@ -31,8 +31,9 @@ Two-factor authentication is optional, because Manifold has one account, set up 
 Some actions need a fresh proof that it is you at the keyboard. The **Confirm Your Identity** dialog asks for your password, and for a code from your authenticator app when two-factor authentication is on, before you can:
 
 - Change your email address or your password.
-- Create an API key.
+- Create an API key or a note token.
 - Reveal, copy or change a vault value.
+- Reveal, copy or change the secrets of a data source.
 - Download the data export.
 - End one of your sessions or all other sessions.
 
@@ -88,9 +89,9 @@ See [Vault](vault.md) for using the vault.
 
 - Note content is checked on the server against the editor's schema. Unknown elements are refused, links may use only `http`, `https` or `mailto` or point to a file stored here (`/files/<id>`), and images must be files uploaded to this Manifold. Raw HTML in Markdown is dropped.
 - Service addresses must start with `http://` or `https://`, so a link in the sidebar cannot run a script. Manifold never fetches them itself.
-- Uploads are recognized from their content, never from the file name or the type the client claims. Note images must be PNG, JPEG, WebP or GIF images. Service icons may also be SVG, which must be UTF-8 and may not contain scripts, embedded documents, event handlers, entity declarations or references to other addresses; SVG is only ever shown as an image. API uploads may be any file: images, PDF, audio, video and text keep their type, and anything else is stored as `application/octet-stream` and only ever downloaded.
-- An upload may be as large as `UPLOAD_MAX_BYTES`, 100 MB unless changed, and is written to disk as it arrives. Note images and service icons stay at 10 MB at most. Other request bodies are limited to 5 MB, and a body sent in chunks without a length is refused.
-- Files are stored under random names in `UPLOAD_DIR`. They are served only to the signed-in owner and to keys with `files:read`, with their exact type, `X-Content-Type-Options: nosniff`, and a sandboxing Content Security Policy, so a file never runs as a page. Files with a preview are sent inline, every other file as a download. Manifold never runs or decodes a stored file, and it does not scan files for viruses: scan a file before you open it on your computer.
+- Uploads are recognized from their content, never from the file name or the type the client claims. Images shown in notes must be PNG, JPEG, WebP or GIF images. Service icons may also be SVG, which must be UTF-8 and may not contain scripts, embedded documents, event handlers, entity declarations or references to other addresses; SVG is only ever shown as an image. API uploads, files attached to notes and uploads on the Files page may be any file: images, PDF, audio, video and text keep their type, and anything else is stored as `application/octet-stream` and only ever downloaded.
+- An upload may be as large as `UPLOAD_MAX_BYTES`, 100 MB unless changed, and is written to disk as it arrives. Note images, service icons and copies saved by the image editor stay at 10 MB at most, or at the upload limit when it is smaller. Other request bodies are limited to 5 MB, and a body sent in chunks without a length is refused.
+- Files are stored under random names in `UPLOAD_DIR`. They are served only to the signed-in owner, to keys with `files:read`, and to a note token or the visitor of a shared note for the files its note shows, with their exact type, `X-Content-Type-Options: nosniff`, and a sandboxing Content Security Policy, so a file never runs as a page. Files with a preview are sent inline, every other file as a download. Manifold never runs or decodes a stored file, and it does not scan files for viruses: scan a file before you open it on your computer.
 - A file that nothing refers to any more is deleted by the daily housekeeping.
 - A restore accepts only the files a Manifold backup contains, and copies only the uploads that the restored records name; see [Backups and restores](backups.md). Restore only archives you made: the database dump is applied as it is.
 
@@ -102,7 +103,8 @@ See [Vault](vault.md) for using the vault.
 | Requests for emailed codes                      | Client address  | 3 per minute                                     |
 | Identity confirmations                          | Client address  | 5 per minute                                     |
 | Wrong passwords or codes in a signed-in session | Account         | 5 per minute, then refused until it is over      |
-| Second step of a sign-in                        | Sign-in attempt | 5 wrong codes, locked 15 minutes after 10        |
+| Wrong codes in the second step of a sign-in     | Sign-in attempt | 5, then start over                               |
+| Wrong second-step codes in a row                | Account         | 10, then locked for 15 minutes                   |
 | REST, MCP and file requests with a key          | API key         | `API_RATE_LIMIT_PER_MINUTE`, 120 per minute      |
 | Image uploads from the editor                   | Account         | 30 per minute                                    |
 | Data exports                                    | Installation    | One at a time                                    |
@@ -129,13 +131,15 @@ The audit log under **Settings → Security** records:
 - Sign-ins, failed sign-ins and sign-outs, failed password reset codes, and sessions that reached their maximum age.
 - Confirmations of your identity, and failed ones.
 - Changes of the email address and the password, password resets, two-factor authentication turned on or off, new backup codes and ended sessions.
-- API keys created and revoked.
+- API keys created, revoked and deleted.
+- Note tokens created, revoked and deleted, and every change saved through a shared note's page.
 - Vault entries created, changed and deleted, and values revealed, copied or changed.
+- Data sources created, changed, deleted and tested, and secrets changed, revealed or copied.
 - The data export.
-- Every write through the REST API and the MCP server.
+- Every write through the REST API and the MCP server, and every read of a data source's secrets.
 - The commands that change data on the server: migrations, owner recovery, key rotation, backups and restores.
 
-Each event holds the time, the actor (**Owner**, **API key**, **Command line** or **System**), the action, the record it concerns, the client's address and user agent, and further details. Events never contain passwords, codes, keys, tokens or vault values. You can filter the log by actor, action and date; times and dates are in UTC.
+Each event holds the time, the actor (**Owner**, **API key**, **Note token**, **Command line** or **System**), the action, the record it concerns, the client's address and user agent, and further details. Events never contain passwords, codes, keys, tokens or vault values. You can filter the log by actor, action and date; times and dates are in UTC.
 
 The log is append-only: the database refuses to change or delete events, except for the daily housekeeping, which deletes events older than `AUDIT_RETENTION_DAYS` days, 180 unless changed. Every event is also written to the application log, so it can be kept by a system outside the server. A failure to write an event is logged and never blocks the action itself. See [Your account](account.md) for reading the log.
 
@@ -145,23 +149,23 @@ The application writes one JSON object per line to standard output, and errors t
 
 - applied migrations, the creation of the owner and the start of the server;
 - every audit event, at level `info` with the message `Audit event`;
-- security events at level `warn` with the message `Security event`: missing and invalid API keys, refused scopes, rate limits, blocked credential checks, cross-site form posts, oversized bodies and rejected uploads, with the address and the path;
+- security events at level `warn` with the message `Security event`: missing and invalid API keys, refused scopes, rate limits, blocked credential checks, cross-site form posts, oversized bodies, bodies without a `Content-Length` and rejected uploads, with the address and the path;
 - unexpected errors at level `error` with an id, the route and the stack; the visitor sees only a generic message and the same id to quote.
 
 The log never contains passwords, codes, keys, cookies, tokens, `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY` or the contents of notes and the vault. Read it with `docker compose logs app` and keep it with Docker's log options, see [Operations](operations.md).
 
 ## Cryptography and keys
 
-| What                               | How                                                                         | Key or secret                   |
-| ---------------------------------- | --------------------------------------------------------------------------- | ------------------------------- |
-| Passwords                          | scrypt, N = 2^15, r = 8, p = 3, 16-byte salt, 64-byte key                   | none                            |
-| Vault values                       | AES-256-GCM, random 12-byte IV, 16-byte tag, entry id as additional data    | `ENCRYPTION_KEY`                |
-| Session cookies                    | random session tokens, signed with HMAC-SHA256                              | `BETTER_AUTH_SECRET`            |
-| Authenticator secret, backup codes | encrypted by Better Auth                                                    | `BETTER_AUTH_SECRET`            |
-| Authenticator codes                | TOTP, HMAC-SHA1, six digits, 30 seconds, as authenticator apps expect       | the secret shared with your app |
-| API keys, emailed codes            | stored as SHA-256 hashes; keys have 32 random bytes                         | none                            |
-| Browser fingerprints for notices   | SHA-256 of the user agent                                                   | none                            |
-| Transport                          | TLS at the reverse proxy; SMTP with TLS 1.2 or newer and certificate checks | the certificates                |
+| What                                 | How                                                                                | Key or secret                   |
+| ------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------- |
+| Passwords                            | scrypt, N = 2^15, r = 8, p = 3, 16-byte salt, 64-byte key                          | none                            |
+| Vault values, data source secrets    | AES-256-GCM, random 12-byte IV, 16-byte tag, entry or source id as additional data | `ENCRYPTION_KEY`                |
+| Session cookies                      | random session tokens, signed with HMAC-SHA256                                     | `BETTER_AUTH_SECRET`            |
+| Authenticator secret, backup codes   | encrypted by Better Auth                                                           | `BETTER_AUTH_SECRET`            |
+| Authenticator codes                  | TOTP, HMAC-SHA1, six digits, 30 seconds, as authenticator apps expect              | the secret shared with your app |
+| API keys, note tokens, emailed codes | stored as SHA-256 hashes; keys and tokens have 32 random bytes                     | none                            |
+| Browser fingerprints for notices     | SHA-256 of the user agent                                                          | none                            |
+| Transport                            | TLS at the reverse proxy; SMTP with TLS 1.2 or newer and certificate checks        | the certificates                |
 
 All random values come from the operating system's cryptographic source through Node's `crypto` module.
 
@@ -175,11 +179,11 @@ Managing the two secrets:
 
 ## Data
 
-| Class       | Data                                                                                                      | Protection                                                                                       |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Secret      | Vault values, passwords, API keys, emailed codes, the authenticator secret, backup codes, the two secrets | Encrypted or hashed at rest, never logged, never in API answers, shown only after a confirmation |
-| Private     | Notes, map features, services, uploaded files, the audit log, sessions and settings                       | Only for the signed-in owner and scoped keys, in the database or the upload folder, in backups   |
-| Operational | Logs, health status                                                                                       | Without secrets or content                                                                       |
+| Class       | Data                                                                                                                                        | Protection                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Secret      | Vault values, data source secrets, passwords, API keys, note tokens, emailed codes, the authenticator secret, backup codes, the two secrets | Encrypted or hashed at rest, never logged, never in API answers, shown only after a confirmation |
+| Private     | Notes, map features, services, memories, prompts, data sources, tags, uploaded files, the audit log, sessions and settings                  | Only for the signed-in owner and scoped keys, in the database or the upload folder, in backups   |
+| Operational | Logs, health status                                                                                                                         | Without secrets or content                                                                       |
 
 Backups hold the secret and private classes in the form they are stored, so protect them like the live data.
 
@@ -189,13 +193,14 @@ Manifold connects only to:
 
 - the PostgreSQL database;
 - the SMTP server, when `SMTP_HOST` is set;
+- the hosts of your data sources, when you or a key with `datasources:write` runs a connection test, see [Data sources](#data-sources);
 
 and, outside the app:
 
 - your browser loads map tiles from `MAP_TILE_URL`, OpenStreetMap unless changed;
 - the release workflow on GitHub calls your Coolify deploy webhook, when you set it up, see [Deployment](deployment.md).
 
-The server never fetches service addresses or anything else from the internet at runtime, and it sends no telemetry.
+Apart from connection tests, the server never fetches service addresses or anything else from the internet at runtime, and it sends no telemetry.
 
 ## Server and container
 

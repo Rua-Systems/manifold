@@ -111,11 +111,11 @@ Migrations run on every start, each in its own transaction. When one of them can
 - **`Left out ... uploaded file(s) that no file record of the backup names.`**: some files in the archive's `uploads` folder belong to no record of the backup; they were not copied. A backup that Manifold wrote has none, so the archive was changed after it was written.
 - **`pg_restore failed:`** followed by the reason: the restore stopped at the first error. With `--force`, the database may now be incomplete; fix the cause and run the restore again.
 
-[Backups and restores](backups.md) lists every message. Nothing is changed when an archive is refused.
+[Backups and restores](backups.md) lists the refusals of the restore. Nothing is changed when an archive is refused.
 
 ## The vault cannot be read
 
-The vault lists its entries, but revealing or copying a value ends on an error page. The app runs with another `ENCRYPTION_KEY` than the one the values were encrypted with, usually after a restore or a move to another server. The app starts with any key of the right length, so it cannot notice this at start.
+The vault lists its entries, but revealing or copying a value ends on an error page, and the Data Sources pages end on an error page too. The app runs with another `ENCRYPTION_KEY` than the one the values were encrypted with, usually after a restore or a move to another server. The app starts with any key of the right length, so it cannot notice this at start.
 
 Set `ENCRYPTION_KEY` to the key that was current when the backup was made, and run `docker compose up -d`. Without that key, the values cannot be recovered: delete those entries and create them again.
 
@@ -130,14 +130,15 @@ Every error has a JSON body with an `error` object that holds a `code` and a `me
 | `401 missing_key`        | No key was sent. Send it as `Authorization: Bearer <key>`.                                             |
 | `401 invalid_key`        | The key is unknown, revoked or expired.                                                                |
 | `403 insufficient_scope` | The key lacks the scope of this endpoint; the message names it.                                        |
+| `411 length_required`    | The body was sent in chunks without a `Content-Length` header. Send the length.                        |
 | `413 payload_too_large`  | The body is larger than 5 MB, or an upload is larger than `UPLOAD_MAX_BYTES` plus 256 KB for the form. |
 | `413 file_too_large`     | The uploaded file is larger than `UPLOAD_MAX_BYTES`.                                                   |
 | `429 rate_limited`       | The key used up its requests for this minute. Wait for `Retry-After` seconds.                          |
 
-Each key may make `API_RATE_LIMIT_PER_MINUTE` requests per minute, 120 by default, counted across the REST API and the MCP server together. The `RateLimit-Remaining` header shows how many are left. [REST API](api.md) and [MCP server](mcp.md) describe the other errors.
+Each key may make `API_RATE_LIMIT_PER_MINUTE` requests per minute, 120 by default, counted across the REST API, the MCP server and file downloads with the key. The `RateLimit-Remaining` header shows how many are left. [REST API](api.md) and [MCP server](mcp.md) describe the other errors.
 
 ## Uploads fail
 
-- **"The file is larger than 100 MB."**: the limit is `UPLOAD_MAX_BYTES`, in bytes. Raise it and run `docker compose up -d`. Note images and service icons stay at 10 MB at most.
+- **"The file is larger than 100 MB."**: the limit is `UPLOAD_MAX_BYTES`, in bytes. Raise it and run `docker compose up -d`. Note images, service icons and copies saved by the image editor stay at 10 MB at most, or at this limit when it is smaller.
 - **A `413` error page from the reverse proxy**: the proxy has a smaller limit than the app. Raise it, for example with `client_max_body_size` in Nginx, see [Deployment](deployment.md).
 - **"Use a PNG, JPEG, WebP or GIF image."**: Manifold checks the content of the file, not its name. Service icons may also be SVG images.

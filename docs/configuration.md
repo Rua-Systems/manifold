@@ -113,12 +113,12 @@ The default template is `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Browse
 
 ## Uploads and retention
 
-| Variable               | Default              | Purpose                                                                                 |
-| ---------------------- | -------------------- | --------------------------------------------------------------------------------------- |
-| `UPLOAD_DIR`           | `/data/uploads`      | Folder of the uploaded files. Set by the image; keep it.                                |
-| `UPLOAD_MAX_BYTES`     | `104857600` (100 MB) | Largest accepted upload, in bytes. Note images and service icons stay at 10 MB at most. |
-| `TRASH_RETENTION_DAYS` | `30`                 | Days a trashed note is kept before it is deleted for good.                              |
-| `AUDIT_RETENTION_DAYS` | `180`                | Days audit events are kept.                                                             |
+| Variable               | Default              | Purpose                                                                                                                                                        |
+| ---------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UPLOAD_DIR`           | `/data/uploads`      | Folder of the uploaded files. Set by the image; keep it.                                                                                                       |
+| `UPLOAD_MAX_BYTES`     | `104857600` (100 MB) | Largest accepted upload, in bytes. Note images, service icons and copies saved by the image editor stay at 10 MB at most, or at this limit when it is smaller. |
+| `TRASH_RETENTION_DAYS` | `30`                 | Days a trashed note or memory is kept before it is deleted for good.                                                                                           |
+| `AUDIT_RETENTION_DAYS` | `180`                | Days audit events are kept.                                                                                                                                    |
 
 `docker-compose.yml` does not pass `UPLOAD_DIR` on; the image sets it to the `uploads` folder of the `/data` volume. Backups written by the command line without a path go to the `backups` folder next to it, `/data/backups`.
 
@@ -128,7 +128,7 @@ The housekeeping that applies the retention periods runs inside the app, once on
 
 ## API
 
-`API_RATE_LIMIT_PER_MINUTE` sets how many requests each API key may make per minute, the REST API and the MCP server together. The default is `120`. Further requests are answered with status `429` until the minute is over. See [REST API](api.md) and [MCP server](mcp.md).
+`API_RATE_LIMIT_PER_MINUTE` sets how many requests each API key may make per minute, counted across the REST API, the MCP server and file downloads at `/files/<id>` made with the key. Note tokens have a limit of the same size. The default is `120`. Further requests are answered with status `429` until the minute is over. See [REST API](api.md) and [MCP server](mcp.md).
 
 ## Reverse proxy
 
@@ -158,11 +158,13 @@ The image sets these variables, and `UPLOAD_DIR` as described above. `docker-com
 | `BODY_SIZE_LIMIT` | `Infinity`   | Lifts the Node server's own body limit, because the app applies its own limits.              |
 | `TMPDIR`          | `/data/tmp`  | Work files of backups, on the volume, so that large archives do not have to fit into memory. |
 
+`SHUTDOWN_TIMEOUT`, which the image does not set, is how many seconds the server waits for open requests after `SIGTERM` before it stops, 30 unless set.
+
 ## Image version
 
 `MANIFOLD_VERSION` is read only by Compose. It chooses the tag of `ghcr.io/rua-systems/manifold` that `docker-compose.yml` runs:
 
-- `latest`, the default, is the newest release.
+- `latest`, the default, is the image of the most recent release run, normally the newest release.
 - A release such as `0.8.1` stays on exactly that version.
 - A minor line such as `0.8` follows the newest patch release of 0.8.
 

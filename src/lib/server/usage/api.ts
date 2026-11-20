@@ -26,7 +26,7 @@ const usageResource = z.object({
 			z.object({
 				owner: z.string().meta({
 					description:
-						'The module that owns the files, or `api` for uploads nothing uses yet.'
+						'The module that owns the files, or `api` for files uploaded through the API without a folder.'
 				}),
 				label: z.string(),
 				count: z.number().int(),

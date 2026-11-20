@@ -10,15 +10,15 @@ Operational tasks that must never be reachable over the network run through a co
 docker compose exec app node cli.js <command>
 ```
 
-| Command                    | Purpose                                                                                          |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
-| `migrate`                  | Applies pending database migrations. The app also applies them on every start.                   |
-| `owner:show`               | Prints the owner's username and email address.                                                   |
-| `owner:reset-password`     | Asks for a new owner password and signs out every session.                                       |
-| `owner:disable-2fa`        | Turns two factor authentication off for the owner and signs out every session.                   |
-| `vault:rotate-key`         | Encrypts every vault value again with a new `ENCRYPTION_KEY`.                                    |
-| `backup [path]`            | Writes a backup archive with the database and the uploaded files, by default to `/data/backups`. |
-| `restore <path> [--force]` | Restores a backup archive, then applies the migrations that are newer than the backup.           |
+| Command                    | Purpose                                                                                            |
+| -------------------------- | -------------------------------------------------------------------------------------------------- |
+| `migrate`                  | Applies pending database migrations. The app also applies them on every start.                     |
+| `owner:show`               | Prints the owner's username and email address.                                                     |
+| `owner:reset-password`     | Asks for a new owner password and signs out every session.                                         |
+| `owner:disable-2fa`        | Turns two factor authentication off for the owner and signs out every session.                     |
+| `vault:rotate-key`         | Encrypts every vault value and the secrets of every data source again with a new `ENCRYPTION_KEY`. |
+| `backup [path]`            | Writes a backup archive with the database and the uploaded files, by default to `/data/backups`.   |
+| `restore <path> [--force]` | Restores a backup archive, then applies the migrations that are newer than the backup.             |
 
 `node cli.js help` prints the same list. The tool reads the same environment as the app and checks it with the same rules, so a configuration error stops it with the same message as the app, see [Troubleshooting](troubleshooting.md). It exits with status `0` on success and `1` on any error, which makes it usable from scripts. Passwords and keys that it asks for are not shown while you type them.
 
@@ -95,7 +95,7 @@ Without email, or without access to the mailbox, set a new password on the comma
 docker compose exec app node cli.js owner:reset-password
 ```
 
-The command asks for the new password twice. It must be 8 to 128 characters long. The command then changes the password, signs out every session and writes an audit entry. Two factor authentication stays as it was.
+The command asks for the new password twice. It must be 8 to 128 characters long, not a common password, and must not contain `manifold`, the organization name, the username or the email address. The command then changes the password, signs out every session and writes an audit entry. Two factor authentication stays as it was.
 
 ### Lost second factor
 
@@ -125,13 +125,13 @@ Both `owner:reset-password` and `owner:disable-2fa` sign out every session, incl
    openssl rand -base64 32
    ```
 
-2. Encrypt the vault and the data sources again with the new key. The command takes the key from `NEW_ENCRYPTION_KEY` when that variable is set, and otherwise asks for it:
+2. Encrypt the vault and the data sources again with the new key. The command takes the key from `NEW_ENCRYPTION_KEY` when that variable is set in the container, for example with `docker compose exec -e NEW_ENCRYPTION_KEY app node cli.js vault:rotate-key` and the variable set in your shell, and otherwise asks for it:
 
    ```bash
    docker compose exec app node cli.js vault:rotate-key
    ```
 
-   Every value is decrypted with the current key and encrypted with the new one in a single transaction, so nothing is ever half rotated. The command reports how many vault values and data sources it encrypted again. If the current key cannot open every value, it stops with `The current ENCRYPTION_KEY does not open every value. Nothing was changed.`
+   Every value is decrypted with the current key and encrypted with the new one in a single transaction, so nothing is ever half rotated. The command reports how many vault values and data sources it encrypted again. If the current key cannot open every value, it stops with `The current ENCRYPTION_KEY does not open every value. Nothing was changed.`, or for data sources `The current ENCRYPTION_KEY does not open the secrets of every data source. Nothing was changed.` A new key equal to the current one stops with `The new key is the current one. Nothing was changed.`
 
 3. Set `ENCRYPTION_KEY` to the new key in `.env`, or in Coolify's environment settings, and recreate the app container so it reads the new value:
 
@@ -139,9 +139,9 @@ Both `owner:reset-password` and `owner:disable-2fa` sign out every session, incl
    docker compose up -d
    ```
 
-   Until then, the running app still holds the old key and cannot read the vault. `docker compose restart` is not enough, because it does not apply changed environment values.
+   Until then, the running app still holds the old key: it cannot reveal vault values, and the Data Sources pages, routes and tools fail. `docker compose restart` is not enough, because it does not apply changed environment values.
 
-4. Create a new backup. Archives made before the rotation hold the vault encrypted with the old key: keep the old key together with them, or delete them once the new backup is stored safely.
+4. Create a new backup. Archives made before the rotation hold the vault and the secrets of data sources encrypted with the old key: keep the old key together with them, or delete them once the new backup is stored safely.
 
 ## Changing the sign in secret
 
@@ -169,11 +169,12 @@ If you changed the secret while two factor authentication was on, run `owner:dis
 
 The app cleans up after itself once when it starts and then every 24 hours:
 
-| Task                       | What it removes                                                                                                               |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `notes.purge-trash`        | Notes that have been in the trash for longer than `TRASH_RETENTION_DAYS` (default 30).                                        |
-| `files.purge-unreferenced` | Uploaded files older than a day that no note and no service refers to any more, from the database and from the upload folder. |
-| `audit.purge`              | Audit events older than `AUDIT_RETENTION_DAYS` (default 180).                                                                 |
+| Task                       | What it removes                                                                                                                                           |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `notes.purge-trash`        | Notes that have been in the trash for longer than `TRASH_RETENTION_DAYS` (default 30).                                                                    |
+| `memory.purge-trash`       | Memories that have been in the trash for longer than `TRASH_RETENTION_DAYS` (default 30).                                                                 |
+| `files.purge-unreferenced` | Uploaded files older than a day that no note, no service and no entry on the Files page refers to any more, from the database and from the upload folder. |
+| `audit.purge`              | Audit events older than `AUDIT_RETENTION_DAYS` (default 180).                                                                                             |
 
 The trash is emptied first, so images of purged notes are removed in the same run. A task that fails is logged as `Housekeeping task failed` with the task's name, and the other tasks still run. The 24 hour interval starts with the app, so every restart runs all tasks once more.
 
@@ -200,9 +201,9 @@ Every line has `time` (UTC), `level` (`info`, `warn` or `error`) and `message`, 
 
 The log contains:
 
-- the start of the app: the migrations it applied (`Applied migrations`), the creation of the owner account on the first start, and the address it listens on;
+- the start of the app: the migrations it applied (`Applied migrations`), the creation of the owner account on the first start, and the address it listens on, as the plain text line `Listening on http://0.0.0.0:3000`;
 - every audit event (`Audit event`, with the action, the actor, the target and the address), so the audit log can be kept outside the server as well;
-- security events (`Security event`, at level `warn`): missing and invalid API keys, refused scopes, rate limits, blocked credential checks, cross-site form posts, oversized bodies and rejected uploads;
+- security events (`Security event`, at level `warn`): missing and invalid API keys, refused scopes, rate limits, blocked credential checks, cross-site form posts, oversized bodies, bodies without a `Content-Length` and rejected uploads;
 - errors that the app caught, such as `Sending a mail failed`, `Housekeeping task failed`, `The export failed`, `API request failed` or `MCP tool failed`, with the error message and stack;
 - unexpected errors of pages and form actions (`Request failed`), with an `id` that the error page shows as well, so a visitor can quote it.
 

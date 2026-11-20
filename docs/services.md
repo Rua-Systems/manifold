@@ -36,7 +36,7 @@ The order of the page is the order of the sidebar and of the command palette.
 - **Dragging**: on a desktop, drag a card to its new place with the mouse. The order is saved when you drop it.
 - **Move buttons**: the arrow buttons on each card move a service one place up or down, and work with a keyboard and on touch screens. On phones they are the only way, and the drag handle is hidden.
 
-A drag is refused when the list changed somewhere else in the meantime, for example through the API; reload the page and try again.
+A drag is refused when services were added or deleted somewhere else in the meantime, for example through the API; reload the page and try again. An order changed elsewhere in the meantime is replaced by the one you drop.
 
 ## In the sidebar and the command palette
 

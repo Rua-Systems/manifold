@@ -34,16 +34,16 @@ cp .env.example .env
 
 Open `.env` and set at least these values:
 
-| Variable             | What to enter                                                                                        |
-| -------------------- | ---------------------------------------------------------------------------------------------------- |
-| `MANIFOLD_VERSION`   | The release you checked out, for example `0.8.1`.                                                    |
-| `ORIGIN`             | The public address, for example `https://manifold.example.com`, without a path or a trailing slash.  |
-| `POSTGRES_PASSWORD`  | A new password for the bundled database. Generate it with the second command below.                  |
-| `BETTER_AUTH_SECRET` | At least 32 random characters. Generate them with the first command below.                           |
-| `ENCRYPTION_KEY`     | Exactly 32 random bytes, base64 encoded. Generate a second value with the first command below.       |
-| `OWNER_USERNAME`     | The username of the owner account: 3 to 32 lowercase letters, digits, `.`, `_` or `-`.               |
-| `OWNER_EMAIL`        | The email address of the owner account.                                                              |
-| `OWNER_PASSWORD`     | The password of the owner account, 8 to 128 characters. You sign in with it and can change it later. |
+| Variable             | What to enter                                                                                                                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MANIFOLD_VERSION`   | The release you checked out, for example `0.8.1`.                                                                                                                                                             |
+| `ORIGIN`             | The public address, for example `https://manifold.example.com`, without a path or a trailing slash.                                                                                                           |
+| `POSTGRES_PASSWORD`  | A new password for the bundled database. Generate it with the second command below.                                                                                                                           |
+| `BETTER_AUTH_SECRET` | At least 32 random characters. Generate them with the first command below.                                                                                                                                    |
+| `ENCRYPTION_KEY`     | Exactly 32 random bytes, base64 encoded. Generate a second value with the first command below.                                                                                                                |
+| `OWNER_USERNAME`     | The username of the owner account: 3 to 32 lowercase letters, digits, `.`, `_` or `-`.                                                                                                                        |
+| `OWNER_EMAIL`        | The email address of the owner account.                                                                                                                                                                       |
+| `OWNER_PASSWORD`     | The password of the owner account, 8 to 128 characters, not a common password, and without `manifold`, the organization name, the username or the email address. You sign in with it and can change it later. |
 
 Generate `BETTER_AUTH_SECRET` and `ENCRYPTION_KEY` with this command, once for each:
 
@@ -107,7 +107,7 @@ gh attestation verify oci://ghcr.io/rua-systems/manifold:0.8.1 --owner Rua-Syste
 
 The image also contains a CycloneDX software bill of materials at `/app/sbom.cdx.json`.
 
-The first start creates the database in the `db-data` volume. The app waits until the database reports healthy, validates its environment, applies all migrations, creates the owner account from the `OWNER_*` variables and starts listening on port 3000. It also starts the daily housekeeping, which deletes notes that have stayed in the trash too long, old audit events and uploaded files that nothing refers to any more. Later starts apply pending migrations automatically before the app accepts requests.
+The first start creates the database in the `db-data` volume. The app waits until the database reports healthy, validates its environment, applies all migrations, creates the owner account from the `OWNER_*` variables and starts listening on port 3000. It also starts the daily housekeeping, which deletes notes and memories that have stayed in the trash too long, old audit events and uploaded files that nothing refers to any more. Later starts apply pending migrations automatically before the app accepts requests.
 
 The Compose file publishes the port only on `127.0.0.1`, so the app is reachable from the server itself and from a reverse proxy on it, but not directly from the internet. The database is not published at all.
 
