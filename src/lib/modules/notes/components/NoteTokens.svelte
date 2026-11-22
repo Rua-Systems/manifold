@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
 	import { invalidate } from '$app/navigation';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { getStepUp, needsStepUp } from '$lib/state/step-up.svelte';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { localizedHref } from '$lib/utils/navigation';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { getStepUp, needsStepUp } from '#lib/state/step-up.svelte.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import Share2 from '@lucide/svelte/icons/share-2';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { NOTE_DEPENDENCY } from '../paths';
 	import { defaultNoteTokenExpiry, NOTE_TOKEN_NAME_MAX_LENGTH } from '../schemas';
 	import { noteTokenStatus } from '../tokens';

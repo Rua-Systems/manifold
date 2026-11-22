@@ -1,4 +1,4 @@
-import { locales } from '$lib/paraglide/runtime.js';
+import { locales } from '#lib/paraglide/runtime.js';
 import { describe, expect, it } from 'vitest';
 import { renderMail, type MailContext } from './layout';
 import {

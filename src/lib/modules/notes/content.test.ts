@@ -1,4 +1,4 @@
-import { ValidationError } from '$lib/server/errors';
+import { ValidationError } from '#lib/server/errors.ts';
 import { describe, expect, it } from 'vitest';
 import {
 	emptyNoteContent,

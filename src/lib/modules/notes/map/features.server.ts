@@ -1,8 +1,8 @@
-import { m } from '$lib/paraglide/messages.js';
-import type { Actor } from '$lib/server/actor';
-import { getDb } from '$lib/server/db';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { isUuid } from '$lib/utils/uuid';
+import { m } from '#lib/paraglide/messages.js';
+import type { Actor } from '#lib/server/actor.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
 import { and, asc, eq, isNull, sql, type SQL } from 'drizzle-orm';
 import { getNote, insertNote, type NoteInput } from '../notes.server';
 import { mapFeature, note } from '../schema.server';

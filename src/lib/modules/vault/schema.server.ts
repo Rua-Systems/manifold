@@ -1,4 +1,4 @@
-import { apiKey } from '$lib/server/db/schema';
+import { apiKey } from '#lib/server/db/schema.ts';
 import { customType, index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 

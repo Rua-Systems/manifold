@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		open: boolean;
@@ -35,9 +35,10 @@
 		{/each}
 		<p class="message">{message}</p>
 		<div class="actions">
-			<button type="button" class="cancel" onclick={() => (open = false)}>
-				{m.common_cancel()}
-			</button>
+			<button type="button" class="cancel" onclick={() => (open = false)}
+				>{m.common_cancel()}</button
+			>
+
 			<button type="submit" class="danger">{confirmLabel}</button>
 		</div>
 	</form>

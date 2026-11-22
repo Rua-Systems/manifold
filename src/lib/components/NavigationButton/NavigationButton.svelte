@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
-	import UserIcon from '$lib/components/icons/UserIcon.svelte';
-	import LocaleSwitch from '$lib/components/LocaleSwitch/LocaleSwitch.svelte';
-	import ThemeSwitch from '$lib/components/ThemeSwitch/ThemeSwitch.svelte';
-	import { ACCOUNT_LINKS, GUEST_LINKS } from '$lib/config/navigation';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { NavigationLink } from '$lib/types/navigation';
-	import { currentMarker, localizedHref } from '$lib/utils/navigation';
+	import CloseIcon from '#lib/components/icons/CloseIcon.svelte';
+	import UserIcon from '#lib/components/icons/UserIcon.svelte';
+	import LocaleSwitch from '#lib/components/LocaleSwitch/LocaleSwitch.svelte';
+	import ThemeSwitch from '#lib/components/ThemeSwitch/ThemeSwitch.svelte';
+	import { ACCOUNT_LINKS, GUEST_LINKS } from '#lib/config/navigation.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { NavigationLink } from '#lib/types/navigation.ts';
+	import { currentMarker, localizedHref } from '#lib/utils/navigation.ts';
 	import type { Action } from 'svelte/action';
 	import { cubicOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
@@ -33,7 +33,9 @@
 		return decorate(ACCOUNT_LINKS);
 	});
 
-	afterNavigate(() => {
+	afterNavigate(({ shallow, type }) => {
+		if (shallow && type === 'goto') return;
+
 		isOpen = false;
 	});
 

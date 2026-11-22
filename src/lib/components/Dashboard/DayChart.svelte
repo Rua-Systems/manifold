@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import type { DashboardDay } from '$lib/types/dashboard';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import type { DashboardDay } from '#lib/types/dashboard.ts';
 
 	interface Props {
 		id: string;

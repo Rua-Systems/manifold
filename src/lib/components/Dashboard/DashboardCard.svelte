@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { Pathname } from '$app/types';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { DashboardCard } from '$lib/types/dashboard';
-	import { localizedHref } from '$lib/utils/navigation';
+	import type { AppPath } from '#lib/types/navigation.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { DashboardCard } from '#lib/types/dashboard.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
 	import DayChart from './DayChart.svelte';
 	import LinkList from './LinkList.svelte';
@@ -20,7 +20,7 @@
 	<header>
 		<h2 id="dashboard-{card.id}">{card.title}</h2>
 		<a
-			href={localizedHref(card.href as Pathname)}
+			href={localizedHref(card.href as AppPath)}
 			aria-label={m.dashboard_open({ title: card.title })}
 			title={m.dashboard_open({ title: card.title })}
 		>

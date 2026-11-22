@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { isCalendarDate, VERSION_MAX } from '$lib/schemas/rules';
+import { m } from '#lib/paraglide/messages.js';
+import { isCalendarDate, VERSION_MAX } from '#lib/schemas/rules.ts';
 import { z } from 'zod';
 
 export const NOTE_TITLE_MAX_LENGTH = 200;

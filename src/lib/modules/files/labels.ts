@@ -1,6 +1,6 @@
-import { m } from '$lib/paraglide/messages.js';
-import { MODULES } from '$lib/modules/registry';
-import type { FileKind } from '$lib/types/files';
+import { m } from '#lib/paraglide/messages.js';
+import { MODULES } from '#lib/modules/registry.ts';
+import type { FileKind } from '#lib/types/files.ts';
 
 // Names shown for kinds of files and for the modules that keep files of their own. Browser safe,
 // so the page and the server name them alike.

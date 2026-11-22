@@ -1,5 +1,5 @@
 <script lang="ts">
-	import MemoryPage from '$lib/modules/memory/components/MemoryPage.svelte';
+	import MemoryPage from '#lib/modules/memory/components/MemoryPage.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

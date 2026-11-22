@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
 	import { page } from '$app/state';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getThemeState } from '$lib/state/theme.svelte';
-	import type { Theme } from '$lib/types/theme';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { parseTheme } from '$lib/utils/theme';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getThemeState } from '#lib/state/theme.svelte.ts';
+	import type { Theme } from '#lib/types/theme.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { parseTheme } from '#lib/utils/theme.ts';
 
 	interface ThemeOption {
 		value: Theme;

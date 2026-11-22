@@ -1,4 +1,4 @@
-import { file } from '$lib/server/db/schema';
+import { file } from '#lib/server/db/schema.ts';
 import { index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 // Mirror of migrations/0004_services_init.sql. The SQL file is the source of truth.

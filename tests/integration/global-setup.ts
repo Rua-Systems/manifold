@@ -1,6 +1,6 @@
-import { connect } from '$lib/server/db';
-import { defaultMigrationsDirectory, runMigrations } from '$lib/server/db/migrate';
-import { bootstrapOwner } from '$lib/server/owner';
+import { connect } from '#lib/server/db/index.ts';
+import { defaultMigrationsDirectory, runMigrations } from '#lib/server/db/migrate.ts';
+import { bootstrapOwner } from '#lib/server/owner.ts';
 import type { TestProject } from 'vitest/node';
 import { TEST_OWNER_VARIABLES } from '../support/owner.ts';
 import { resetTestDatabase, testDatabaseUrl } from '../support/test-database.ts';

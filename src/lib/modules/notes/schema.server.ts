@@ -1,6 +1,6 @@
-import { geometry4326 } from '$lib/server/db/geometry';
+import { geometry4326 } from '#lib/server/db/geometry.ts';
 import { sql } from 'drizzle-orm';
-import { file } from '$lib/server/db/schema';
+import { file } from '#lib/server/db/schema.ts';
 import {
 	type AnyPgColumn,
 	boolean,

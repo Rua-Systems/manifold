@@ -1,8 +1,8 @@
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { requireUser } from '$lib/server/guard';
-import { listTags, tagsByIds } from '$lib/server/tags/tags';
-import { textValue } from '$lib/utils/validation';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { ConflictError, NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { listTags, tagsByIds } from '#lib/server/tags/tags.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { withSubcategories } from '../categories';
 import { allMemoryCategories } from '../categories.server';

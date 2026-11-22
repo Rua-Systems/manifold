@@ -1,9 +1,9 @@
-import { ownerActor, SYSTEM_ACTOR, type Actor } from '$lib/server/actor';
-import { getDb } from '$lib/server/db';
-import { file } from '$lib/server/db/schema';
-import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { storeUpload } from '$lib/server/files/files';
-import { housekeepingTasks } from '$lib/server/tasks';
+import { ownerActor, SYSTEM_ACTOR, type Actor } from '#lib/server/actor.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { file } from '#lib/server/db/schema.ts';
+import { ConflictError, NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { storeUpload } from '#lib/server/files/files.ts';
+import { housekeepingTasks } from '#lib/server/tasks.ts';
 import { eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { NoteContent } from './content';

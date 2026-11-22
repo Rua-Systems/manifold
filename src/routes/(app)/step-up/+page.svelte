@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import StepUpForm from '$lib/components/StepUp/StepUpForm.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import StepUpForm from '#lib/components/StepUp/StepUpForm.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

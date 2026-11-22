@@ -1,5 +1,5 @@
-import { SERVER_MODULES } from '$lib/modules/registry.server';
-import type { SearchHit } from '$lib/types/search';
+import { SERVER_MODULES } from '#lib/modules/registry.server.ts';
+import type { SearchHit } from '#lib/types/search.ts';
 import type { ApiKeyIdentity } from './api-keys';
 
 // The search: every module's provider answers, and the hits are merged into one list by score.

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import TagChip from '$lib/components/Tags/TagChip.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import type { Tag } from '$lib/types/tags';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { relativeTime } from '$lib/utils/time';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import TagChip from '#lib/components/Tags/TagChip.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import type { Tag } from '#lib/types/tags.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
 	import Pin from '@lucide/svelte/icons/pin';
 	import { categoryLabel } from '../categories';
 	import type { MemoryCategory, MemoryCategoryNode, MemorySummary } from '../types';
@@ -66,7 +66,7 @@
 		method="GET"
 		class="filters"
 		role="search"
-		data-sveltekit-keepfocus
+		data-sveltekit-reset="false"
 		data-sveltekit-replacestate
 		bind:this={filterForm}
 	>

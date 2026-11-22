@@ -2,12 +2,12 @@ import {
 	NOTE_TOKEN_COOKIE,
 	authenticateNoteToken,
 	noteShowsFile
-} from '$lib/modules/notes/tokens.server';
-import { authenticateCredential } from '$lib/server/api/credentials';
-import { getEnv } from '$lib/server/env';
-import { findFile, serveFile } from '$lib/server/files/files';
-import { logSecurityEvent } from '$lib/server/log';
-import { consumeApiRequest } from '$lib/server/rate-limit';
+} from '#lib/modules/notes/tokens.server.ts';
+import { authenticateCredential } from '#lib/server/api/credentials.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { findFile, serveFile } from '#lib/server/files/files.ts';
+import { logSecurityEvent } from '#lib/server/log.ts';
+import { consumeApiRequest } from '#lib/server/rate-limit.ts';
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 

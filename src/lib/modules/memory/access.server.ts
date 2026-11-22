@@ -1,8 +1,8 @@
-import { m } from '$lib/paraglide/messages.js';
-import type { ApiKeyIdentity } from '$lib/server/api-keys';
-import { getDb, type Transaction } from '$lib/server/db';
-import { ValidationError } from '$lib/server/errors';
-import { isUuid } from '$lib/utils/uuid';
+import { m } from '#lib/paraglide/messages.js';
+import type { ApiKeyIdentity } from '#lib/server/api-keys.ts';
+import { getDb, type Transaction } from '#lib/server/db/index.ts';
+import { ValidationError } from '#lib/server/errors.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
 import { eq, inArray, sql, type SQL } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { categoryLabel, withSubcategories } from './categories';

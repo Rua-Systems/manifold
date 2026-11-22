@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { localizedHref } from '$lib/utils/navigation';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import RefreshIcon from '@lucide/svelte/icons/refresh-cw';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { summaryOf, TYPE_LABELS } from '../labels';
 	import { DATA_SOURCE_TYPES, type DataSourceType, type DataSourceView } from '../types';
 	import TestStatus from './TestStatus.svelte';
@@ -67,7 +67,7 @@
 		method="GET"
 		class="filters"
 		role="search"
-		data-sveltekit-keepfocus
+		data-sveltekit-reset="false"
 		data-sveltekit-replacestate
 		bind:this={filterForm}
 	>

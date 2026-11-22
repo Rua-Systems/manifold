@@ -1,13 +1,13 @@
-import type { CredentialProvider } from '$lib/server/api/credentials';
-import type { ApiRoute } from '$lib/server/api/types';
-import type { FileReference } from '$lib/server/files/files';
-import type { HousekeepingTask } from '$lib/server/housekeeping';
-import type { ApiKeyIdentity } from '$lib/server/api-keys';
-import type { McpPrompt, McpTool } from '$lib/server/mcp/types';
-import type { SearchProvider } from '$lib/server/search';
-import type { DashboardCard } from '$lib/types/dashboard';
-import type { FileUse } from '$lib/types/files';
-import type { UsageItem } from '$lib/types/usage';
+import type { CredentialProvider } from '#lib/server/api/credentials.ts';
+import type { ApiRoute } from '#lib/server/api/types.ts';
+import type { FileReference } from '#lib/server/files/files.ts';
+import type { HousekeepingTask } from '#lib/server/housekeeping.ts';
+import type { ApiKeyIdentity } from '#lib/server/api-keys.ts';
+import type { McpPrompt, McpTool } from '#lib/server/mcp/types.ts';
+import type { SearchProvider } from '#lib/server/search.ts';
+import type { DashboardCard } from '#lib/types/dashboard.ts';
+import type { FileUse } from '#lib/types/files.ts';
+import type { UsageItem } from '#lib/types/usage.ts';
 import type { SidebarGroup } from './types';
 
 export interface ServerModuleManifest {

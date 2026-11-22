@@ -1,4 +1,4 @@
-import { tag } from '$lib/server/db/schema';
+import { tag } from '#lib/server/db/schema.ts';
 import {
 	index,
 	integer,

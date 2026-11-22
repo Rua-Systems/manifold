@@ -1,7 +1,7 @@
-import type { AuthSession, AuthUser } from '$lib/server/auth';
-import type { Features } from '$lib/types/features';
-import type { Theme } from '$lib/types/theme';
-import type { SessionUser } from '$lib/types/user';
+import type { AuthSession, AuthUser } from '#lib/server/auth.ts';
+import type { Features } from '#lib/types/features.ts';
+import type { Theme } from '#lib/types/theme.ts';
+import type { SessionUser } from '#lib/types/user.ts';
 
 declare global {
 	namespace App {

@@ -1,5 +1,5 @@
-import { DOWNLOAD_TYPE, fileKind, isPreviewable } from '$lib/utils/file-kind';
-import { isUuid } from '$lib/utils/uuid';
+import { DOWNLOAD_TYPE, fileKind, isPreviewable } from '#lib/utils/file-kind.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
 import { and, eq, inArray, lt, sql, type SQL } from 'drizzle-orm';
 import { createHash, randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';

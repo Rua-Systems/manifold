@@ -1,4 +1,4 @@
-import type { FolderOption } from '$lib/types/folders';
+import type { FolderOption } from '#lib/types/folders.ts';
 import type { SidebarItem } from '../types';
 
 // The notes in the sidebar as a tree: the folders by name, each with its folders and its newest

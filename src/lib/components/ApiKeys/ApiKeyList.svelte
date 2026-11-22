@@ -1,11 +1,11 @@
 <script lang="ts">
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { ApiKeyView } from '$lib/types/api-keys';
-	import { relativeTime } from '$lib/utils/time';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { ApiKeyView } from '#lib/types/api-keys.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
 
 	interface Props {
 		keys: ApiKeyView[];

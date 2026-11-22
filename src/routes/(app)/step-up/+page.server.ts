@@ -1,15 +1,15 @@
-import { m } from '$lib/paraglide/messages.js';
-import { codeSchema } from '$lib/schemas/auth';
-import { stepUpSchema } from '$lib/schemas/security';
-import { requireUser } from '$lib/server/guard';
+import { m } from '#lib/paraglide/messages.js';
+import { codeSchema } from '#lib/schemas/auth.ts';
+import { stepUpSchema } from '#lib/schemas/security.ts';
+import { requireUser } from '#lib/server/guard.ts';
 import {
 	countFailedCredentialCheck,
 	isCredentialCheckBlocked,
 	isRateLimited
-} from '$lib/server/rate-limit';
-import { confirmIdentity } from '$lib/server/step-up';
-import { safeRedirectTarget } from '$lib/utils/redirect';
-import { fieldErrors, textValue } from '$lib/utils/validation';
+} from '#lib/server/rate-limit.ts';
+import { confirmIdentity } from '#lib/server/step-up.ts';
+import { safeRedirectTarget } from '#lib/utils/redirect.ts';
+import { fieldErrors, textValue } from '#lib/utils/validation.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

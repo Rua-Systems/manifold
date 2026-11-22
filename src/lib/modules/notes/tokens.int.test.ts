@@ -1,10 +1,10 @@
-import { ownerActor } from '$lib/server/actor';
-import { createApiKey } from '$lib/server/api-keys';
-import { handleApiRequest } from '$lib/server/api/router';
-import { getDb } from '$lib/server/db';
-import { auditEvent, file } from '$lib/server/db/schema';
-import { NotFoundError } from '$lib/server/errors';
-import { storeUpload } from '$lib/server/files/files';
+import { ownerActor } from '#lib/server/actor.ts';
+import { createApiKey } from '#lib/server/api-keys.ts';
+import { handleApiRequest } from '#lib/server/api/router.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { auditEvent, file } from '#lib/server/db/schema.ts';
+import { NotFoundError } from '#lib/server/errors.ts';
+import { storeUpload } from '#lib/server/files/files.ts';
 import { desc, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createNote, deleteNotePermanently, trashNote, updateNote } from './notes.server';

@@ -2,7 +2,7 @@
 	import Copy from '@lucide/svelte/icons/copy';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import Unlink from '@lucide/svelte/icons/unlink';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { BubbleMenu, getEditor, useEditorState } from '../tiptap/index.ts';
 
 	// Edra's link bubble menu: shown while the cursor is inside a link.

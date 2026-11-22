@@ -1,7 +1,7 @@
-import { version } from '$app/environment';
-import { MODULES } from '$lib/modules/registry';
-import { moduleUsage } from '$lib/modules/registry.server';
-import { m } from '$lib/paraglide/messages.js';
+import { version } from '$app/env';
+import { MODULES } from '#lib/modules/registry.ts';
+import { moduleUsage } from '#lib/modules/registry.server.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type {
 	DatabaseUsage,
 	FileUsage,
@@ -9,7 +9,7 @@ import type {
 	StorageUsage,
 	UsageGroup,
 	UsageReport
-} from '$lib/types/usage';
+} from '#lib/types/usage.ts';
 import { sql } from 'drizzle-orm';
 import { getDb } from '../db';
 import { apiKey, auditEvent, file, session } from '../db/schema';

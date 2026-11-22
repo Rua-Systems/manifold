@@ -1,5 +1,5 @@
 <script lang="ts">
-	import FilePreviewPage from '$lib/modules/files/components/FilePreviewPage.svelte';
+	import FilePreviewPage from '#lib/modules/files/components/FilePreviewPage.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

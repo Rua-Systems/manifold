@@ -1,18 +1,22 @@
-import { connect, type Connection } from '$lib/server/db';
-import { defaultMigrationsDirectory, MigrationError, runMigrations } from '$lib/server/db/migrate';
-import { EnvError, parseEnv, type Env } from '$lib/server/env';
-import { parseVaultKey, VaultKeyError } from '$lib/modules/vault/crypto.server';
-import { reencryptDataSources } from '$lib/modules/datasources/rotation.server';
-import { reencryptVaultSecrets } from '$lib/modules/vault/rotation.server';
-import { recordAudit } from '$lib/server/audit';
-import { restoreBackup, writeBackup } from '$lib/server/backup/backup';
-import { BackupError } from '$lib/server/backup/pg-tools';
+import { connect, type Connection } from '#lib/server/db/index.ts';
+import {
+	defaultMigrationsDirectory,
+	MigrationError,
+	runMigrations
+} from '#lib/server/db/migrate.ts';
+import { EnvError, parseEnv, type Env } from '#lib/server/env.ts';
+import { parseVaultKey, VaultKeyError } from '#lib/modules/vault/crypto.server.ts';
+import { reencryptDataSources } from '#lib/modules/datasources/rotation.server.ts';
+import { reencryptVaultSecrets } from '#lib/modules/vault/rotation.server.ts';
+import { recordAudit } from '#lib/server/audit.ts';
+import { restoreBackup, writeBackup } from '#lib/server/backup/backup.ts';
+import { BackupError } from '#lib/server/backup/pg-tools.ts';
 import {
 	disableOwnerTwoFactor,
 	findOwner,
 	OwnerError,
 	resetOwnerPassword
-} from '$lib/server/owner';
+} from '#lib/server/owner.ts';
 import { once } from 'node:events';
 import { createWriteStream } from 'node:fs';
 import { mkdir, rm } from 'node:fs/promises';

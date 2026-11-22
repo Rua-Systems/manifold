@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { localizedHref } from '$lib/utils/navigation';
+	import { m } from '#lib/paraglide/messages.js';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import { untrack } from 'svelte';
 	import type { MapConfig } from '../map/config';
 	import { MapController } from '../map/controller';

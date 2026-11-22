@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { ValidationError } from '$lib/server/errors';
+import { m } from '#lib/paraglide/messages.js';
+import { ValidationError } from '#lib/server/errors.ts';
 import type { NoteContent } from '../notes/content';
 import { validateNoteContent } from '../notes/content.server';
 import { markdownToNote } from '../notes/markdown.server';

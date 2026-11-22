@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import TagPicker from '$lib/components/Tags/TagPicker.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { Tag } from '$lib/types/tags';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { localizedHref } from '$lib/utils/navigation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import TagPicker from '#lib/components/Tags/TagPicker.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { Tag } from '#lib/types/tags.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import { untrack } from 'svelte';
 	import CategorySelect from '../../components/CategorySelect.svelte';
 	import type { MemoryCategory } from '../../types';
@@ -113,9 +113,9 @@
 	{#snippet actions()}
 		<a class="quiet" href={localizedHref('/memory/prompts')}>{m.prompts_all()}</a>
 		{#if prompt !== null}
-			<button type="button" class="quiet danger" onclick={() => (deleteOpen = true)}>
-				{m.common_delete()}
-			</button>
+			<button type="button" class="quiet danger" onclick={() => (deleteOpen = true)}
+				>{m.common_delete()}</button
+			>
 		{/if}
 	{/snippet}
 	<div class="layout">

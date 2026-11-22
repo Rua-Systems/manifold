@@ -1,4 +1,4 @@
-import { getLocale, type Locale } from '$lib/paraglide/runtime.js';
+import { getLocale, type Locale } from '#lib/paraglide/runtime.js';
 import type { RequestEvent } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { createHash } from 'node:crypto';

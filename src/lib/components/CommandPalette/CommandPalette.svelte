@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import type { PathnameWithSearchOrHash } from '$app/types';
-	import { MODULES } from '$lib/modules/registry';
-	import { m } from '$lib/paraglide/messages.js';
-	import { deLocalizeHref, getLocale, locales, type Locale } from '$lib/paraglide/runtime.js';
-	import { getPalette } from '$lib/state/palette.svelte';
-	import { getThemeState } from '$lib/state/theme.svelte';
-	import type { SearchHit } from '$lib/types/search';
-	import { postAction } from '$lib/utils/actions';
-	import { localizedHref } from '$lib/utils/navigation';
+	import type { AppHref } from '#lib/types/navigation.ts';
+	import { MODULES } from '#lib/modules/registry.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { deLocalizeHref, getLocale, locales, type Locale } from '#lib/paraglide/runtime.js';
+	import { getPalette } from '#lib/state/palette.svelte.ts';
+	import { getThemeState } from '#lib/state/theme.svelte.ts';
+	import type { SearchHit } from '#lib/types/search.ts';
+	import { postAction } from '#lib/utils/actions.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import Search from '@lucide/svelte/icons/search';
 	import { tick } from 'svelte';
 
@@ -63,7 +63,7 @@
 		palette.open = false;
 	}
 
-	async function navigate(href: PathnameWithSearchOrHash): Promise<void> {
+	async function navigate(href: AppHref): Promise<void> {
 		close();
 		await goto(localizedHref(href));
 	}
@@ -84,8 +84,7 @@
 
 	/** Messages render once per page, so a new locale needs a full load, as in the locale switch. */
 	function switchLocale(locale: Locale): void {
-		const path = (deLocalizeHref(page.url.pathname) +
-			page.url.search) as PathnameWithSearchOrHash;
+		const path = (deLocalizeHref(page.url.pathname) + page.url.search) as AppHref;
 		window.location.assign(localizedHref(path, locale));
 	}
 
@@ -117,7 +116,7 @@
 				});
 			}
 		}
-		const settings: [string, () => string, PathnameWithSearchOrHash][] = [
+		const settings: [string, () => string, AppHref][] = [
 			['dashboard', m.dashboard_title, '/dashboard'],
 			['settings', m.nav_settings, '/settings'],
 			['security', m.settings_section_security, '/settings/security'],
@@ -187,10 +186,7 @@
 			section: 'results',
 			label: hit.title,
 			hint: hit.snippet || (TYPE_LABELS[hit.type]?.() ?? hit.type),
-			run: () =>
-				hit.external
-					? openExternal(hit.href)
-					: navigate(hit.href as PathnameWithSearchOrHash)
+			run: () => (hit.external ? openExternal(hit.href) : navigate(hit.href as AppHref))
 		}));
 		const searched = query.trim();
 		if (searched.length >= SEARCH_MIN_LENGTH) {
@@ -199,10 +195,7 @@
 				section: 'results',
 				label: m.palette_all_results({ query: searched }),
 				hint: '',
-				run: () =>
-					navigate(
-						`/search?q=${encodeURIComponent(searched)}` as PathnameWithSearchOrHash
-					)
+				run: () => navigate(`/search?q=${encodeURIComponent(searched)}` as AppHref)
 			});
 		}
 		return [...matching, ...results];

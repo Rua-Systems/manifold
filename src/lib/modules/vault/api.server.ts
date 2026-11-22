@@ -1,5 +1,5 @@
-import { decodeCursor, pageOf, pageQuery, pageSchema } from '$lib/server/api/paging';
-import { defineRoute, type ApiRoute } from '$lib/server/api/types';
+import { decodeCursor, pageOf, pageQuery, pageSchema } from '#lib/server/api/paging.ts';
+import { defineRoute, type ApiRoute } from '#lib/server/api/types.ts';
 import { z } from 'zod';
 import type { VaultSecretView } from './types';
 import { getSecret, listSecrets } from './vault.server';

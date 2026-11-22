@@ -1,5 +1,5 @@
-import { SERVER_MODULES } from '$lib/modules/registry.server';
-import type { DashboardStat } from '$lib/types/dashboard';
+import { SERVER_MODULES } from '#lib/modules/registry.server.ts';
+import type { DashboardStat } from '#lib/types/dashboard.ts';
 import type { Actor } from '../actor';
 import { authenticateApiKey, type ApiKeyIdentity, type NoteGrant } from '../api-keys';
 import { ApiError } from './errors';

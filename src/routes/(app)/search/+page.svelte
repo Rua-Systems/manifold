@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { PathnameWithSearchOrHash } from '$app/types';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { localizedHref } from '$lib/utils/navigation';
+	import type { AppHref } from '#lib/types/navigation.ts';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -23,7 +23,7 @@
 	sigil={m.search_sigil()}
 	metaDescription={m.search_meta_description()}
 >
-	<form method="GET" class="search" role="search" data-sveltekit-keepfocus>
+	<form method="GET" class="search" role="search" data-sveltekit-reset="false">
 		<label class="visually-hidden" for="searchQuery">{m.palette_input()}</label>
 		<input
 			id="searchQuery"
@@ -46,8 +46,7 @@
 							>{hit.title}</a
 						>
 					{:else}
-						<a href={localizedHref(hit.href as PathnameWithSearchOrHash)}>{hit.title}</a
-						>
+						<a href={localizedHref(hit.href as AppHref)}>{hit.title}</a>
 					{/if}
 					<span class="type">{TYPE_LABELS[hit.type]?.() ?? hit.type}</span>
 					{#if hit.snippet}

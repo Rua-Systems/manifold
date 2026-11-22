@@ -1,4 +1,4 @@
-import type { Validator } from '$lib/types/validation';
+import type { Validator } from '#lib/types/validation.ts';
 
 export class Field {
 	value = $state('');

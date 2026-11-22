@@ -1,9 +1,9 @@
-import { ownerActor, type Actor } from '$lib/server/actor';
-import { createApiKey } from '$lib/server/api-keys';
-import { getDb } from '$lib/server/db';
-import { apiKey, tag } from '$lib/server/db/schema';
-import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { createTag } from '$lib/server/tags/tags';
+import { ownerActor, type Actor } from '#lib/server/actor.ts';
+import { createApiKey } from '#lib/server/api-keys.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { apiKey, tag } from '#lib/server/db/schema.ts';
+import { ConflictError, NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { createTag } from '#lib/server/tags/tags.ts';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { markdownToNote } from '../notes/markdown.server';

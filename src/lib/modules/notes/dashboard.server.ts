@@ -1,7 +1,7 @@
-import { m } from '$lib/paraglide/messages.js';
-import { getDb } from '$lib/server/db';
-import type { DashboardCard } from '$lib/types/dashboard';
-import { fillDays, startOfLastDays } from '$lib/utils/days';
+import { m } from '#lib/paraglide/messages.js';
+import { getDb } from '#lib/server/db/index.ts';
+import type { DashboardCard } from '#lib/types/dashboard.ts';
+import { fillDays, startOfLastDays } from '#lib/utils/days.ts';
 import { and, count, desc, eq, gte, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 import { mapFeature, note, noteRevision } from './schema.server';
 

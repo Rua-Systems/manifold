@@ -83,6 +83,25 @@ test('a key is shown once, works on the API and stops working when revoked', asy
 	await expect(page.locator('.card', { hasText: name })).toHaveCount(0);
 });
 
+// SvelteKit 3 refuses cross-origin writes without a Content-Type as forged form posts. Calls without
+// a body, from a script on another origin, must still reach the API.
+test('writes without a body work from another origin', async ({ page }) => {
+	const key = await createKey(page, `Cleanup ${Date.now()}`, ['notes:write']);
+	const headers = { Authorization: `Bearer ${key}` };
+	const created = await page.request.post('/api/v1/notes', {
+		headers,
+		data: { title: 'Bodyless', markdown: 'Gone soon' }
+	});
+	expect(created.status()).toBe(201);
+	const { id } = (await created.json()) as { id: string };
+
+	const elsewhere = { ...headers, Origin: 'https://scripts.example.com' };
+	const trashed = await page.request.delete(`/api/v1/notes/${id}`, { headers: elsewhere });
+	expect(trashed.status()).toBe(204);
+	const restored = await page.request.post(`/api/v1/notes/${id}/restore`, { headers: elsewhere });
+	expect(restored.status()).toBe(200);
+});
+
 test('a copy of a key waits in the vault until the key is revoked', async ({ page }) => {
 	const name = `Agent ${Date.now()}`;
 	const key = await createKey(page, name, ['notes:read'], { vault: true });

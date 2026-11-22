@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { getStepUp, needsStepUp } from '$lib/state/step-up.svelte';
-	import { localizedHref } from '$lib/utils/navigation';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { getStepUp, needsStepUp } from '#lib/state/step-up.svelte.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import Copy from '@lucide/svelte/icons/copy';
 	import Eye from '@lucide/svelte/icons/eye';
 	import EyeOff from '@lucide/svelte/icons/eye-off';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { onDestroy } from 'svelte';
 	import type { VaultSecretView } from '../types';
 	import SecretForm from './SecretForm.svelte';
@@ -130,9 +130,9 @@
 	metaDescription={m.vault_meta_description()}
 >
 	{#snippet actions()}
-		<button type="button" class="primary" onclick={() => (createOpen = true)}>
-			{m.vault_new()}
-		</button>
+		<button type="button" class="primary" onclick={() => (createOpen = true)}
+			>{m.vault_new()}</button
+		>
 	{/snippet}
 	{#if stepUpNeeded}
 		<p class="step-up" role="alert">

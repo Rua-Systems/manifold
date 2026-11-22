@@ -1,16 +1,16 @@
-import { m } from '$lib/paraglide/messages.js';
-import { getEnv } from '$lib/server/env';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { deleteUnreferencedFile } from '$lib/server/files/files';
-import { fileRejectionMessage } from '$lib/server/files/messages';
+import { m } from '#lib/paraglide/messages.js';
+import { getEnv } from '#lib/server/env.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { deleteUnreferencedFile } from '#lib/server/files/files.ts';
+import { fileRejectionMessage } from '#lib/server/files/messages.ts';
 import {
 	receiveUploads,
 	UploadFormatError,
 	type ReceivedUploads
-} from '$lib/server/files/upload-stream';
-import { requireUser } from '$lib/server/guard';
-import { isFileUploadLimited } from '$lib/server/rate-limit';
-import { textValue } from '$lib/utils/validation';
+} from '#lib/server/files/upload-stream.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { isFileUploadLimited } from '#lib/server/rate-limit.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { error, fail, type ActionFailure, type RequestEvent } from '@sveltejs/kit';
 import { FILES_MODULE, FILES_PER_REQUEST } from './constants';
 
@@ -74,7 +74,7 @@ async function loadView(url: URL, filter: FilesFilter): Promise<FilesView> {
 		const sources = await listSources();
 		const found = sources.find((item) => item.module === source);
 		if (found === undefined) {
-			error(404, { message: m.files_error_missing() });
+			error(404, m.files_error_missing());
 		}
 		return { kind: 'source', source: found, files: await listSource(source, sort) };
 	}
@@ -86,7 +86,7 @@ async function loadView(url: URL, filter: FilesFilter): Promise<FilesView> {
 	}
 	const folder = await getFolder(folderId);
 	if (folder === null) {
-		error(404, { message: m.files_error_missing() });
+		error(404, m.files_error_missing());
 	}
 	const [contents, path] = await Promise.all([
 		listFolder(folder.id, sort),

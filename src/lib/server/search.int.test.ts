@@ -1,9 +1,9 @@
-import { createNote, trashNote } from '$lib/modules/notes/notes.server';
-import { note } from '$lib/modules/notes/schema.server';
-import { service } from '$lib/modules/services/schema.server';
-import { createService } from '$lib/modules/services/services.server';
-import { vaultSecret } from '$lib/modules/vault/schema.server';
-import { createSecret } from '$lib/modules/vault/vault.server';
+import { createNote, trashNote } from '#lib/modules/notes/notes.server.ts';
+import { note } from '#lib/modules/notes/schema.server.ts';
+import { service } from '#lib/modules/services/schema.server.ts';
+import { createService } from '#lib/modules/services/services.server.ts';
+import { vaultSecret } from '#lib/modules/vault/schema.server.ts';
+import { createSecret } from '#lib/modules/vault/vault.server.ts';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ownerActor } from './actor';
 import { createApiKey } from './api-keys';

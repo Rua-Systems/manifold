@@ -1,7 +1,7 @@
-import { callRoute, findRoute } from '$lib/server/mcp/routes';
-import { defineTool, type McpTool } from '$lib/server/mcp/types';
-import { TAG_NAME_MAX_LENGTH, TAGS_PER_RECORD_MAX } from '$lib/schemas/tags';
-import { VERSION_MAX } from '$lib/schemas/rules';
+import { callRoute, findRoute } from '#lib/server/mcp/routes.ts';
+import { defineTool, type McpTool } from '#lib/server/mcp/types.ts';
+import { TAG_NAME_MAX_LENGTH, TAGS_PER_RECORD_MAX } from '#lib/schemas/tags.ts';
+import { VERSION_MAX } from '#lib/schemas/rules.ts';
 import { z } from 'zod';
 import { memoryApiRoutes } from './api.server';
 import { MEMORY_TITLE_MAX_LENGTH } from './schemas';

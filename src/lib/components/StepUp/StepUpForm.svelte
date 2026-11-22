@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { m } from '$lib/paraglide/messages.js';
-	import { CODE_LENGTH } from '$lib/schemas/auth';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { localizedHref } from '$lib/utils/navigation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { CODE_LENGTH } from '#lib/schemas/auth.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 
 	interface Props {
 		/** Distinguishes the dialog's fields from the page's. */

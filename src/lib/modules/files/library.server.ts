@@ -1,20 +1,20 @@
-import { m } from '$lib/paraglide/messages.js';
-import { fileReferences, moduleFileUses } from '$lib/modules/registry.server';
-import { getDb } from '$lib/server/db';
-import { file } from '$lib/server/db/schema';
-import { FOREIGN_KEY_VIOLATION, hasErrorCode, UNIQUE_VIOLATION } from '$lib/server/db/errors';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
+import { m } from '#lib/paraglide/messages.js';
+import { fileReferences, moduleFileUses } from '#lib/modules/registry.server.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { file } from '#lib/server/db/schema.ts';
+import { FOREIGN_KEY_VIOLATION, hasErrorCode, UNIQUE_VIOLATION } from '#lib/server/db/errors.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
 import {
 	changeFileOwner,
 	deleteUnreferencedFile,
 	renameStoredFile,
 	unreferencedBy,
 	type FileReference
-} from '$lib/server/files/files';
-import { containsPattern } from '$lib/server/search-query';
-import type { FileUse } from '$lib/types/files';
-import { fileKind, previewableTypes, typesOfKind } from '$lib/utils/file-kind';
-import { isUuid } from '$lib/utils/uuid';
+} from '#lib/server/files/files.ts';
+import { containsPattern } from '#lib/server/search-query.ts';
+import type { FileUse } from '#lib/types/files.ts';
+import { fileKind, previewableTypes, typesOfKind } from '#lib/utils/file-kind.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
 import {
 	and,
 	asc,

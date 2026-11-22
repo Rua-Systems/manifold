@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { TAG_COLORS } from '$lib/types/tags';
+import { m } from '#lib/paraglide/messages.js';
+import { TAG_COLORS } from '#lib/types/tags.ts';
 import { z } from 'zod';
 import { plainNameSchema } from './names';
 

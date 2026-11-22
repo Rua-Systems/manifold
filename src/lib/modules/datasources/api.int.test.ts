@@ -1,9 +1,9 @@
-import { createApiKey } from '$lib/server/api-keys';
-import { handleApiRequest } from '$lib/server/api/router';
-import { purgeAuditEvents } from '$lib/server/audit';
-import { getDb } from '$lib/server/db';
-import { apiKey, auditEvent } from '$lib/server/db/schema';
-import { handleMcpRequest } from '$lib/server/mcp/server';
+import { createApiKey } from '#lib/server/api-keys.ts';
+import { handleApiRequest } from '#lib/server/api/router.ts';
+import { purgeAuditEvents } from '#lib/server/audit.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { apiKey, auditEvent } from '#lib/server/db/schema.ts';
+import { handleMcpRequest } from '#lib/server/mcp/server.ts';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { desc, eq } from 'drizzle-orm';

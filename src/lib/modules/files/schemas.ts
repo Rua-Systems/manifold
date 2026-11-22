@@ -1,4 +1,4 @@
-import { FOLDER_NAME_MAX_LENGTH, folderNameSchema, plainNameSchema } from '$lib/schemas/names';
+import { FOLDER_NAME_MAX_LENGTH, folderNameSchema, plainNameSchema } from '#lib/schemas/names.ts';
 import type { FilesKindFilter, FilesSort } from './types';
 
 export { FOLDER_NAME_MAX_LENGTH, folderNameSchema };

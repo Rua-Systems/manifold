@@ -198,3 +198,25 @@ test('an API key with a memory scope can be limited to categories', async ({ pag
 	await expect(page.locator('.new-key code')).toHaveText(/^mfd_/);
 	await expect(page.getByText('Memory limited to: Work')).toBeVisible();
 });
+
+// SvelteKit 3 reloads the page's data when its own link is followed again; edits in progress stay.
+test('following the link of the open memory keeps unsaved changes', async ({ page, isMobile }) => {
+	test.skip(isMobile, 'The sidebar is a drawer on phones.');
+	await page.goto('/memory/new', { waitUntil: 'networkidle' });
+	await page.getByLabel('Title', { exact: true }).fill('Release checklist');
+	await editor(page).click();
+	await page.keyboard.type('Tag the release.');
+	await page.keyboard.press('ControlOrMeta+s');
+	await expect(page).toHaveURL(MEMORY_URL);
+
+	await editor(page).click();
+	await page.keyboard.press('ControlOrMeta+End');
+	await page.keyboard.type(' Publish the notes.');
+	await expect(page.getByText('Unsaved changes')).toBeVisible();
+	await page
+		.getByRole('navigation', { name: 'Sections' })
+		.getByRole('link', { name: 'Release checklist' })
+		.click();
+	await expect(editor(page)).toContainText('Tag the release. Publish the notes.');
+	await expect(page.getByText('Unsaved changes')).toBeVisible();
+});

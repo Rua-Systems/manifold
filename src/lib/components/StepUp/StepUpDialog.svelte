@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getStepUp } from '$lib/state/step-up.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getStepUp } from '#lib/state/step-up.svelte.ts';
 	import { untrack } from 'svelte';
 	import StepUpForm from './StepUpForm.svelte';
 

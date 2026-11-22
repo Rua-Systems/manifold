@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { getStepUp, needsStepUp } from '$lib/state/step-up.svelte';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { localizedHref } from '$lib/utils/navigation';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { getStepUp, needsStepUp } from '#lib/state/step-up.svelte.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import CopyIcon from '@lucide/svelte/icons/copy';
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { onDestroy } from 'svelte';
 	import { SECRET_LABELS, TYPE_LABELS } from '../labels';
 	import type {
@@ -293,12 +293,14 @@
 					{testing ? m.datasources_testing() : m.datasources_test()}
 				</button>
 			</form>
-			<button type="button" class="quiet" onclick={() => (editing = true)}>
-				{m.datasources_edit()}
-			</button>
-			<button type="button" class="quiet danger" onclick={() => (deleteOpen = true)}>
-				{m.common_delete()}
-			</button>
+
+			<button type="button" class="quiet" onclick={() => (editing = true)}
+				>{m.datasources_edit()}</button
+			>
+
+			<button type="button" class="quiet danger" onclick={() => (deleteOpen = true)}
+				>{m.common_delete()}</button
+			>
 		{/if}
 	{/snippet}
 

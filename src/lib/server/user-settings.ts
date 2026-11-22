@@ -1,5 +1,5 @@
-import { baseLocale, isLocale, type Locale } from '$lib/paraglide/runtime.js';
-import type { Theme } from '$lib/types/theme';
+import { baseLocale, isLocale, type Locale } from '#lib/paraglide/runtime.js';
+import type { Theme } from '#lib/types/theme.ts';
 import { eq } from 'drizzle-orm';
 import { getDb, type Database } from './db';
 import { user, userSetting } from './db/schema';

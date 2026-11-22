@@ -1,8 +1,8 @@
 <script lang="ts">
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { localizedHref } from '$lib/utils/navigation';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import SettingsNav from '#lib/components/SettingsNav/SettingsNav.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 </script>
 
 <PageShell

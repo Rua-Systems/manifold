@@ -1,4 +1,4 @@
-import type { UsageReport } from '$lib/types/usage';
+import type { UsageReport } from '#lib/types/usage.ts';
 import { z } from 'zod';
 import { defineRoute, type ApiRoute } from '../api/types';
 import { usageReport } from './report';

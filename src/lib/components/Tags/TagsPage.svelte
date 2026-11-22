@@ -1,15 +1,15 @@
 <script lang="ts">
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import PencilIcon from '$lib/components/icons/PencilIcon.svelte';
-	import TrashIcon from '$lib/components/icons/TrashIcon.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { Tag, TagsAction, TagsFormState } from '$lib/types/tags';
-	import type { FieldErrors } from '$lib/types/validation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import PencilIcon from '#lib/components/icons/PencilIcon.svelte';
+	import TrashIcon from '#lib/components/icons/TrashIcon.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import SettingsNav from '#lib/components/SettingsNav/SettingsNav.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { Tag, TagsAction, TagsFormState } from '#lib/types/tags.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
 	import TagChip from './TagChip.svelte';
 	import TagForm from './TagForm.svelte';
 
@@ -85,9 +85,10 @@
 	<section class="section" aria-labelledby="tagsHeading">
 		<div class="heading">
 			<h2 id="tagsHeading">{m.tags_heading()}</h2>
-			<button type="button" class="primary" onclick={() => (createOpen = true)}>
-				{m.tags_new()}
-			</button>
+
+			<button type="button" class="primary" onclick={() => (createOpen = true)}
+				>{m.tags_new()}</button
+			>
 		</div>
 		<p class="lead">{m.tags_lead()}</p>
 		{#if tags.length === 0}

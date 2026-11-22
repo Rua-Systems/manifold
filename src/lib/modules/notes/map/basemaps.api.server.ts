@@ -1,6 +1,6 @@
-import { decodeCursor, pageOf, pageQuery, pageSchema } from '$lib/server/api/paging';
-import { defineRoute, type ApiRoute } from '$lib/server/api/types';
-import { ValidationError } from '$lib/server/errors';
+import { decodeCursor, pageOf, pageQuery, pageSchema } from '#lib/server/api/paging.ts';
+import { defineRoute, type ApiRoute } from '#lib/server/api/types.ts';
+import { ValidationError } from '#lib/server/errors.ts';
 import { z } from 'zod';
 import {
 	BASEMAP_ATTRIBUTION_MAX_LENGTH,

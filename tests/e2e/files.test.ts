@@ -205,3 +205,10 @@ test('an image is turned and saved as a new copy beside the original', async ({ 
 	await page.goto('/files', { waitUntil: 'networkidle' });
 	await expect(row(page, name.slice(0, -4))).toHaveCount(2);
 });
+
+// SvelteKit 3 hands errors thrown with error() to handleError as well; their message must survive.
+test('a missing file answers 404 with its own message', async ({ page }) => {
+	const response = await page.goto('/files/view/00000000-0000-4000-8000-000000000000');
+	expect(response?.status()).toBe(404);
+	await expect(page.getByText('The file or folder was not found.')).toBeVisible();
+});

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import Eraser from '@lucide/svelte/icons/eraser';
 	import Layers from '@lucide/svelte/icons/layers';
 	import LocateFixed from '@lucide/svelte/icons/locate-fixed';

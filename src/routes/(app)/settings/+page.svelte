@@ -1,25 +1,25 @@
 <script lang="ts">
-	import { version } from '$app/environment';
-	import { enhance } from '$app/forms';
+	import { version } from '$app/env';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
 	import { page } from '$app/state';
-	import Credit from '$lib/components/Credit/Credit.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import Credit from '#lib/components/Credit/Credit.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import SettingsNav from '#lib/components/SettingsNav/SettingsNav.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		displayNameSchema,
 		emailSchema,
 		newPasswordSchema,
 		passwordSchema,
 		usernameSchema
-	} from '$lib/schemas/auth';
-	import { Field, validateAll } from '$lib/state/field.svelte';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { getStepUp, needsStepUp } from '$lib/state/step-up.svelte';
-	import type { SettingsForm } from '$lib/types/settings';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { fromSchema, matches } from '$lib/utils/validation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	} from '#lib/schemas/auth.ts';
+	import { Field, validateAll } from '#lib/state/field.svelte.ts';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { getStepUp, needsStepUp } from '#lib/state/step-up.svelte.ts';
+	import type { SettingsForm } from '#lib/types/settings.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { fromSchema, matches } from '#lib/utils/validation.ts';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 

@@ -1,4 +1,4 @@
-import type { FieldErrors } from '$lib/types/validation';
+import type { FieldErrors } from '#lib/types/validation.ts';
 
 /** Input that failed validation; `fields` maps field names to messages for the form or the API. */
 export class ValidationError extends Error {

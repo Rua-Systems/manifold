@@ -1,8 +1,8 @@
-import { summarizeUserAgent } from '$lib/utils/user-agent';
+import { summarizeUserAgent } from '#lib/utils/user-agent.ts';
 import { and, desc, eq, gt, ne } from 'drizzle-orm';
 import { getDb } from './db';
 import { session } from './db/schema';
-import type { SessionView } from '$lib/types/security';
+import type { SessionView } from '#lib/types/security.ts';
 
 // The owner's sessions as Settings shows them. Tokens never leave the server: sessions are named
 // by their id, and revoking deletes the row, which ends the session on its next request.

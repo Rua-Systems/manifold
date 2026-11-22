@@ -1,4 +1,4 @@
-import type { FieldErrors } from '$lib/types/validation';
+import type { FieldErrors } from '#lib/types/validation.ts';
 
 export interface Service {
 	id: string;

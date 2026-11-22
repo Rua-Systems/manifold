@@ -1,6 +1,6 @@
-import { m } from '$lib/paraglide/messages.js';
-import { measureRows } from '$lib/server/usage/measure';
-import type { UsageItem } from '$lib/types/usage';
+import { m } from '#lib/paraglide/messages.js';
+import { measureRows } from '#lib/server/usage/measure.ts';
+import type { UsageItem } from '#lib/types/usage.ts';
 import { isNotNull, isNull } from 'drizzle-orm';
 import { mapBasemap, mapFeature, note, noteFolder, noteRevision, noteToken } from './schema.server';
 

@@ -1,7 +1,7 @@
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { ownerActor } from '$lib/server/actor';
-import { originOf, recordAudit } from '$lib/server/audit';
-import { getAuth } from '$lib/server/auth';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { ownerActor } from '#lib/server/actor.ts';
+import { originOf, recordAudit } from '#lib/server/audit.ts';
+import { getAuth } from '#lib/server/auth.ts';
 import { redirect } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
 import type { Actions, PageServerLoad } from './$types';

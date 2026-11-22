@@ -1,4 +1,4 @@
-import type { Notification, NotificationKind } from '$lib/types/notification';
+import type { Notification, NotificationKind } from '#lib/types/notification.ts';
 import { getContext, setContext } from 'svelte';
 
 const NOTIFICATIONS_KEY = Symbol('notifications');

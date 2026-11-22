@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import NavigationButton from '$lib/components/NavigationButton/NavigationButton.svelte';
-	import Notifications from '$lib/components/Notifications/Notifications.svelte';
-	import { PRODUCT_NAME } from '$lib/constants';
-	import { baseLocale, locales, localizeUrl } from '$lib/paraglide/runtime.js';
-	import { setNotifications } from '$lib/state/notifications.svelte';
-	import { setThemeState } from '$lib/state/theme.svelte';
+	import NavigationButton from '#lib/components/NavigationButton/NavigationButton.svelte';
+	import Notifications from '#lib/components/Notifications/Notifications.svelte';
+	import { PRODUCT_NAME } from '#lib/constants.ts';
+	import { baseLocale, locales, localizeUrl } from '#lib/paraglide/runtime.js';
+	import { setNotifications } from '#lib/state/notifications.svelte.ts';
+	import { setThemeState } from '#lib/state/theme.svelte.ts';
 	import '@fontsource/space-mono/400.css';
 	import '@fontsource/space-mono/700.css';
 	import '../styles/styles.scss';

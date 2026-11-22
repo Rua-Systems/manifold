@@ -1,6 +1,6 @@
 <script lang="ts">
-	import DataSourcePage from '$lib/modules/datasources/components/DataSourcePage.svelte';
-	import type { FieldErrors } from '$lib/types/validation';
+	import DataSourcePage from '#lib/modules/datasources/components/DataSourcePage.svelte';
+	import type { FieldErrors } from '#lib/types/validation.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

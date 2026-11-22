@@ -1,4 +1,4 @@
-import { loadMemoryTrash, memoryTrashActions } from '$lib/modules/memory/page.server';
+import { loadMemoryTrash, memoryTrashActions } from '#lib/modules/memory/page.server.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = () => loadMemoryTrash();

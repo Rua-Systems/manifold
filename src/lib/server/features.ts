@@ -1,5 +1,5 @@
-import { dev } from '$app/environment';
-import type { Features } from '$lib/types/features';
+import { dev } from '$app/env';
+import type { Features } from '#lib/types/features.ts';
 import { getEnv } from './env';
 
 /** Email sign in and reset need SMTP in production; development prints mails to the console. */

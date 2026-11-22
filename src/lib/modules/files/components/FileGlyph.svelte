@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { FileKind } from '$lib/types/files';
+	import type { FileKind } from '#lib/types/files.ts';
 	import FileIcon from '@lucide/svelte/icons/file';
 	import FileImageIcon from '@lucide/svelte/icons/file-image';
 	import FileMusicIcon from '@lucide/svelte/icons/file-music';

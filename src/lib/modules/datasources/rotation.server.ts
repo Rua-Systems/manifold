@@ -1,5 +1,5 @@
-import type { Transaction } from '$lib/server/db';
-import { EncryptionKeyError, seal, unseal } from '$lib/server/sealing';
+import type { Transaction } from '#lib/server/db/index.ts';
+import { EncryptionKeyError, seal, unseal } from '#lib/server/sealing.ts';
 import { eq } from 'drizzle-orm';
 import { dataSource } from './schema.server';
 

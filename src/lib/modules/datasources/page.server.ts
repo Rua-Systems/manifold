@@ -1,12 +1,12 @@
-import { m } from '$lib/paraglide/messages.js';
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { ownerActor } from '$lib/server/actor';
-import { originOf, recordAudit } from '$lib/server/audit';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { requireUser } from '$lib/server/guard';
-import { isSteppedUp, stepUpRequired } from '$lib/server/step-up';
-import type { FieldErrors } from '$lib/types/validation';
-import { textValue } from '$lib/utils/validation';
+import { m } from '#lib/paraglide/messages.js';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { ownerActor } from '#lib/server/actor.ts';
+import { originOf, recordAudit } from '#lib/server/audit.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { isSteppedUp, stepUpRequired } from '#lib/server/step-up.ts';
+import type { FieldErrors } from '#lib/types/validation.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { testDataSource } from './connect.server';
 import {
@@ -53,7 +53,7 @@ function failure(action: DataSourceAction, cause: unknown) {
 		});
 	}
 	if (cause instanceof NotFoundError) {
-		error(404, { message: m.datasources_error_missing() });
+		error(404, m.datasources_error_missing());
 	}
 	throw cause;
 }
@@ -182,7 +182,7 @@ export async function loadDataSource(id: string) {
 		return { source: await getDataSource(id) };
 	} catch (cause) {
 		if (cause instanceof NotFoundError) {
-			error(404, { message: m.datasources_error_missing() });
+			error(404, m.datasources_error_missing());
 		}
 		throw cause;
 	}

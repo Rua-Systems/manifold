@@ -5,4 +5,4 @@ export {
 	seal,
 	unseal,
 	type SealedValue
-} from '$lib/server/sealing';
+} from '#lib/server/sealing.ts';

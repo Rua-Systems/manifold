@@ -1,6 +1,6 @@
 <script lang="ts">
-	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import CloseIcon from '#lib/components/icons/CloseIcon.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

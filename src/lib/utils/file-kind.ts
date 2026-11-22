@@ -1,4 +1,4 @@
-import type { FileKind } from '$lib/types/files';
+import type { FileKind } from '#lib/types/files.ts';
 
 // The types files are stored and served as. The server picks one of them from the content of an
 // upload; the browser reads them only to choose a preview.

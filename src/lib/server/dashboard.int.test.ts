@@ -1,10 +1,10 @@
-import { addFeature } from '$lib/modules/notes/map/features.server';
-import { createNote, trashNote } from '$lib/modules/notes/notes.server';
-import { note } from '$lib/modules/notes/schema.server';
-import { createNoteToken } from '$lib/modules/notes/tokens.server';
-import { service } from '$lib/modules/services/schema.server';
-import { createService } from '$lib/modules/services/services.server';
-import type { DashboardBlock, DashboardCard, DashboardStat } from '$lib/types/dashboard';
+import { addFeature } from '#lib/modules/notes/map/features.server.ts';
+import { createNote, trashNote } from '#lib/modules/notes/notes.server.ts';
+import { note } from '#lib/modules/notes/schema.server.ts';
+import { createNoteToken } from '#lib/modules/notes/tokens.server.ts';
+import { service } from '#lib/modules/services/schema.server.ts';
+import { createService } from '#lib/modules/services/services.server.ts';
+import type { DashboardBlock, DashboardCard, DashboardStat } from '#lib/types/dashboard.ts';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ownerActor, SYSTEM_ACTOR } from './actor';
 import { createApiKey, revokeApiKey } from './api-keys';

@@ -1,5 +1,4 @@
-import { deserialize } from '$app/forms';
-import type { ActionResult } from '@sveltejs/kit';
+import { deserialize, type ActionResult } from '$app/forms';
 
 /**
  * Posts one file to a form action, after the other fields so the server reads them first, and

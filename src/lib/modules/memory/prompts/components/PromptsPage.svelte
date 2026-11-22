@@ -1,9 +1,9 @@
 <script lang="ts">
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import TagChip from '$lib/components/Tags/TagChip.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { Tag } from '$lib/types/tags';
-	import { localizedHref } from '$lib/utils/navigation';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import TagChip from '#lib/components/Tags/TagChip.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { Tag } from '#lib/types/tags.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import { categoryLabel } from '../../categories';
 	import CategorySelect from '../../components/CategorySelect.svelte';
 	import type { MemoryCategory } from '../../types';
@@ -51,7 +51,7 @@
 		method="GET"
 		class="filters"
 		role="search"
-		data-sveltekit-keepfocus
+		data-sveltekit-reset="false"
 		data-sveltekit-replacestate
 		bind:this={filterForm}
 	>

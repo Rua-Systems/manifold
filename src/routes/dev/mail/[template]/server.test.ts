@@ -1,4 +1,4 @@
-import { loadEnv } from '$lib/server/env';
+import { loadEnv } from '#lib/server/env.ts';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { GET } from './+server';
 

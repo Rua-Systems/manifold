@@ -1,13 +1,13 @@
 <script lang="ts">
+	import type { SubmitFunction } from '$app/forms';
 	import { goto, invalidate } from '$app/navigation';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { actionMessage, postAction } from '$lib/utils/actions';
-	import { localizedHref } from '$lib/utils/navigation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { actionMessage, postAction } from '#lib/utils/actions.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import { untrack } from 'svelte';
 	import { activeBasemap, type MapConfig } from '../map/config';
 	import { MapController, type MapMode, type MapViewState } from '../map/controller';
@@ -132,9 +132,8 @@
 			attach = null;
 			await createFeature(geometry, target);
 			await goto(localizedHref('/notes/map'), {
-				replaceState: true,
-				keepFocus: true,
-				noScroll: true
+				replace: true,
+				reset: false
 			});
 			return;
 		}
@@ -252,9 +251,8 @@
 	async function cancelAttach(): Promise<void> {
 		attach = null;
 		await goto(localizedHref('/notes/map'), {
-			replaceState: true,
-			keepFocus: true,
-			noScroll: true
+			replace: true,
+			reset: false
 		});
 	}
 

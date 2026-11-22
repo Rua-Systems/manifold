@@ -1,15 +1,15 @@
-import { createNote, deleteNotePermanently, trashNote } from '$lib/modules/notes/notes.server';
-import { note } from '$lib/modules/notes/schema.server';
-import { fileReferences } from '$lib/modules/registry.server';
-import { createService } from '$lib/modules/services/services.server';
-import { service } from '$lib/modules/services/schema.server';
-import { ownerActor } from '$lib/server/actor';
-import { getDb } from '$lib/server/db';
-import { file } from '$lib/server/db/schema';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { purgeUnreferencedFiles, storeUpload } from '$lib/server/files/files';
-import { receiveUploads } from '$lib/server/files/upload-stream';
-import { searchProviders } from '$lib/server/search';
+import { createNote, deleteNotePermanently, trashNote } from '#lib/modules/notes/notes.server.ts';
+import { note } from '#lib/modules/notes/schema.server.ts';
+import { fileReferences } from '#lib/modules/registry.server.ts';
+import { createService } from '#lib/modules/services/services.server.ts';
+import { service } from '#lib/modules/services/schema.server.ts';
+import { ownerActor } from '#lib/server/actor.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { file } from '#lib/server/db/schema.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { purgeUnreferencedFiles, storeUpload } from '#lib/server/files/files.ts';
+import { receiveUploads } from '#lib/server/files/upload-stream.ts';
+import { searchProviders } from '#lib/server/search.ts';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
 	createFolder,

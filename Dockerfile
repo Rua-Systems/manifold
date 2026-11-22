@@ -10,9 +10,10 @@ COPY . .
 
 # pdf.js runs only in the browser; its optional canvas binding for Node is a native module the
 # server never loads, so it leaves the image. npm checks the tree against the lockfile, so the SBOM
-# is written before, and still names the binding.
-RUN npm run build && npm run --silent sbom > sbom.cdx.json && npm prune --omit=dev \
-	&& rm -rf node_modules/@napi-rs
+# is written before, and still names the binding. SvelteKit writes its generated types to
+# node_modules/$app, which npm sbom refuses as a package name; nothing needs them after the build.
+RUN npm run build && rm -rf 'node_modules/$app' && npm run --silent sbom > sbom.cdx.json \
+	&& npm prune --omit=dev && rm -rf node_modules/@napi-rs
 
 FROM node:24-alpine AS runtime
 

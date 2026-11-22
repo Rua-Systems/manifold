@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import type { PathnameWithSearchOrHash } from '$app/types';
-	import { m } from '$lib/paraglide/messages.js';
-	import { deLocalizeHref, getLocale, locales, type Locale } from '$lib/paraglide/runtime.js';
-	import { localizedHref } from '$lib/utils/navigation';
+	import type { AppHref } from '#lib/types/navigation.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { deLocalizeHref, getLocale, locales, type Locale } from '#lib/paraglide/runtime.js';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 
 	const LABELS: Record<Locale, () => string> = {
 		en: m.locale_name_en,
@@ -13,9 +13,7 @@
 	const currentLocale = getLocale();
 
 	// The current URL always belongs to a route of this app once the locale prefix is removed.
-	const path = $derived(
-		(deLocalizeHref(page.url.pathname) + page.url.search) as PathnameWithSearchOrHash
-	);
+	const path = $derived((deLocalizeHref(page.url.pathname) + page.url.search) as AppHref);
 </script>
 
 <div class="switch">

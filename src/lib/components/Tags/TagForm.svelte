@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { m } from '$lib/paraglide/messages.js';
-	import { tagNameSchema } from '$lib/schemas/tags';
-	import { Field, validateAll } from '$lib/state/field.svelte';
-	import { TAG_COLORS, type Tag, type TagColor } from '$lib/types/tags';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { fromSchema } from '$lib/utils/validation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { tagNameSchema } from '#lib/schemas/tags.ts';
+	import { Field, validateAll } from '#lib/state/field.svelte.ts';
+	import { TAG_COLORS, type Tag, type TagColor } from '#lib/types/tags.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { fromSchema } from '#lib/utils/validation.ts';
 	import { untrack } from 'svelte';
 	import { TAG_COLOR_LABELS } from './labels';
 

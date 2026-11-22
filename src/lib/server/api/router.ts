@@ -1,4 +1,4 @@
-import { fieldErrors } from '$lib/utils/validation';
+import { fieldErrors } from '#lib/utils/validation.ts';
 import type { z } from 'zod';
 import { assertNoteGrant, authenticateCredential, credentialActor } from './credentials';
 import { recordAudit, type AuditOrigin } from '../audit';

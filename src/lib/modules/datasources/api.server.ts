@@ -1,6 +1,6 @@
-import { ValidationError } from '$lib/server/errors';
-import { defineRoute, type ApiRoute } from '$lib/server/api/types';
-import type { FieldErrors } from '$lib/types/validation';
+import { ValidationError } from '#lib/server/errors.ts';
+import { defineRoute, type ApiRoute } from '#lib/server/api/types.ts';
+import type { FieldErrors } from '#lib/types/validation.ts';
 import { z } from 'zod';
 import { testDataSource } from './connect.server';
 import {

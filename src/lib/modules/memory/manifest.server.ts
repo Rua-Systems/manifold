@@ -1,7 +1,7 @@
-import { m } from '$lib/paraglide/messages.js';
-import { getEnv } from '$lib/server/env';
-import { measureRows } from '$lib/server/usage/measure';
-import type { DashboardCard } from '$lib/types/dashboard';
+import { m } from '#lib/paraglide/messages.js';
+import { getEnv } from '#lib/server/env.ts';
+import { measureRows } from '#lib/server/usage/measure.ts';
+import type { DashboardCard } from '#lib/types/dashboard.ts';
 import { isNotNull, isNull } from 'drizzle-orm';
 import type { ServerModuleManifest } from '../types.server';
 import { FULL_ACCESS, memoryAccessFor } from './access.server';

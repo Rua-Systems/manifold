@@ -1,12 +1,12 @@
 <script lang="ts">
-	import ApiKeyForm from '$lib/components/ApiKeys/ApiKeyForm.svelte';
-	import ApiKeyList from '$lib/components/ApiKeys/ApiKeyList.svelte';
-	import NewApiKey from '$lib/components/ApiKeys/NewApiKey.svelte';
-	import NoteTokenList from '$lib/modules/notes/components/NoteTokenList.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { FieldErrors } from '$lib/types/validation';
+	import ApiKeyForm from '#lib/components/ApiKeys/ApiKeyForm.svelte';
+	import ApiKeyList from '#lib/components/ApiKeys/ApiKeyList.svelte';
+	import NewApiKey from '#lib/components/ApiKeys/NewApiKey.svelte';
+	import NoteTokenList from '#lib/modules/notes/components/NoteTokenList.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import SettingsNav from '#lib/components/SettingsNav/SettingsNav.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { FieldErrors } from '#lib/types/validation.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

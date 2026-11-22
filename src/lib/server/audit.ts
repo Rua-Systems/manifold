@@ -3,7 +3,7 @@ import { and, count, desc, eq, gte, like, lt, lte, sql, type SQL } from 'drizzle
 import type { Actor, ActorType } from './actor';
 import { getDb, type Database } from './db';
 import { auditEvent } from './db/schema';
-import type { AuditEventView } from '$lib/types/security';
+import type { AuditEventView } from '#lib/types/security.ts';
 import { log } from './log';
 
 // The audit log: security events, writes from outside the browser and CLI changes. Metadata must

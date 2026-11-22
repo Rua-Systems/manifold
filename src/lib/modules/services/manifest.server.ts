@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { measureRows } from '$lib/server/usage/measure';
+import { m } from '#lib/paraglide/messages.js';
+import { measureRows } from '#lib/server/usage/measure.ts';
 import type { SidebarItem } from '../types';
 import type { ServerModuleManifest } from '../types.server';
 import { servicesApiRoutes } from './api.server';

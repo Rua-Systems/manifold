@@ -1,8 +1,8 @@
 <script lang="ts">
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { localizedHref } from '$lib/utils/navigation';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import { TYPE_HINTS, TYPE_LABELS } from '../labels';
 	import { DATA_SOURCE_TYPES, type DataSourceType } from '../types';
 	import DataSourceForm from './DataSourceForm.svelte';
@@ -32,7 +32,7 @@
 				href={localizedHref(`/data-sources/new?type=${option}`)}
 				aria-current={option === type ? 'page' : undefined}
 				data-sveltekit-replacestate
-				data-sveltekit-noscroll
+				data-sveltekit-reset="false"
 			>
 				<span class="box" aria-hidden="true"><TypeIcon type={option} /></span>
 				<span class="text">

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import Credit from '$lib/components/Credit/Credit.svelte';
-	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
+	import Credit from '#lib/components/Credit/Credit.svelte';
+	import ManifoldLogo from '#lib/components/ManifoldLogo/ManifoldLogo.svelte';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

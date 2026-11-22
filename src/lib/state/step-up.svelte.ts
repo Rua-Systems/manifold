@@ -1,4 +1,4 @@
-import type { ActionResult } from '@sveltejs/kit';
+import type { ActionResult } from '$app/forms';
 import { getContext, setContext } from 'svelte';
 
 const STEP_UP_KEY = Symbol('stepUp');

@@ -1,4 +1,4 @@
-import { localizeHref } from '$lib/paraglide/runtime.js';
+import { localizeHref } from '#lib/paraglide/runtime.js';
 import { error, redirect, type RequestEvent } from '@sveltejs/kit';
 import type { AuthSession, AuthUser } from './auth';
 

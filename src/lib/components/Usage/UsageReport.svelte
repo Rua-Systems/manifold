@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import type { UsageReport } from '$lib/types/usage';
-	import { formatBytes, formatSeconds } from '$lib/utils/format';
-	import { relativeTime } from '$lib/utils/time';
+	import { refreshAll } from '$app/navigation';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import type { UsageReport } from '#lib/types/usage.ts';
+	import { formatBytes, formatSeconds } from '#lib/utils/format.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
 	import type { UsageTableSection } from './types';
 	import UsageTable from './UsageTable.svelte';
 
@@ -51,7 +51,7 @@
 		event.preventDefault();
 		measuring = true;
 		try {
-			await invalidateAll();
+			await refreshAll();
 		} finally {
 			measuring = false;
 		}

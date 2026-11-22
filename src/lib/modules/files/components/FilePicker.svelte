@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { postAction } from '$lib/utils/actions';
-	import { formatBytes } from '$lib/utils/format';
-	import { localizedHref } from '$lib/utils/navigation';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { postAction } from '#lib/utils/actions.ts';
+	import { formatBytes } from '#lib/utils/format.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import { onMount } from 'svelte';
 	import { kindLabel } from '../labels';
 	import type { PickedFile } from '../types';

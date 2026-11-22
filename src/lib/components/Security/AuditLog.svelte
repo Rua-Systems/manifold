@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import type { ActorType } from '$lib/server/actor';
-	import type { AuditEventView } from '$lib/types/security';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { summarizeUserAgent } from '$lib/utils/user-agent';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import type { ActorType } from '#lib/server/actor.ts';
+	import type { AuditEventView } from '#lib/types/security.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { summarizeUserAgent } from '#lib/utils/user-agent.ts';
 
 	interface Props {
 		events: AuditEventView[];
@@ -61,7 +61,7 @@
 	}
 </script>
 
-<form method="GET" class="filters" data-sveltekit-keepfocus data-sveltekit-noscroll>
+<form method="GET" class="filters" data-sveltekit-reset="false">
 	<div class="field">
 		<label for="auditActor">{m.security_audit_actor()}</label>
 		<select id="auditActor" name="actor" value={filter.actor}>
@@ -129,14 +129,14 @@
 		{#if current > 1}
 			<a
 				href={localizedHref(`/settings/security?${pageQuery(current - 1)}`)}
-				data-sveltekit-noscroll>{m.security_audit_newer()}</a
+				data-sveltekit-reset="false">{m.security_audit_newer()}</a
 			>
 		{/if}
 		<p>{m.security_audit_page({ page: current, pages })}</p>
 		{#if current < pages}
 			<a
 				href={localizedHref(`/settings/security?${pageQuery(current + 1)}`)}
-				data-sveltekit-noscroll>{m.security_audit_older()}</a
+				data-sveltekit-reset="false">{m.security_audit_older()}</a
 			>
 		{/if}
 	</nav>

@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { ValidationError } from '$lib/server/errors';
+import { m } from '#lib/paraglide/messages.js';
+import { ValidationError } from '#lib/server/errors.ts';
 import { generateText, getSchema } from '@tiptap/core';
 import { Node, type Schema } from '@tiptap/pm/model';
 import type { NoteContent } from './content';

@@ -1,5 +1,4 @@
-import { deserialize } from '$app/forms';
-import type { ActionResult } from '@sveltejs/kit';
+import { deserialize, type ActionResult } from '$app/forms';
 
 /**
  * Calls a form action from code, the way `use:enhance` does, for pages whose widgets save on

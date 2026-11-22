@@ -1,4 +1,4 @@
-import type { ActorType } from '$lib/server/actor';
+import type { ActorType } from '#lib/server/actor.ts';
 import type { FieldErrors } from './validation';
 
 /** One of the owner's sessions; its token never leaves the server. */

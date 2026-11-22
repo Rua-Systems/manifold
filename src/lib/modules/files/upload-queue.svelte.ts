@@ -1,4 +1,4 @@
-import { actionMessage } from '$lib/utils/actions';
+import { actionMessage } from '#lib/utils/actions.ts';
 import { sendFile } from './uploads';
 
 export type UploadStatus = 'waiting' | 'sending' | 'done' | 'failed';

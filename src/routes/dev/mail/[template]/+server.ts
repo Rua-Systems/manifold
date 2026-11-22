@@ -1,9 +1,9 @@
-import { dev } from '$app/environment';
-import { locales } from '$lib/paraglide/runtime.js';
-import { getEnv } from '$lib/server/env';
-import { escapeHtml } from '$lib/server/services/mail/html';
-import { renderMail, type MailContext } from '$lib/server/services/mail/layout';
-import { isMailTemplateId, MAIL_TEMPLATES } from '$lib/server/services/mail/templates';
+import { dev } from '$app/env';
+import { locales } from '#lib/paraglide/runtime.js';
+import { getEnv } from '#lib/server/env.ts';
+import { escapeHtml } from '#lib/server/services/mail/html.ts';
+import { renderMail, type MailContext } from '#lib/server/services/mail/layout.ts';
+import { isMailTemplateId, MAIL_TEMPLATES } from '#lib/server/services/mail/templates.ts';
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 

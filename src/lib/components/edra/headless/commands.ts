@@ -15,7 +15,7 @@ import SquareCode from '@lucide/svelte/icons/square-code';
 import Strikethrough from '@lucide/svelte/icons/strikethrough';
 import Table from '@lucide/svelte/icons/table';
 import Undo from '@lucide/svelte/icons/undo-2';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import type { Component } from 'svelte';
 import type { Editor } from '../tiptap/index.ts';
 

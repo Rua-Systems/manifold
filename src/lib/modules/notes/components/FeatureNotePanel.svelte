@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { postAction } from '$lib/utils/actions';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { postAction } from '#lib/utils/actions.ts';
 	import { untrack } from 'svelte';
 	import type { FeatureKind, MapFeatureView } from '../map/geometry';
 	import type { NoteData } from '../types';

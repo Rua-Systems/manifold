@@ -1,6 +1,6 @@
-import { ownerActor } from '$lib/server/actor';
-import { getDb } from '$lib/server/db';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
+import { ownerActor } from '#lib/server/actor.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
 import { sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {

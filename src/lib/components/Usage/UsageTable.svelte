@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { formatBytes } from '$lib/utils/format';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { formatBytes } from '#lib/utils/format.ts';
 	import type { UsageTableSection } from './types';
 
 	interface Props {

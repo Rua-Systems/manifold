@@ -1,34 +1,39 @@
-import { building, dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
-import { getTextDirection } from '$lib/paraglide/runtime.js';
-import { paraglideMiddleware } from '$lib/paraglide/server.js';
-import { ApiError, errorResponse } from '$lib/server/api/errors';
-import { CLIENT_ADDRESS_HEADER, getAuth } from '$lib/server/auth';
-import { ownerActor } from '$lib/server/actor';
-import { recordAudit } from '$lib/server/audit';
-import { checkBodySize } from '$lib/server/body-limit';
-import { applySecurityHeaders, CLEAR_SITE_DATA } from '$lib/server/security-headers';
-import { getDb, getSql } from '$lib/server/db';
-import { defaultMigrationsDirectory, runMigrations } from '$lib/server/db/migrate';
-import { getEnv, loadEnv } from '$lib/server/env';
-import { guardRequest } from '$lib/server/guard';
-import { log, logSecurityEvent } from '$lib/server/log';
-import { endSession, isPastMaximumAge } from '$lib/server/sessions';
-import { startHousekeeping } from '$lib/server/housekeeping';
-import { bootstrapOwner } from '$lib/server/owner';
-import { housekeepingTasks } from '$lib/server/tasks';
-import { getUserSettings } from '$lib/server/user-settings';
-import { parseTheme, THEME_COOKIE } from '$lib/utils/theme';
-import type { Handle, HandleServerError, RequestEvent, ServerInit } from '@sveltejs/kit';
+import type { RequestEvent } from '@sveltejs/kit';
+import { building, dev } from '$app/env';
+import { getTextDirection } from '#lib/paraglide/runtime.js';
+import { paraglideMiddleware } from '#lib/paraglide/server.js';
+import { ApiError, errorResponse } from '#lib/server/api/errors.ts';
+import { CLIENT_ADDRESS_HEADER, getAuth } from '#lib/server/auth.ts';
+import { ownerActor } from '#lib/server/actor.ts';
+import { recordAudit } from '#lib/server/audit.ts';
+import { checkBodySize } from '#lib/server/body-limit.ts';
+import { applySecurityHeaders, CLEAR_SITE_DATA } from '#lib/server/security-headers.ts';
+import { getDb, getSql } from '#lib/server/db/index.ts';
+import { defaultMigrationsDirectory, runMigrations } from '#lib/server/db/migrate.ts';
+import { getEnv, loadEnv } from '#lib/server/env.ts';
+import { guardRequest } from '#lib/server/guard.ts';
+import { log, logSecurityEvent } from '#lib/server/log.ts';
+import { endSession, isPastMaximumAge } from '#lib/server/sessions.ts';
+import { startHousekeeping } from '#lib/server/housekeeping.ts';
+import { bootstrapOwner } from '#lib/server/owner.ts';
+import { housekeepingTasks } from '#lib/server/tasks.ts';
+import { getUserSettings } from '#lib/server/user-settings.ts';
+import { parseTheme, THEME_COOKIE } from '#lib/utils/theme.ts';
 import { randomUUID } from 'node:crypto';
-import { sequence } from '@sveltejs/kit/hooks';
+
+import {
+	sequence,
+	type Handle,
+	type HandleServerError,
+	type ServerInit
+} from '@sveltejs/kit/hooks';
 
 export const init: ServerInit = async () => {
 	if (building) {
 		return;
 	}
 
-	const config = loadEnv(env, { dev });
+	const config = loadEnv(process.env, { dev });
 	const applied = await runMigrations(getSql(), defaultMigrationsDirectory());
 	if (applied.length > 0) {
 		log('info', 'Applied migrations', { migrations: applied.join(', ') });
@@ -96,8 +101,9 @@ const handleBodySize: Handle = ({ event, resolve }) => {
 };
 
 const handleLocale: Handle = ({ event, resolve }) =>
-	paraglideMiddleware(event.request, ({ request, locale }) => {
-		event.request = request;
+	// The request paraglide hands back is a clone at the same address; SvelteKit 3 makes
+	// event.request read-only, so the original goes on.
+	paraglideMiddleware(event.request, ({ locale }) => {
 		return resolve(event, {
 			transformPageChunk: ({ html }) =>
 				html
@@ -179,22 +185,30 @@ export const handle: Handle = sequence(
 
 /**
  * An unexpected error: logged with an id, route and method, while the visitor sees only a generic
- * message and the id to quote.
+ * message and the id to quote. Errors thrown with error() and SvelteKit's own 4xx, such as a 404,
+ * keep their status and message and are not logged.
  */
-export const handleError: HandleServerError = ({ error, event, status, message }) => {
-	const id = randomUUID();
-	if (status >= 500) {
-		log(
-			'error',
-			'Request failed',
-			{
-				id,
-				status,
-				method: event.request.method,
-				route: event.route.id ?? event.url.pathname
-			},
-			error
-		);
+export const handleError: HandleServerError = ({ kind, error, event }) => {
+	let status = 500;
+	if (kind === 'framework') {
+		status = error.status;
+	} else if (kind !== 'unknown') {
+		return;
 	}
-	return { message, id };
+	if (status < 500) {
+		return;
+	}
+	const id = randomUUID();
+	log(
+		'error',
+		'Request failed',
+		{
+			id,
+			status,
+			method: event.request.method,
+			route: event.route.id ?? event.url.pathname
+		},
+		error
+	);
+	return { id };
 };

@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import type { TagColor } from '$lib/types/tags';
+import { m } from '#lib/paraglide/messages.js';
+import type { TagColor } from '#lib/types/tags.ts';
 
 /** The name of each tag color, for the color choice and its screen reader labels. */
 export const TAG_COLOR_LABELS: Record<TagColor, () => string> = {

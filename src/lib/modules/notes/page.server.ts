@@ -1,18 +1,18 @@
-import { m } from '$lib/paraglide/messages.js';
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { ownerActor } from '$lib/server/actor';
-import { getEnv } from '$lib/server/env';
-import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { deleteUnreferencedFile, imageMaxBytes } from '$lib/server/files/files';
-import { fileRejectionMessage } from '$lib/server/files/messages';
+import { m } from '#lib/paraglide/messages.js';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { ownerActor } from '#lib/server/actor.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { ConflictError, NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { deleteUnreferencedFile, imageMaxBytes } from '#lib/server/files/files.ts';
+import { fileRejectionMessage } from '#lib/server/files/messages.ts';
 import {
 	receiveUploads,
 	UploadFormatError,
 	type ReceivedUploads
-} from '$lib/server/files/upload-stream';
-import { fileKind } from '$lib/utils/file-kind';
-import { requireUser } from '$lib/server/guard';
-import { textValue } from '$lib/utils/validation';
+} from '#lib/server/files/upload-stream.ts';
+import { fileKind } from '#lib/utils/file-kind.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import {
 	createNote,
@@ -37,7 +37,7 @@ import { noteVersionSchema } from './schemas';
 import { createNoteTokenAction } from './tokens.page.server';
 import { listNoteTokens } from './tokens.server';
 import type { AttachedFile, NoteFolderPath, NotePreview, NoteSummary } from './types';
-import { isUploadLimited } from '$lib/server/rate-limit';
+import { isUploadLimited } from '#lib/server/rate-limit.ts';
 
 /** The notes page shows at most this many search hits. */
 const SEARCH_PAGE_LIMIT = 100;
@@ -107,7 +107,7 @@ export async function loadNotesList(url: URL) {
 	}
 	const folder = await getNoteFolder(folderId);
 	if (folder === null) {
-		error(404, { message: m.folders_error_missing() });
+		error(404, m.folders_error_missing());
 	}
 	const [notes, folders, path] = await Promise.all([
 		listNotes({ folderId: folder.id }),
@@ -158,7 +158,7 @@ export async function loadNotePage(id: string, url: URL) {
 			note: null,
 			revisions: [],
 			preview: null,
-			features: [],
+			mapFeatures: [],
 			tokens: [],
 			draftKey: crypto.randomUUID(),
 			newNoteFolderId: folder?.id ?? null,
@@ -178,7 +178,7 @@ export async function loadNotePage(id: string, url: URL) {
 		]);
 		return {
 			...data,
-			features,
+			mapFeatures: features,
 			tokens,
 			draftKey: id,
 			newNoteFolderId: null,

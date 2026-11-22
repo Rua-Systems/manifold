@@ -1,22 +1,22 @@
 <script lang="ts">
+	import type { SubmitFunction } from '$app/forms';
 	import { resolve } from '$app/paths';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { PathnameWithSearchOrHash } from '$app/types';
-	import { formatBytes } from '$lib/utils/format';
-	import { localizedHref } from '$lib/utils/navigation';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { AppHref } from '#lib/types/navigation.ts';
+	import { formatBytes } from '#lib/utils/format.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { kindLabel } from '../labels';
 	import { fileNameSchema } from '../schemas';
 	import type { FileDetail, FilesAction, FilesFormState, FolderSummary } from '../types';
-	import MoveForm from '$lib/components/Folders/MoveForm.svelte';
+	import MoveForm from '#lib/components/Folders/MoveForm.svelte';
 	import ImageEditor from './ImageEditor.svelte';
-	import NameForm from '$lib/components/Folders/NameForm.svelte';
+	import NameForm from '#lib/components/Folders/NameForm.svelte';
 	import PdfViewer from './PdfViewer.svelte';
 	import TextPreview from './TextPreview.svelte';
 
@@ -91,27 +91,26 @@
 			{m.files_download()}
 		</a>
 		{#if EDITABLE_TYPES.has(file.mimeType) && !editing}
-			<button type="button" class="quiet" onclick={() => (editing = true)}>
-				{m.files_edit_image()}
-			</button>
+			<button type="button" class="quiet" onclick={() => (editing = true)}
+				>{m.files_edit_image()}</button
+			>
 		{/if}
 		{#if file.inFiles}
-			<button type="button" class="quiet" onclick={() => (renameOpen = true)}>
-				{m.files_rename()}
-			</button>
-			<button type="button" class="quiet" onclick={() => (moveOpen = true)}>
-				{m.files_move()}
-			</button>
+			<button type="button" class="quiet" onclick={() => (renameOpen = true)}
+				>{m.files_rename()}</button
+			>
+
+			<button type="button" class="quiet" onclick={() => (moveOpen = true)}
+				>{m.files_move()}</button
+			>
 		{/if}
 		<button
 			type="button"
 			class="quiet danger"
 			disabled={file.uses.length > 0}
 			title={file.uses.length > 0 ? m.files_in_use_hint() : undefined}
-			onclick={() => (deleteOpen = true)}
+			onclick={() => (deleteOpen = true)}>{m.common_delete()}</button
 		>
-			{m.common_delete()}
-		</button>
 	{/snippet}
 	<nav class="path" aria-label={m.files_path()}>
 		<ol>
@@ -126,9 +125,7 @@
 			{:else}
 				<li>
 					<ChevronRightIcon size={14} aria-hidden="true" />
-					<a href={localizedHref(back as PathnameWithSearchOrHash)}
-						>{file.location.label}</a
-					>
+					<a href={localizedHref(back as AppHref)}>{file.location.label}</a>
 				</li>
 			{/if}
 		</ol>
@@ -180,9 +177,7 @@
 					<ul class="uses">
 						{#each file.uses as use, index (index)}
 							<li>
-								<a href={localizedHref(use.href as PathnameWithSearchOrHash)}
-									>{use.label}</a
-								>
+								<a href={localizedHref(use.href as AppHref)}>{use.label}</a>
 								{#if use.trashed}
 									<span class="trashed">{m.files_use_trashed()}</span>
 								{/if}

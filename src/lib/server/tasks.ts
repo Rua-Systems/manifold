@@ -1,4 +1,4 @@
-import { fileReferences, moduleHousekeeping } from '$lib/modules/registry.server';
+import { fileReferences, moduleHousekeeping } from '#lib/modules/registry.server.ts';
 import { purgeAuditEvents } from './audit';
 import { getEnv } from './env';
 import { purgeUnreferencedFiles } from './files/files';

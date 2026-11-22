@@ -1,13 +1,13 @@
-import { ApiError, fileRejectedError } from '$lib/server/api/errors';
-import { decodeCursor, pageOf, pageQuery, pageSchema } from '$lib/server/api/paging';
-import { defineRoute, type ApiRoute } from '$lib/server/api/types';
-import { getEnv } from '$lib/server/env';
-import { API_FILE_OWNER, findFile, readFileStart, serveFile } from '$lib/server/files/files';
+import { ApiError, fileRejectedError } from '#lib/server/api/errors.ts';
+import { decodeCursor, pageOf, pageQuery, pageSchema } from '#lib/server/api/paging.ts';
+import { defineRoute, type ApiRoute } from '#lib/server/api/types.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { API_FILE_OWNER, findFile, readFileStart, serveFile } from '#lib/server/files/files.ts';
 import {
 	receiveUploads,
 	UploadFormatError,
 	type ReceivedUploads
-} from '$lib/server/files/upload-stream';
+} from '#lib/server/files/upload-stream.ts';
 import { z } from 'zod';
 import {
 	adoptIntoFiles,

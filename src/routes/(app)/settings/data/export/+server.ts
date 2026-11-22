@@ -1,18 +1,18 @@
-import { m } from '$lib/paraglide/messages.js';
-import { version } from '$app/environment';
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { ownerActor } from '$lib/server/actor';
-import { originOf, recordAudit } from '$lib/server/audit';
-import { writeBackup } from '$lib/server/backup/backup';
-import { pgCommand } from '$lib/server/backup/pg-tools';
-import { getEnv } from '$lib/server/env';
-import { uploadDirectory } from '$lib/server/files/storage';
-import { requireUser } from '$lib/server/guard';
-import { isSteppedUp } from '$lib/server/step-up';
+import { m } from '#lib/paraglide/messages.js';
+import { version } from '$app/env';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { ownerActor } from '#lib/server/actor.ts';
+import { originOf, recordAudit } from '#lib/server/audit.ts';
+import { writeBackup } from '#lib/server/backup/backup.ts';
+import { pgCommand } from '#lib/server/backup/pg-tools.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { uploadDirectory } from '#lib/server/files/storage.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { isSteppedUp } from '#lib/server/step-up.ts';
 import { error, redirect } from '@sveltejs/kit';
 import { PassThrough, Readable } from 'node:stream';
 import type { RequestHandler } from './$types';
-import { log, logSecurityEvent } from '$lib/server/log';
+import { log, logSecurityEvent } from '#lib/server/log.ts';
 
 // "Download export": the same archive as the CLI's backup, streamed. It needs a step-up; without
 // one the owner is sent to confirm and comes back here.
@@ -21,6 +21,7 @@ let exportRunning = false;
 
 export const GET: RequestHandler = async (event) => {
 	const { user, session } = requireUser(event.locals);
+
 	if (!(await isSteppedUp(session.id))) {
 		redirect(
 			303,
@@ -29,7 +30,7 @@ export const GET: RequestHandler = async (event) => {
 	}
 	if (exportRunning) {
 		logSecurityEvent('rate_limited', { bucket: 'export', userId: user.id });
-		error(429, { message: m.data_export_running() });
+		error(429, m.data_export_running());
 	}
 	try {
 		// Fails early, before the download starts, when pg_dump is missing.

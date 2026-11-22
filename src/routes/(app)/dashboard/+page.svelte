@@ -1,8 +1,8 @@
 <script lang="ts">
-	import DashboardCard from '$lib/components/Dashboard/DashboardCard.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { DashboardCard as Card } from '$lib/types/dashboard';
+	import DashboardCard from '#lib/components/Dashboard/DashboardCard.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { DashboardCard as Card } from '#lib/types/dashboard.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

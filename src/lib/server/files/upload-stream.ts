@@ -1,4 +1,4 @@
-import { DOWNLOAD_TYPE, fileKind } from '$lib/utils/file-kind';
+import { DOWNLOAD_TYPE, fileKind } from '#lib/utils/file-kind.ts';
 import Busboy, { type BusboyFileStream, type BusboyInstance } from '@fastify/busboy';
 import { eq } from 'drizzle-orm';
 import { createHash, randomUUID } from 'node:crypto';

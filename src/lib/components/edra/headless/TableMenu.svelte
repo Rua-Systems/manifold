@@ -5,7 +5,7 @@
 	import Rows3 from '@lucide/svelte/icons/rows-3';
 	import TableProperties from '@lucide/svelte/icons/table-properties';
 	import X from '@lucide/svelte/icons/x';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { Component } from 'svelte';
 	import { BubbleMenu, getEditor, type Editor } from '../tiptap/index.ts';
 

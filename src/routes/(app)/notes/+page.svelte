@@ -1,5 +1,5 @@
 <script lang="ts">
-	import NotesList from '$lib/modules/notes/components/NotesList.svelte';
+	import NotesList from '#lib/modules/notes/components/NotesList.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

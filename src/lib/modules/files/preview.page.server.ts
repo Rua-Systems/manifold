@@ -1,16 +1,16 @@
-import { m } from '$lib/paraglide/messages.js';
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { NotFoundError } from '$lib/server/errors';
-import { imageMaxBytes } from '$lib/server/files/files';
-import { fileRejectionMessage } from '$lib/server/files/messages';
+import { m } from '#lib/paraglide/messages.js';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { NotFoundError } from '#lib/server/errors.ts';
+import { imageMaxBytes } from '#lib/server/files/files.ts';
+import { fileRejectionMessage } from '#lib/server/files/messages.ts';
 import {
 	receiveUploads,
 	UploadFormatError,
 	type ReceivedUploads
-} from '$lib/server/files/upload-stream';
-import { requireUser } from '$lib/server/guard';
-import { isFileUploadLimited } from '$lib/server/rate-limit';
-import { textValue } from '$lib/utils/validation';
+} from '#lib/server/files/upload-stream.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { isFileUploadLimited } from '#lib/server/rate-limit.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { FILES_MODULE } from './constants';
 import { allFolders, deleteFile, getFileDetail, keepUploads } from './library.server';
@@ -34,7 +34,7 @@ export function locationHref(detail: FileDetail): string {
 export async function loadFilePreview(id: string) {
 	const detail = await getFileDetail(id);
 	if (detail === null) {
-		error(404, { message: m.files_error_missing() });
+		error(404, m.files_error_missing());
 	}
 	return { file: detail, folders: await allFolders(), back: locationHref(detail) };
 }

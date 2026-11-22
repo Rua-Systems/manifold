@@ -10,7 +10,7 @@ import {
 	unique,
 	uuid
 } from 'drizzle-orm/pg-core';
-import type { TagColor } from '$lib/types/tags';
+import type { TagColor } from '#lib/types/tags.ts';
 import type { ActorType } from '../actor';
 import { session, user } from './auth-schema';
 
