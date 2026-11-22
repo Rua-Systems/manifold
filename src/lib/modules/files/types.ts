@@ -1,5 +1,5 @@
-import type { FileKind, FileUse } from '$lib/types/files';
-import type { FieldErrors } from '$lib/types/validation';
+import type { FileKind, FileUse } from '#lib/types/files.ts';
+import type { FieldErrors } from '#lib/types/validation.ts';
 
 export type FilesSort = 'newest' | 'oldest' | 'name' | 'size';
 

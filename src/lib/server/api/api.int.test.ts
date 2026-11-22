@@ -1,8 +1,8 @@
-import { fileEntry, fileFolder } from '$lib/modules/files/schema.server';
-import { createNote, trashNote } from '$lib/modules/notes/notes.server';
-import { allScopeIds } from '$lib/modules/scopes';
-import { mapBasemap, note } from '$lib/modules/notes/schema.server';
-import { service } from '$lib/modules/services/schema.server';
+import { fileEntry, fileFolder } from '#lib/modules/files/schema.server.ts';
+import { createNote, trashNote } from '#lib/modules/notes/notes.server.ts';
+import { allScopeIds } from '#lib/modules/scopes.ts';
+import { mapBasemap, note } from '#lib/modules/notes/schema.server.ts';
+import { service } from '#lib/modules/services/schema.server.ts';
 import { eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '../api-keys';

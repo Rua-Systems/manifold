@@ -1,4 +1,4 @@
-import { apiKey, tag } from '$lib/server/db/schema';
+import { apiKey, tag } from '#lib/server/db/schema.ts';
 import { sql } from 'drizzle-orm';
 import {
 	type AnyPgColumn,

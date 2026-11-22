@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { relativeTime } from '$lib/utils/time';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { relativeTime } from '#lib/utils/time.ts';
 	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 	import CircleDashedIcon from '@lucide/svelte/icons/circle-dashed';
 	import CircleXIcon from '@lucide/svelte/icons/circle-x';

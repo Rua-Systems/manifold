@@ -1,7 +1,7 @@
-import { getDb } from '$lib/server/db';
-import { getEnv } from '$lib/server/env';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { parseEncryptionKey, unseal } from '$lib/server/sealing';
+import { getDb } from '#lib/server/db/index.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { parseEncryptionKey, unseal } from '#lib/server/sealing.ts';
 import { eq } from 'drizzle-orm';
 import http from 'node:http';
 import net from 'node:net';

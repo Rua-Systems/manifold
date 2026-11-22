@@ -1,12 +1,12 @@
-import { postAction } from '$lib/utils/actions';
-import { localizedHref } from '$lib/utils/navigation';
+import { postAction } from '#lib/utils/actions.ts';
+import { localizedHref } from '#lib/utils/navigation.ts';
 import {
 	serializeSidebarPreferences,
 	SIDEBAR_COOKIE,
 	SIDEBAR_COOKIE_MAX_AGE,
 	type SidebarPreferences
-} from '$lib/utils/sidebar-preferences';
-import { clampSidebarWidth } from '$lib/utils/sidebar-width';
+} from '#lib/utils/sidebar-preferences.ts';
+import { clampSidebarWidth } from '#lib/utils/sidebar-width.ts';
 import { getContext, setContext } from 'svelte';
 
 const SIDEBAR_KEY = Symbol('sidebar');

@@ -3,12 +3,34 @@ import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { readFileSync } from 'node:fs';
+import { loadEnv, type Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 
 const packageJson = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
+/**
+ * The app reads its settings from process.env (SvelteKit 3 offers only declared variables through
+ * $app/env). The production server gets them from the container; `vite dev` and `vite preview`
+ * get the .env file here, without overriding what the shell already set. Vitest also serves, and
+ * its tests bring their own environment, so it is left out.
+ */
+function dotenvForServe(): Plugin {
+	return {
+		name: 'manifold-dotenv-for-serve',
+		config(_config, { command, mode }) {
+			if (command !== 'serve' || process.env.VITEST !== undefined) {
+				return;
+			}
+			for (const [name, value] of Object.entries(loadEnv(mode, process.cwd(), ''))) {
+				process.env[name] ??= value;
+			}
+		}
+	};
+}
+
 export default defineConfig({
 	plugins: [
+		dotenvForServe(),
 		sveltekit({
 			compilerOptions: {
 				runes: ({ filename }) => {
@@ -44,17 +66,6 @@ export default defineConfig({
 					'base-uri': ['none'],
 					'form-action': ['self'],
 					'object-src': ['none']
-				}
-			},
-			typescript: {
-				config: (config) => {
-					config.include.push(
-						'../drizzle.config.ts',
-						'../playwright.config.ts',
-						'../vite.cli.config.ts',
-						'../vite.server.config.ts',
-						'../scripts/**/*.ts'
-					);
 				}
 			}
 		}),

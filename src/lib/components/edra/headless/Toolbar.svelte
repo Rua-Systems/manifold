@@ -3,7 +3,7 @@
 	import ImageIcon from '@lucide/svelte/icons/image';
 	import Link2 from '@lucide/svelte/icons/link-2';
 	import PaperclipIcon from '@lucide/svelte/icons/paperclip';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getEditor, useEditorTransaction } from '../tiptap/index.ts';
 	import { COMMAND_GROUPS, type EditorCommand } from './commands';
 	import LinkForm from './LinkForm.svelte';

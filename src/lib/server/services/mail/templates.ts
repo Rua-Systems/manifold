@@ -1,6 +1,6 @@
-import { m } from '$lib/paraglide/messages.js';
-import type { Locale } from '$lib/paraglide/runtime.js';
-import { summarizeUserAgent } from '$lib/utils/user-agent';
+import { m } from '#lib/paraglide/messages.js';
+import type { Locale } from '#lib/paraglide/runtime.js';
+import { summarizeUserAgent } from '#lib/utils/user-agent.ts';
 import type { MailContent, MailContext, MailDetail } from './layout';
 
 export interface CodeMail {

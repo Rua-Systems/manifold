@@ -1,6 +1,6 @@
-import { m } from '$lib/paraglide/messages.js';
-import { URL_MAX_LENGTH } from '$lib/schemas/rules';
-import type { FieldErrors } from '$lib/types/validation';
+import { m } from '#lib/paraglide/messages.js';
+import { URL_MAX_LENGTH } from '#lib/schemas/rules.ts';
+import type { FieldErrors } from '#lib/types/validation.ts';
 import { z } from 'zod';
 
 // Rules for the basemaps the owner adds, shared by the settings form, its actions and the API.

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import VaultPage from '$lib/modules/vault/components/VaultPage.svelte';
+	import VaultPage from '#lib/modules/vault/components/VaultPage.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

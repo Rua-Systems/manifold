@@ -4,7 +4,7 @@ import {
 	PASSWORD_MIN_LENGTH,
 	USERNAME_MAX_LENGTH,
 	USERNAME_MIN_LENGTH
-} from '$lib/schemas/rules';
+} from '#lib/schemas/rules.ts';
 import { and, count, eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';

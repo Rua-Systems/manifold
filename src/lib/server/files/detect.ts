@@ -1,4 +1,4 @@
-import { DOWNLOAD_TYPE } from '$lib/utils/file-kind';
+import { DOWNLOAD_TYPE } from '#lib/utils/file-kind.ts';
 
 export type ImageType = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif' | 'image/svg+xml';
 

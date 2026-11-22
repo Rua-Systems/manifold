@@ -1,4 +1,4 @@
-import type { SidebarIcon } from '$lib/modules/types';
+import type { SidebarIcon } from '#lib/modules/types.ts';
 
 // The dashboard is built from cards that modules and the core return as data, so the page draws
 // every card the same way and a new module only adds a `dashboard` hook.

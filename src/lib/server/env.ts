@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 
-// Plain module on purpose: the CLI parses process.env with it, the app parses $env/dynamic/private.
+// Plain module on purpose: the CLI and the app both parse process.env with it.
 
 const DEFAULT_ORGANIZATION_NAME = 'Manifold';
 const DEFAULT_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';

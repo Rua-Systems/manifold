@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
 	import { page } from '$app/state';
-	import AuthShell from '$lib/components/AuthShell/AuthShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { CODE_LENGTH, codeSchema, emailSchema, newPasswordSchema } from '$lib/schemas/auth';
-	import { Field, validateAll } from '$lib/state/field.svelte';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { ResetStage } from '$lib/types/auth';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { pageTitle } from '$lib/utils/title';
-	import { fromSchema, matches } from '$lib/utils/validation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import AuthShell from '#lib/components/AuthShell/AuthShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { CODE_LENGTH, codeSchema, emailSchema, newPasswordSchema } from '#lib/schemas/auth.ts';
+	import { Field, validateAll } from '#lib/state/field.svelte.ts';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { ResetStage } from '#lib/types/auth.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { pageTitle } from '#lib/utils/title.ts';
+	import { fromSchema, matches } from '#lib/utils/validation.ts';
 	import { onDestroy } from 'svelte';
 	import type { PageProps } from './$types';
 

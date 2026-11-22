@@ -1,18 +1,19 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import { refreshAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { actionMessage, postAction } from '$lib/utils/actions';
-	import { formatBytes, formatMegabytes } from '$lib/utils/format';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { relativeTime } from '$lib/utils/time';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { actionMessage, postAction } from '#lib/utils/actions.ts';
+	import { formatBytes, formatMegabytes } from '#lib/utils/format.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import FilesIcon from '@lucide/svelte/icons/files';
@@ -20,7 +21,6 @@
 	import FolderInputIcon from '@lucide/svelte/icons/folder-input';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { onMount, untrack } from 'svelte';
 	import { FILES_LIST_LIMIT } from '../constants';
 	import { kindLabel, sourceLabel } from '../labels';
@@ -36,8 +36,8 @@
 		FolderSummary
 	} from '../types';
 	import FileGlyph from './FileGlyph.svelte';
-	import MoveForm from '$lib/components/Folders/MoveForm.svelte';
-	import NameForm from '$lib/components/Folders/NameForm.svelte';
+	import MoveForm from '#lib/components/Folders/MoveForm.svelte';
+	import NameForm from '#lib/components/Folders/NameForm.svelte';
 	import UploadList from './UploadList.svelte';
 
 	interface Props {
@@ -55,7 +55,6 @@
 		kind: 'file' | 'folder';
 		id: string;
 	}
-
 	interface MoveTarget extends DraggedItem {
 		name: string;
 		current: string | null;
@@ -98,7 +97,7 @@
 			max: formatMegabytes(untrack(() => uploadMaxBytes))
 		}),
 		failed: m.files_error_upload_failed(),
-		onsettled: () => invalidateAll()
+		onsettled: () => refreshAll()
 	});
 
 	/** The folder shown, `''` for the top; null when the page shows a source or a filter. */
@@ -205,7 +204,7 @@
 		} else {
 			notifications.fault(actionMessage(result, m.files_error_move_failed()));
 		}
-		await invalidateAll();
+		await refreshAll();
 	}
 
 	/** A file from the computer is uploaded into the folder; an item of the page moves there. */
@@ -277,9 +276,10 @@
 >
 	{#snippet actions()}
 		{#if currentFolder !== null}
-			<button type="button" class="quiet" onclick={() => (createOpen = true)}>
-				{m.files_new_folder()}
-			</button>
+			<button type="button" class="quiet" onclick={() => (createOpen = true)}
+				>{m.files_new_folder()}</button
+			>
+
 			<form
 				method="POST"
 				action="?/upload"
@@ -313,7 +313,7 @@
 		method="GET"
 		class="filters"
 		role="search"
-		data-sveltekit-keepfocus
+		data-sveltekit-reset="false"
 		data-sveltekit-replacestate
 		bind:this={filterForm}
 	>

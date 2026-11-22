@@ -1,10 +1,10 @@
-import { m } from '$lib/paraglide/messages.js';
-import { ownerActor } from '$lib/server/actor';
-import { getEnv } from '$lib/server/env';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { requireUser } from '$lib/server/guard';
-import { isUuid } from '$lib/utils/uuid';
-import { textValue } from '$lib/utils/validation';
+import { m } from '#lib/paraglide/messages.js';
+import { ownerActor } from '#lib/server/actor.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { error, fail, type RequestEvent } from '@sveltejs/kit';
 import { getNote, listNoteTitles } from '../notes.server';
 import { loadNoteData } from '../page.server';
@@ -49,7 +49,7 @@ export async function loadMapPage(url: URL) {
 	]);
 	const focus = url.searchParams.get('note');
 	return {
-		features,
+		mapFeatures: features,
 		notes,
 		attachNote,
 		focusNoteId: focus !== null && isUuid(focus) ? focus : null,

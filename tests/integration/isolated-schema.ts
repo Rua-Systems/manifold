@@ -1,4 +1,4 @@
-import { connect, type Connection } from '$lib/server/db';
+import { connect, type Connection } from '#lib/server/db/index.ts';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { inject } from 'vitest';

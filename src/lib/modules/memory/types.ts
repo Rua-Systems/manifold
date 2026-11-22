@@ -1,5 +1,5 @@
-import type { Tag } from '$lib/types/tags';
-import type { FieldErrors } from '$lib/types/validation';
+import type { Tag } from '#lib/types/tags.ts';
+import type { FieldErrors } from '#lib/types/validation.ts';
 import type { NoteContent } from '../notes/content';
 
 /** Who wrote a revision of a memory: the owner, an API key or the app itself. */

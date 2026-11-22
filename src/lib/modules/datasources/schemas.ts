@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { URL_MAX_LENGTH } from '$lib/schemas/rules';
+import { m } from '#lib/paraglide/messages.js';
+import { URL_MAX_LENGTH } from '#lib/schemas/rules.ts';
 import { z } from 'zod';
 import { DATA_SOURCE_TYPES, SECRET_NAMES, type DataSourceType, type SecretName } from './types';
 

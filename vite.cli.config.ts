@@ -1,13 +1,7 @@
-import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 // Builds scripts/cli.ts into one self-contained file for the production image (`node cli.js`).
 export default defineConfig({
-	resolve: {
-		alias: {
-			$lib: fileURLToPath(new URL('./src/lib', import.meta.url))
-		}
-	},
 	ssr: {
 		noExternal: true
 	},

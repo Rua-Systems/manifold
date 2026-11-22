@@ -1,5 +1,5 @@
 <script lang="ts">
-	import MemoryTrash from '$lib/modules/memory/components/MemoryTrash.svelte';
+	import MemoryTrash from '#lib/modules/memory/components/MemoryTrash.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

@@ -1,10 +1,10 @@
-import type { ApiKeyIdentity } from '$lib/server/api-keys';
-import type { CredentialProvider } from '$lib/server/api/credentials';
-import { getDb } from '$lib/server/db';
-import { NotFoundError } from '$lib/server/errors';
-import { issueToken, tokenMatches, tokenPrefix } from '$lib/server/secret-tokens';
-import { isUuid } from '$lib/utils/uuid';
-import { m } from '$lib/paraglide/messages.js';
+import type { ApiKeyIdentity } from '#lib/server/api-keys.ts';
+import type { CredentialProvider } from '#lib/server/api/credentials.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { NotFoundError } from '#lib/server/errors.ts';
+import { issueToken, tokenMatches, tokenPrefix } from '#lib/server/secret-tokens.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { and, count, desc, eq, gt, isNull, type SQL } from 'drizzle-orm';
 import { note, noteFile, noteToken } from './schema.server';
 import type { NoteTokenAccess, NoteTokenView } from './types';

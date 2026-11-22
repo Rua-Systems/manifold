@@ -1,8 +1,8 @@
-import { m } from '$lib/paraglide/messages.js';
-import { imageMaxBytes } from '$lib/server/files/files';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { requireUser } from '$lib/server/guard';
-import { textValue } from '$lib/utils/validation';
+import { m } from '#lib/paraglide/messages.js';
+import { imageMaxBytes } from '#lib/server/files/files.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { fail, type ActionFailure, type RequestEvent } from '@sveltejs/kit';
 import { serviceIconSource, serviceInitial } from './manifest.server';
 import {

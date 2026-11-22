@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import HamburgerIcon from '$lib/components/icons/HamburgerIcon.svelte';
-	import CommandPalette from '$lib/components/CommandPalette/CommandPalette.svelte';
-	import Sidebar from '$lib/components/Sidebar/Sidebar.svelte';
-	import StepUpDialog from '$lib/components/StepUp/StepUpDialog.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { setPalette } from '$lib/state/palette.svelte';
-	import { setSidebarState } from '$lib/state/sidebar.svelte';
-	import { setStepUp } from '$lib/state/step-up.svelte';
+	import HamburgerIcon from '#lib/components/icons/HamburgerIcon.svelte';
+	import CommandPalette from '#lib/components/CommandPalette/CommandPalette.svelte';
+	import Sidebar from '#lib/components/Sidebar/Sidebar.svelte';
+	import StepUpDialog from '#lib/components/StepUp/StepUpDialog.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { setPalette } from '#lib/state/palette.svelte.ts';
+	import { setSidebarState } from '#lib/state/sidebar.svelte.ts';
+	import { setStepUp } from '#lib/state/step-up.svelte.ts';
 	import Search from '@lucide/svelte/icons/search';
 	import { untrack } from 'svelte';
 	import type { LayoutProps } from './$types';

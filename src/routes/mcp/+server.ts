@@ -1,5 +1,5 @@
-import { originOf } from '$lib/server/audit';
-import { handleMcpRequest } from '$lib/server/mcp/server';
+import { originOf } from '#lib/server/audit.ts';
+import { handleMcpRequest } from '#lib/server/mcp/server.ts';
 import type { RequestHandler } from './$types';
 
 // The MCP server. Stateless streamable HTTP: clients POST JSON-RPC messages with an API key.

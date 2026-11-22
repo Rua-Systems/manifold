@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { TagColor } from '$lib/types/tags';
+	import type { TagColor } from '#lib/types/tags.ts';
 
 	interface Props {
 		name: string;

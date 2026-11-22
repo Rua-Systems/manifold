@@ -1,10 +1,10 @@
-import { createApiKey } from '$lib/server/api-keys';
-import { handleApiRequest } from '$lib/server/api/router';
-import { getDb } from '$lib/server/db';
-import { apiKey, tag } from '$lib/server/db/schema';
-import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { handleMcpRequest } from '$lib/server/mcp/server';
-import { createTag } from '$lib/server/tags/tags';
+import { createApiKey } from '#lib/server/api-keys.ts';
+import { handleApiRequest } from '#lib/server/api/router.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { apiKey, tag } from '#lib/server/db/schema.ts';
+import { ConflictError, NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { handleMcpRequest } from '#lib/server/mcp/server.ts';
+import { createTag } from '#lib/server/tags/tags.ts';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { isNotNull } from 'drizzle-orm';

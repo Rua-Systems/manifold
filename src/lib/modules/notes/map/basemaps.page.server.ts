@@ -1,7 +1,7 @@
-import { m } from '$lib/paraglide/messages.js';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { requireUser } from '$lib/server/guard';
-import { textValue } from '$lib/utils/validation';
+import { m } from '#lib/paraglide/messages.js';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { fail, type ActionFailure, type RequestEvent } from '@sveltejs/kit';
 import type { BasemapsAction, BasemapsFormState } from './basemaps';
 import {

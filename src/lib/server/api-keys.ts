@@ -3,7 +3,7 @@ import { getDb, type Database, type Transaction } from './db';
 import { apiKey } from './db/schema';
 import { NotFoundError } from './errors';
 import { issueToken, tokenMatches, tokenPrefix } from './secret-tokens';
-import type { ApiKeyView } from '$lib/types/api-keys';
+import type { ApiKeyView } from '#lib/types/api-keys.ts';
 
 // API keys: `mfd_` tokens (secret-tokens.ts) with scopes, stored as a hash. The key itself is
 // shown once, when it is created.

@@ -1,5 +1,5 @@
-import { handleApiRequest } from '$lib/server/api/router';
-import { originOf } from '$lib/server/audit';
+import { handleApiRequest } from '#lib/server/api/router.ts';
+import { originOf } from '#lib/server/audit.ts';
 import type { RequestHandler } from './$types';
 
 // Every /api/v1 request goes to the router, which serves the routes of the core and the modules.

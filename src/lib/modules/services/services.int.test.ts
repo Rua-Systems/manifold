@@ -1,7 +1,7 @@
-import { getDb } from '$lib/server/db';
-import { file } from '$lib/server/db/schema';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { purgeUnreferencedFiles } from '$lib/server/files/files';
+import { getDb } from '#lib/server/db/index.ts';
+import { file } from '#lib/server/db/schema.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { purgeUnreferencedFiles } from '#lib/server/files/files.ts';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { servicesServerManifest } from './manifest.server';

@@ -1,5 +1,5 @@
-import { callRoute, findRoute } from '$lib/server/mcp/routes';
-import { defineTool, type McpTool } from '$lib/server/mcp/types';
+import { callRoute, findRoute } from '#lib/server/mcp/routes.ts';
+import { defineTool, type McpTool } from '#lib/server/mcp/types.ts';
 import { z } from 'zod';
 import { dataSourcesApiRoutes } from './api.server';
 import { DATA_SOURCE_TYPES } from './types';

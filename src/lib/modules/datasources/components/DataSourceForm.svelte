@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { getStepUp, needsStepUp } from '$lib/state/step-up.svelte';
-	import type { FieldErrors } from '$lib/types/validation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { getStepUp, needsStepUp } from '#lib/state/step-up.svelte.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
 	import { untrack } from 'svelte';
 	import { SECRET_LABELS } from '../labels';
 	import { DATA_SOURCE_DESCRIPTION_MAX_LENGTH, DATA_SOURCE_NAME_MAX_LENGTH } from '../schemas';

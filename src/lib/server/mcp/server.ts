@@ -1,5 +1,5 @@
-import { version } from '$app/environment';
-import { moduleMcpPrompts, moduleMcpTools } from '$lib/modules/registry.server';
+import { version } from '$app/env';
+import { moduleMcpPrompts, moduleMcpTools } from '#lib/modules/registry.server.ts';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';

@@ -1,4 +1,4 @@
-import type { SessionUser } from '$lib/types/user';
+import type { SessionUser } from '#lib/types/user.ts';
 
 interface SessionUserSource {
 	name: string;

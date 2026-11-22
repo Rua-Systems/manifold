@@ -1,30 +1,30 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import Credit from '$lib/components/Credit/Credit.svelte';
-	import ChevronIcon from '$lib/components/icons/ChevronIcon.svelte';
-	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
-	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
-	import { CORE_SIDEBAR_LINKS } from '$lib/config/navigation';
-	import { MODULES } from '$lib/modules/registry';
-	import type { Pathname } from '$app/types';
-	import type { ModuleManifest, SidebarData, SidebarItem } from '$lib/modules/types';
-	import { m } from '$lib/paraglide/messages.js';
-	import { deLocalizeHref } from '$lib/paraglide/runtime.js';
-	import { getPalette } from '$lib/state/palette.svelte';
-	import { getSidebarState } from '$lib/state/sidebar.svelte';
+	import Credit from '#lib/components/Credit/Credit.svelte';
+	import ChevronIcon from '#lib/components/icons/ChevronIcon.svelte';
+	import CloseIcon from '#lib/components/icons/CloseIcon.svelte';
+	import ManifoldLogo from '#lib/components/ManifoldLogo/ManifoldLogo.svelte';
+	import { CORE_SIDEBAR_LINKS } from '#lib/config/navigation.ts';
+	import { MODULES } from '#lib/modules/registry.ts';
+	import type { AppPath } from '#lib/types/navigation.ts';
+	import type { ModuleManifest, SidebarData, SidebarItem } from '#lib/modules/types.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { deLocalizeHref } from '#lib/paraglide/runtime.js';
+	import { getPalette } from '#lib/state/palette.svelte.ts';
+	import { getSidebarState } from '#lib/state/sidebar.svelte.ts';
 	import FolderIcon from '@lucide/svelte/icons/folder';
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import Search from '@lucide/svelte/icons/search';
-	import type { SearchHit } from '$lib/types/search';
-	import { postAction } from '$lib/utils/actions';
-	import { currentMarker, localizedHref } from '$lib/utils/navigation';
+	import type { SearchHit } from '#lib/types/search.ts';
+	import { postAction } from '#lib/utils/actions.ts';
+	import { currentMarker, localizedHref } from '#lib/utils/navigation.ts';
 	import {
 		SIDEBAR_DEFAULT_WIDTH,
 		SIDEBAR_MAX_WIDTH,
 		SIDEBAR_MIN_WIDTH,
 		SIDEBAR_WIDTH_STEP
-	} from '$lib/utils/sidebar-width';
+	} from '#lib/utils/sidebar-width.ts';
 	import { fade } from 'svelte/transition';
 
 	interface Props {
@@ -48,7 +48,9 @@
 		return m.sidebar_expand();
 	});
 
-	afterNavigate(() => {
+	afterNavigate(({ shallow, type }) => {
+		if (shallow && type === 'goto') return;
+
 		sidebar.closeDrawer();
 	});
 
@@ -127,7 +129,7 @@
 					label: hit.title,
 					link: hit.external
 						? { kind: 'external', url: hit.href }
-						: { kind: 'internal', path: hit.href as Pathname },
+						: { kind: 'internal', path: hit.href as AppPath },
 					filterable: true
 				}))
 			};

@@ -1,9 +1,9 @@
-import { ApiError } from '$lib/server/api/errors';
-import { decodeCursor, pageOf, pageQuery, pageSchema } from '$lib/server/api/paging';
-import { FOLDER_NAME_MAX_LENGTH } from '$lib/schemas/names';
-import { VERSION_MAX } from '$lib/schemas/rules';
-import { defineRoute, type ApiRoute } from '$lib/server/api/types';
-import type { FolderOption } from '$lib/types/folders';
+import { ApiError } from '#lib/server/api/errors.ts';
+import { decodeCursor, pageOf, pageQuery, pageSchema } from '#lib/server/api/paging.ts';
+import { FOLDER_NAME_MAX_LENGTH } from '#lib/schemas/names.ts';
+import { VERSION_MAX } from '#lib/schemas/rules.ts';
+import { defineRoute, type ApiRoute } from '#lib/server/api/types.ts';
+import type { FolderOption } from '#lib/types/folders.ts';
 import { z } from 'zod';
 import type { NoteContent } from './content';
 import {

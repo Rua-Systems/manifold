@@ -1,5 +1,5 @@
 import { getRequestEvent } from '$app/server';
-import { getLocale } from '$lib/paraglide/runtime.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
 import {
 	CODE_LENGTH,
 	PASSWORD_MAX_LENGTH,
@@ -7,7 +7,7 @@ import {
 	USERNAME_MAX_LENGTH,
 	USERNAME_MIN_LENGTH,
 	USERNAME_PATTERN
-} from '$lib/schemas/rules';
+} from '#lib/schemas/rules.ts';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { betterAuth } from 'better-auth/minimal';

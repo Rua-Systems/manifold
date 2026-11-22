@@ -1,9 +1,9 @@
-import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
-import { handleApiRequest } from '$lib/server/api/router';
-import { apiRoutes } from '$lib/server/api/routes';
-import { getDb } from '$lib/server/db';
-import { getEnv } from '$lib/server/env';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
+import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '#lib/server/api-keys.ts';
+import { handleApiRequest } from '#lib/server/api/router.ts';
+import { apiRoutes } from '#lib/server/api/routes.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
 import { eq } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';

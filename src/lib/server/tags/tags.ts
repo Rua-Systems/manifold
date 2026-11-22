@@ -1,8 +1,8 @@
-import { m } from '$lib/paraglide/messages.js';
-import { tagSchema, TAGS_PER_RECORD_MAX } from '$lib/schemas/tags';
-import type { Tag } from '$lib/types/tags';
-import { isUuid } from '$lib/utils/uuid';
-import { fieldErrors } from '$lib/utils/validation';
+import { m } from '#lib/paraglide/messages.js';
+import { tagSchema, TAGS_PER_RECORD_MAX } from '#lib/schemas/tags.ts';
+import type { Tag } from '#lib/types/tags.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
+import { fieldErrors } from '#lib/utils/validation.ts';
 import { asc, eq, inArray, sql } from 'drizzle-orm';
 import { getDb } from '../db';
 import { hasErrorCode, UNIQUE_VIOLATION } from '../db/errors';

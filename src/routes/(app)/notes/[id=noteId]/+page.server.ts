@@ -1,5 +1,5 @@
-import { loadNotePage, noteActions } from '$lib/modules/notes/page.server';
-import { NOTE_DEPENDENCY } from '$lib/modules/notes/paths';
+import { loadNotePage, noteActions } from '#lib/modules/notes/page.server.ts';
+import { NOTE_DEPENDENCY } from '#lib/modules/notes/paths.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ params, url, depends }) => {

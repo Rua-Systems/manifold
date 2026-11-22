@@ -1,4 +1,4 @@
-import type { FieldErrors } from '$lib/types/validation';
+import type { FieldErrors } from '#lib/types/validation.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../errors';
 import { FileRejectedError, type FileRejection } from '../files/files';
 

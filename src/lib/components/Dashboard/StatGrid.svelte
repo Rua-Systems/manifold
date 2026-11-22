@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import type { DashboardStat } from '$lib/types/dashboard';
-	import { formatBytes } from '$lib/utils/format';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import type { DashboardStat } from '#lib/types/dashboard.ts';
+	import { formatBytes } from '#lib/utils/format.ts';
 
 	interface Props {
 		stats: DashboardStat[];

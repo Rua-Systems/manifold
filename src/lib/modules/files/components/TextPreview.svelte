@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { parseCsv } from '$lib/utils/csv';
-	import { formatBytes } from '$lib/utils/format';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { parseCsv } from '#lib/utils/csv.ts';
+	import { formatBytes } from '#lib/utils/format.ts';
 	import { onMount } from 'svelte';
 
 	interface Props {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import MemoriesPage from '$lib/modules/memory/components/MemoriesPage.svelte';
+	import MemoriesPage from '#lib/modules/memory/components/MemoriesPage.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

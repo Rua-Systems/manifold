@@ -1,4 +1,4 @@
-import type { Tag } from '$lib/types/tags';
+import type { Tag } from '#lib/types/tags.ts';
 
 /** A prompt as the pages and the API show it. */
 export interface Prompt {

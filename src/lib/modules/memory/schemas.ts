@@ -1,6 +1,6 @@
-import { m } from '$lib/paraglide/messages.js';
-import { plainNameSchema } from '$lib/schemas/names';
-import { VERSION_MAX } from '$lib/schemas/rules';
+import { m } from '#lib/paraglide/messages.js';
+import { plainNameSchema } from '#lib/schemas/names.ts';
+import { VERSION_MAX } from '#lib/schemas/rules.ts';
 import { z } from 'zod';
 
 // Rules for memories and their categories, shared by the forms, their actions and the API.

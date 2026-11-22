@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
 	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import AuthShell from '$lib/components/AuthShell/AuthShell.svelte';
-	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { actionMessage, postAction } from '$lib/utils/actions';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { pageTitle } from '$lib/utils/title';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import AuthShell from '#lib/components/AuthShell/AuthShell.svelte';
+	import ManifoldLogo from '#lib/components/ManifoldLogo/ManifoldLogo.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { actionMessage, postAction } from '#lib/utils/actions.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { pageTitle } from '#lib/utils/title.ts';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { emptyNoteContent } from '../content';
 	import {
@@ -131,7 +131,9 @@
 		openForm?.requestSubmit();
 	});
 
-	beforeNavigate(() => {
+	beforeNavigate(({ shallow, type }) => {
+		if (shallow && type === 'goto') return;
+
 		void draft.flush();
 	});
 
@@ -183,7 +185,7 @@
 	<meta name="description" content={m.shared_meta_description()} />
 </svelte:head>
 
-<svelte:document onvisibilitychange={onVisibilityChange} />
+<svelte:document onvisibilitychange={onVisibilityChange}></svelte:document>
 <svelte:window onkeydown={onKeydown} />
 
 {#if shared === null}

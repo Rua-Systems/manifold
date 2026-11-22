@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { actionMessage } from '$lib/utils/actions';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { actionMessage } from '#lib/utils/actions.ts';
 	import {
 		adjustPixels,
 		cropBetween,
@@ -18,8 +18,8 @@
 		type CropRect,
 		type ImageFilter,
 		type Rotation
-	} from '$lib/utils/image-edit';
-	import { localizedHref } from '$lib/utils/navigation';
+	} from '#lib/utils/image-edit.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import CropIcon from '@lucide/svelte/icons/crop';
 	import FlipHorizontalIcon from '@lucide/svelte/icons/flip-horizontal';
 	import FlipVerticalIcon from '@lucide/svelte/icons/flip-vertical';

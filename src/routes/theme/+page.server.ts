@@ -1,6 +1,6 @@
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { safeRedirectTarget } from '$lib/utils/redirect';
-import { parseTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '$lib/utils/theme';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { safeRedirectTarget } from '#lib/utils/redirect.ts';
+import { parseTheme, THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '#lib/utils/theme.ts';
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

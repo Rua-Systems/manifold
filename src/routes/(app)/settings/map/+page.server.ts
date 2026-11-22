@@ -1,4 +1,4 @@
-import { basemapsActions, loadBasemapsPage } from '$lib/modules/notes/map/basemaps.page.server';
+import { basemapsActions, loadBasemapsPage } from '#lib/modules/notes/map/basemaps.page.server.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = () => loadBasemapsPage();

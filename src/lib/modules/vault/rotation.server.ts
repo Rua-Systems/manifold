@@ -1,4 +1,4 @@
-import type { Database, Transaction } from '$lib/server/db';
+import type { Database, Transaction } from '#lib/server/db/index.ts';
 import { eq } from 'drizzle-orm';
 import { seal, unseal, VaultKeyError } from './crypto.server';
 import { vaultSecret } from './schema.server';

@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { z } from 'zod';
 
 // Rules for prompts, shared by the form, its actions and the API.

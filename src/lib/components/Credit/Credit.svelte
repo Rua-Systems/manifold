@@ -1,7 +1,7 @@
 <script lang="ts">
-	import ManifoldLogo from '$lib/components/ManifoldLogo/ManifoldLogo.svelte';
-	import { DEVELOPER_NAME, DEVELOPER_URL, PRODUCT_NAME } from '$lib/constants';
-	import { m } from '$lib/paraglide/messages.js';
+	import ManifoldLogo from '#lib/components/ManifoldLogo/ManifoldLogo.svelte';
+	import { DEVELOPER_NAME, DEVELOPER_URL, PRODUCT_NAME } from '#lib/constants.ts';
+	import { m } from '#lib/paraglide/messages.js';
 </script>
 
 <p class="credit">

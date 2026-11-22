@@ -1,5 +1,5 @@
-import { getDb } from '$lib/server/db';
-import { file } from '$lib/server/db/schema';
+import { getDb } from '#lib/server/db/index.ts';
+import { file } from '#lib/server/db/schema.ts';
 import { eq } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 import { mkdir, readdir } from 'node:fs/promises';

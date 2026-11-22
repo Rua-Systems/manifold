@@ -1,4 +1,4 @@
-import type { Theme } from '$lib/types/theme';
+import type { Theme } from '#lib/types/theme.ts';
 
 export const THEME_COOKIE = 'manifold_theme';
 

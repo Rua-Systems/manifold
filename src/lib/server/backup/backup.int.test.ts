@@ -1,8 +1,8 @@
-import { createNote } from '$lib/modules/notes/notes.server';
-import { note } from '$lib/modules/notes/schema.server';
-import { parseVaultKey, unseal } from '$lib/modules/vault/crypto.server';
-import { vaultSecret } from '$lib/modules/vault/schema.server';
-import { createSecret } from '$lib/modules/vault/vault.server';
+import { createNote } from '#lib/modules/notes/notes.server.ts';
+import { note } from '#lib/modules/notes/schema.server.ts';
+import { parseVaultKey, unseal } from '#lib/modules/vault/crypto.server.ts';
+import { vaultSecret } from '#lib/modules/vault/schema.server.ts';
+import { createSecret } from '#lib/modules/vault/vault.server.ts';
 import { randomUUID } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';

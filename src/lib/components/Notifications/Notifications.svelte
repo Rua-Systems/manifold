@@ -1,8 +1,8 @@
 <script lang="ts">
-	import CloseIcon from '$lib/components/icons/CloseIcon.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { NotificationKind } from '$lib/types/notification';
+	import CloseIcon from '#lib/components/icons/CloseIcon.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { NotificationKind } from '#lib/types/notification.ts';
 	import { flip } from 'svelte/animate';
 	import { cubicOut } from 'svelte/easing';
 	import { fly } from 'svelte/transition';

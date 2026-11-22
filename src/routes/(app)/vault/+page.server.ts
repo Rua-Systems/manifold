@@ -1,4 +1,4 @@
-import { loadVault, vaultActions } from '$lib/modules/vault/page.server';
+import { loadVault, vaultActions } from '#lib/modules/vault/page.server.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = () => loadVault();

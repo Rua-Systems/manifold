@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { z } from 'zod';
 import { codeSchema, passwordSchema } from './auth';
 import { isCalendarDate } from './rules';

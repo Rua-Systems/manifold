@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
 	import { beforeNavigate } from '$app/navigation';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import TrashIcon from '$lib/components/icons/TrashIcon.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import TagPicker from '$lib/components/Tags/TagPicker.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { Tag } from '$lib/types/tags';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { relativeTime } from '$lib/utils/time';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import TrashIcon from '#lib/components/icons/TrashIcon.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import TagPicker from '#lib/components/Tags/TagPicker.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { Tag } from '#lib/types/tags.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
 	import History from '@lucide/svelte/icons/history';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { tick, untrack } from 'svelte';
 	import { emptyNoteContent, type NoteContent } from '../../notes/content';
 	import NoteEditor from '../../notes/components/NoteEditor.svelte';
@@ -100,6 +100,8 @@
 	}
 
 	beforeNavigate((navigation) => {
+		if (navigation.shallow && navigation.type === 'goto') return;
+
 		if (dirty && !saving && !confirm(m.memory_leave_unsaved())) {
 			navigation.cancel();
 		}
@@ -169,10 +171,9 @@
 				class="tool"
 				aria-label={m.memory_history()}
 				title={m.memory_history()}
-				onclick={() => (historyOpen = true)}
+				onclick={() => (historyOpen = true)}><History size={18} /></button
 			>
-				<History size={18} />
-			</button>
+
 			<form method="POST" action="?/trash" use:enhance={trashSubmit}>
 				<button
 					type="submit"

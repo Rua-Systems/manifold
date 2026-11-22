@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { relativeTime } from '$lib/utils/time';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
 	import { categoryLabel } from '../categories';
 	import type { MemoryCategory, MemorySummary } from '../types';
 

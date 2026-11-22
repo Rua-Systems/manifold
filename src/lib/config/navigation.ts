@@ -1,6 +1,6 @@
-import SettingsIcon from '$lib/components/icons/SettingsIcon.svelte';
-import { m } from '$lib/paraglide/messages.js';
-import type { AsideLink, NavigationLink } from '$lib/types/navigation';
+import SettingsIcon from '#lib/components/icons/SettingsIcon.svelte';
+import { m } from '#lib/paraglide/messages.js';
+import type { AsideLink, NavigationLink } from '#lib/types/navigation.ts';
 
 /** Account menu for visitors who are not signed in. */
 export const GUEST_LINKS: NavigationLink[] = [{ href: '/login', label: m.nav_login }];

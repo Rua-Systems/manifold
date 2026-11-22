@@ -1,6 +1,6 @@
-import { getEnv } from '$lib/server/env';
-import { getFeatures } from '$lib/server/features';
-import { toSessionUser } from '$lib/server/session';
+import { getEnv } from '#lib/server/env.ts';
+import { getFeatures } from '#lib/server/features.ts';
+import { toSessionUser } from '#lib/server/session.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = ({ locals }) => {

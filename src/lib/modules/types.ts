@@ -1,4 +1,4 @@
-import type { Pathname, PathnameWithSearchOrHash } from '$app/types';
+import type { AppHref, AppPath } from '#lib/types/navigation.ts';
 import type { Component } from 'svelte';
 
 // Client safe half of a module manifest. The server half (sidebar data, API handlers, MCP tools,
@@ -16,7 +16,7 @@ export interface ApiScope {
 export interface ModuleCommand {
 	id: string;
 	label: () => string;
-	href: PathnameWithSearchOrHash;
+	href: AppHref;
 }
 
 export interface ModuleManifest {
@@ -24,7 +24,7 @@ export interface ModuleManifest {
 	label: () => string;
 	icon: Component;
 	/** The module page: the target of a link entry, or of a group's label. */
-	href: Pathname;
+	href: AppPath;
 	/** Sidebar order, lowest first. */
 	position: number;
 	sidebar: 'link' | 'group';
@@ -32,8 +32,7 @@ export interface ModuleManifest {
 	commands?: ModuleCommand[];
 }
 
-export type SidebarLink =
-	{ kind: 'internal'; path: PathnameWithSearchOrHash } | { kind: 'external'; url: string };
+export type SidebarLink = { kind: 'internal'; path: AppHref } | { kind: 'external'; url: string };
 
 export type SidebarIcon = { kind: 'image'; src: string } | { kind: 'letter'; letter: string };
 

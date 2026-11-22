@@ -1,9 +1,9 @@
 <script lang="ts">
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import MoveForm from '$lib/components/Folders/MoveForm.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { FolderOption } from '$lib/types/folders';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import MoveForm from '#lib/components/Folders/MoveForm.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { FolderOption } from '#lib/types/folders.ts';
 	import FolderInputIcon from '@lucide/svelte/icons/folder-input';
 
 	interface Props {

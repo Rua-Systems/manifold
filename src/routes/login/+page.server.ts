@@ -1,25 +1,25 @@
-import { m } from '$lib/paraglide/messages.js';
-import { localizeHref } from '$lib/paraglide/runtime.js';
+import { m } from '#lib/paraglide/messages.js';
+import { localizeHref } from '#lib/paraglide/runtime.js';
 import {
 	backupCodeSchema,
 	codeLoginSchema,
 	codeRequestSchema,
 	codeSchema,
 	passwordLoginSchema
-} from '$lib/schemas/auth';
-import { ownerActor, SYSTEM_ACTOR } from '$lib/server/actor';
-import { originOf, recordAudit } from '$lib/server/audit';
-import { getAuth } from '$lib/server/auth';
-import { getDb } from '$lib/server/db';
-import { emailEnabled } from '$lib/server/features';
-import { noteSignIn } from '$lib/server/notices';
-import { upgradeOwnerPasswordHash } from '$lib/server/owner';
-import { isRateLimited } from '$lib/server/rate-limit';
-import { rememberTotp, wasTotpUsed } from '$lib/server/totp-replay';
-import type { LoginFormState, LoginMethod, SecondFactor } from '$lib/types/auth';
-import type { FieldErrors } from '$lib/types/validation';
-import { safeRedirectTarget } from '$lib/utils/redirect';
-import { fieldErrors, textValue } from '$lib/utils/validation';
+} from '#lib/schemas/auth.ts';
+import { ownerActor, SYSTEM_ACTOR } from '#lib/server/actor.ts';
+import { originOf, recordAudit } from '#lib/server/audit.ts';
+import { getAuth } from '#lib/server/auth.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { emailEnabled } from '#lib/server/features.ts';
+import { noteSignIn } from '#lib/server/notices.ts';
+import { upgradeOwnerPasswordHash } from '#lib/server/owner.ts';
+import { isRateLimited } from '#lib/server/rate-limit.ts';
+import { rememberTotp, wasTotpUsed } from '#lib/server/totp-replay.ts';
+import type { LoginFormState, LoginMethod, SecondFactor } from '#lib/types/auth.ts';
+import type { FieldErrors } from '#lib/types/validation.ts';
+import { safeRedirectTarget } from '#lib/utils/redirect.ts';
+import { fieldErrors, textValue } from '#lib/utils/validation.ts';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
 import type { Actions, PageServerLoad } from './$types';

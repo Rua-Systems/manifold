@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { FolderOption } from '$lib/types/folders';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { FolderOption } from '#lib/types/folders.ts';
 	import { untrack } from 'svelte';
 
 	interface Props {

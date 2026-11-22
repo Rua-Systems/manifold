@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DataSourcesPage from '$lib/modules/datasources/components/DataSourcesPage.svelte';
+	import DataSourcesPage from '#lib/modules/datasources/components/DataSourcesPage.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

@@ -1,12 +1,12 @@
-import { m } from '$lib/paraglide/messages.js';
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { ownerActor } from '$lib/server/actor';
-import { getEnv } from '$lib/server/env';
-import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { requireUser } from '$lib/server/guard';
-import { listTags, tagsByIds } from '$lib/server/tags/tags';
-import { isUuid } from '$lib/utils/uuid';
-import { textValue } from '$lib/utils/validation';
+import { m } from '#lib/paraglide/messages.js';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { ownerActor } from '#lib/server/actor.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { ConflictError, NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { listTags, tagsByIds } from '#lib/server/tags/tags.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { error, fail, redirect, type ActionFailure, type RequestEvent } from '@sveltejs/kit';
 import { categoryTree, withSubcategories } from './categories';
 import {
@@ -70,7 +70,7 @@ export async function loadMemoriesList(url: URL) {
 		query.uncategorized = true;
 	} else if (filter.category !== '') {
 		if (!categories.some((category) => category.id === filter.category)) {
-			error(404, { message: m.memory_categories_error_missing() });
+			error(404, m.memory_categories_error_missing());
 		}
 		query.categoryIds = withSubcategories(categories, filter.category);
 	}

@@ -1,6 +1,6 @@
-import { requireUser } from '$lib/server/guard';
-import { search } from '$lib/server/search';
-import { textValue } from '$lib/utils/validation';
+import { requireUser } from '#lib/server/guard.ts';
+import { search } from '#lib/server/search.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const PAGE_LIMIT = 50;

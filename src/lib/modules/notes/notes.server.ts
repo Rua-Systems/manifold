@@ -1,11 +1,11 @@
-import { m } from '$lib/paraglide/messages.js';
-import type { Actor } from '$lib/server/actor';
-import { getDb } from '$lib/server/db';
-import { file } from '$lib/server/db/schema';
-import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import type { FileUse } from '$lib/types/files';
-import { isUuid } from '$lib/utils/uuid';
-import { fieldErrors } from '$lib/utils/validation';
+import { m } from '#lib/paraglide/messages.js';
+import type { Actor } from '#lib/server/actor.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { file } from '#lib/server/db/schema.ts';
+import { ConflictError, NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import type { FileUse } from '#lib/types/files.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
+import { fieldErrors } from '#lib/utils/validation.ts';
 import {
 	and,
 	asc,
@@ -23,7 +23,7 @@ import {
 import { emptyNoteContent, fileIdsInContent, type NoteContent } from './content';
 import { contentToText, validateNoteContent } from './content.server';
 import { note, noteFile, noteFolder, noteRevision } from './schema.server';
-import { containsPattern, prefixQuery } from '$lib/server/search-query';
+import { containsPattern, prefixQuery } from '#lib/server/search-query.ts';
 import { noteTitleSchema } from './schemas';
 import type { NoteDetail, NoteRevisionSummary, NoteSummary, RevisionActorType } from './types';
 

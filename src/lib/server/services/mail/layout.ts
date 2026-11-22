@@ -1,6 +1,6 @@
-import { DEVELOPER_NAME, DEVELOPER_URL, PRODUCT_NAME } from '$lib/constants';
-import { m } from '$lib/paraglide/messages.js';
-import type { Locale } from '$lib/paraglide/runtime.js';
+import { DEVELOPER_NAME, DEVELOPER_URL, PRODUCT_NAME } from '#lib/constants.ts';
+import { m } from '#lib/paraglide/messages.js';
+import type { Locale } from '#lib/paraglide/runtime.js';
 import { escapeHtml } from './html';
 
 // Mail clients ignore stylesheets and web fonts, so everything is inline and the font falls back to

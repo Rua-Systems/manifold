@@ -1,4 +1,4 @@
-import type { FieldErrors, Validator } from '$lib/types/validation';
+import type { FieldErrors, Validator } from '#lib/types/validation.ts';
 import type { z } from 'zod';
 
 /** Lets client fields reuse the Zod schemas the server validates with. */

@@ -1,25 +1,25 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
 	import { beforeNavigate, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import TrashIcon from '$lib/components/icons/TrashIcon.svelte';
-	import FilePicker from '$lib/modules/files/components/FilePicker.svelte';
-	import { SIDEBAR_DEPENDENCY } from '$lib/modules/registry';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { actionMessage, postAction } from '$lib/utils/actions';
-	import { formatMegabytes } from '$lib/utils/format';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { relativeTime } from '$lib/utils/time';
-	import { pageTitle } from '$lib/utils/title';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import TrashIcon from '#lib/components/icons/TrashIcon.svelte';
+	import FilePicker from '#lib/modules/files/components/FilePicker.svelte';
+	import { SIDEBAR_DEPENDENCY } from '#lib/modules/registry.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { actionMessage, postAction } from '#lib/utils/actions.ts';
+	import { formatMegabytes } from '#lib/utils/format.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
+	import { pageTitle } from '#lib/utils/title.ts';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import History from '@lucide/svelte/icons/history';
 	import Maximize2 from '@lucide/svelte/icons/maximize-2';
 	import Minimize2 from '@lucide/svelte/icons/minimize-2';
 	import Pencil from '@lucide/svelte/icons/pencil';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { onDestroy, untrack, type Snippet } from 'svelte';
 	import { emptyNoteContent, isEmptyNoteContent } from '../content';
 	import {
@@ -237,7 +237,9 @@
 		});
 	});
 
-	beforeNavigate(() => {
+	beforeNavigate(({ shallow, type }) => {
+		if (shallow && type === 'goto') return;
+
 		void draft.flush();
 	});
 
@@ -351,7 +353,7 @@
 	{/if}
 </svelte:head>
 
-<svelte:document onvisibilitychange={onVisibilityChange} />
+<svelte:document onvisibilitychange={onVisibilityChange}></svelte:document>
 <svelte:window onkeydown={onKeydown} />
 
 <article class="note-page" class:embedded={host !== undefined} class:focused>

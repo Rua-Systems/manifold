@@ -1,26 +1,26 @@
-import { keyCategoryLabels, limitKeyToCategories } from '$lib/modules/memory/access.server';
-import { allMemoryCategories } from '$lib/modules/memory/categories.server';
-import { noteTokenSettingsActions } from '$lib/modules/notes/tokens.page.server';
-import { listNoteTokens } from '$lib/modules/notes/tokens.server';
-import { allScopeIds } from '$lib/modules/scopes';
+import { keyCategoryLabels, limitKeyToCategories } from '#lib/modules/memory/access.server.ts';
+import { allMemoryCategories } from '#lib/modules/memory/categories.server.ts';
+import { noteTokenSettingsActions } from '#lib/modules/notes/tokens.page.server.ts';
+import { listNoteTokens } from '#lib/modules/notes/tokens.server.ts';
+import { allScopeIds } from '#lib/modules/scopes.ts';
 import {
 	apiKeysWithCopy,
 	deleteApiKeyCopy,
 	storeApiKeyCopy,
 	VAULT_MODULE
-} from '$lib/modules/vault/vault.server';
-import { m } from '$lib/paraglide/messages.js';
-import { apiKeyCreateSchema } from '$lib/schemas/api-keys';
-import { endOfUtcDay } from '$lib/schemas/rules';
-import { ownerActor } from '$lib/server/actor';
-import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '$lib/server/api-keys';
-import { originOf, recordAudit } from '$lib/server/audit';
-import { getDb } from '$lib/server/db';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { requireUser } from '$lib/server/guard';
-import { isSteppedUp, stepUpRequired } from '$lib/server/step-up';
-import { isUuid } from '$lib/utils/uuid';
-import { fieldErrors, textValue } from '$lib/utils/validation';
+} from '#lib/modules/vault/vault.server.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { apiKeyCreateSchema } from '#lib/schemas/api-keys.ts';
+import { endOfUtcDay } from '#lib/schemas/rules.ts';
+import { ownerActor } from '#lib/server/actor.ts';
+import { createApiKey, deleteApiKey, listApiKeys, revokeApiKey } from '#lib/server/api-keys.ts';
+import { originOf, recordAudit } from '#lib/server/audit.ts';
+import { getDb } from '#lib/server/db/index.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { isSteppedUp, stepUpRequired } from '#lib/server/step-up.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
+import { fieldErrors, textValue } from '#lib/utils/validation.ts';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

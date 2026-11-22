@@ -1,25 +1,25 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import MoveForm from '$lib/components/Folders/MoveForm.svelte';
-	import NameForm from '$lib/components/Folders/NameForm.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { folderNameSchema } from '$lib/schemas/names';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { FolderOption } from '$lib/types/folders';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { actionMessage, postAction } from '$lib/utils/actions';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { relativeTime } from '$lib/utils/time';
+	import type { SubmitFunction } from '$app/forms';
+	import { refreshAll } from '$app/navigation';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import MoveForm from '#lib/components/Folders/MoveForm.svelte';
+	import NameForm from '#lib/components/Folders/NameForm.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { folderNameSchema } from '#lib/schemas/names.ts';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { FolderOption } from '#lib/types/folders.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { actionMessage, postAction } from '#lib/utils/actions.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import FolderIcon from '@lucide/svelte/icons/folder';
 	import FolderInputIcon from '@lucide/svelte/icons/folder-input';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { NoteFolderAction, NoteFolderFormState } from '../folders.page.server';
 	import type { NoteFolderPath, NoteFolderSummary, NoteSummary } from '../types';
 
@@ -42,7 +42,6 @@
 		kind: 'note' | 'folder';
 		id: string;
 	}
-
 	interface MoveTarget extends DraggedItem {
 		name: string;
 		current: string | null;
@@ -123,7 +122,7 @@
 		} else {
 			notifications.fault(actionMessage(result, m.folders_error_move_failed()));
 		}
-		await invalidateAll();
+		await refreshAll();
 	}
 
 	function dropOnFolder(event: DragEvent, target: string): void {
@@ -170,9 +169,9 @@
 	{#snippet actions()}
 		<a class="quiet-link" href={localizedHref('/notes/trash')}>{m.notes_trash_title()}</a>
 		{#if !searching}
-			<button type="button" class="quiet" onclick={() => (createOpen = true)}>
-				{m.notes_folder_new()}
-			</button>
+			<button type="button" class="quiet" onclick={() => (createOpen = true)}
+				>{m.notes_folder_new()}</button
+			>
 		{/if}
 		<a class="primary" href={newNoteHref}>{m.notes_new()}</a>
 	{/snippet}
@@ -180,7 +179,7 @@
 		method="GET"
 		class="filter"
 		role="search"
-		data-sveltekit-keepfocus
+		data-sveltekit-reset="false"
 		data-sveltekit-replacestate
 		bind:this={filterForm}
 	>

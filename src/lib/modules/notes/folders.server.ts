@@ -1,10 +1,10 @@
-import { m } from '$lib/paraglide/messages.js';
-import { getDb } from '$lib/server/db';
-import { FOREIGN_KEY_VIOLATION, hasErrorCode, UNIQUE_VIOLATION } from '$lib/server/db/errors';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
-import { folderNameSchema } from '$lib/schemas/names';
-import type { FolderOption } from '$lib/types/folders';
-import { isUuid } from '$lib/utils/uuid';
+import { m } from '#lib/paraglide/messages.js';
+import { getDb } from '#lib/server/db/index.ts';
+import { FOREIGN_KEY_VIOLATION, hasErrorCode, UNIQUE_VIOLATION } from '#lib/server/db/errors.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { folderNameSchema } from '#lib/schemas/names.ts';
+import type { FolderOption } from '#lib/types/folders.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
 import { and, asc, count, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { note, noteFolder } from './schema.server';
 import type { NoteFolderPath, NoteFolderSummary } from './types';

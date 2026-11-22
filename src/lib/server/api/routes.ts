@@ -1,5 +1,5 @@
-import { version } from '$app/environment';
-import { moduleApiRoutes } from '$lib/modules/registry.server';
+import { version } from '$app/env';
+import { moduleApiRoutes } from '#lib/modules/registry.server.ts';
 import { z } from 'zod';
 import { getEnv } from '../env';
 import { tagsApiRoutes } from '../tags/api';

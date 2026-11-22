@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import type { ModuleManifest } from '../types';
 import FilesIcon from './components/FilesIcon.svelte';
 

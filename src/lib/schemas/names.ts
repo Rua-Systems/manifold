@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { z } from 'zod';
 
 // Names the owner gives to folders and files. They show in breadcrumbs and lists, so slashes would

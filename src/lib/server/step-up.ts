@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { fail, type RequestEvent } from '@sveltejs/kit';
 import { isAPIError } from 'better-auth/api';
 import { eq } from 'drizzle-orm';

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import type { DashboardLink } from '$lib/types/dashboard';
-	import { localizedHref } from '$lib/utils/navigation';
-	import { relativeTime } from '$lib/utils/time';
-	import type { Pathname } from '$app/types';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import type { DashboardLink } from '#lib/types/dashboard.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
+	import { relativeTime } from '#lib/utils/time.ts';
+	import type { AppPath } from '#lib/types/navigation.ts';
 
 	interface Props {
 		title: string;
@@ -48,7 +48,7 @@
 							{@render content(link)}
 						</a>
 					{:else}
-						<a href={localizedHref(link.href as Pathname)}>{@render content(link)}</a>
+						<a href={localizedHref(link.href as AppPath)}>{@render content(link)}</a>
 					{/if}
 				</li>
 			{/each}

@@ -1,4 +1,4 @@
-import { TAG_COLORS, type Tag } from '$lib/types/tags';
+import { TAG_COLORS, type Tag } from '#lib/types/tags.ts';
 import { z } from 'zod';
 import { decodeCursor, pageOf, pageQuery, pageSchema } from '../api/paging';
 import { defineRoute, type ApiRoute } from '../api/types';

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import NoteEditorPage from '$lib/modules/notes/components/NoteEditorPage.svelte';
-	import NoteFolderMove from '$lib/modules/notes/components/NoteFolderMove.svelte';
-	import NoteLocation from '$lib/modules/notes/components/NoteLocation.svelte';
-	import NoteTokens from '$lib/modules/notes/components/NoteTokens.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { localizedHref } from '$lib/utils/navigation';
+	import NoteEditorPage from '#lib/modules/notes/components/NoteEditorPage.svelte';
+	import NoteFolderMove from '#lib/modules/notes/components/NoteFolderMove.svelte';
+	import NoteLocation from '#lib/modules/notes/components/NoteLocation.svelte';
+	import NoteTokens from '#lib/modules/notes/components/NoteTokens.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -35,9 +35,8 @@
 	async function oncreated(id: string): Promise<void> {
 		created = { id, draftKey: data.draftKey };
 		await goto(localizedHref(`/notes/${id}`), {
-			replaceState: true,
-			keepFocus: true,
-			noScroll: true
+			replace: true,
+			reset: false
 		});
 	}
 </script>
@@ -64,7 +63,7 @@
 			{/if}
 		{/snippet}
 		{#if data.note !== null}
-			<NoteLocation noteId={data.note.id} features={data.features} config={data.map} />
+			<NoteLocation noteId={data.note.id} features={data.mapFeatures} config={data.map} />
 		{/if}
 	</NoteEditorPage>
 {/key}

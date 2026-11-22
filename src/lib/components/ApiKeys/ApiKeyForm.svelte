@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { MemoryCategory } from '$lib/modules/memory/types';
-	import { readScopeFor, scopeGroups } from '$lib/modules/scopes';
-	import { m } from '$lib/paraglide/messages.js';
-	import { API_KEY_NAME_MAX_LENGTH } from '$lib/schemas/api-keys';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { getStepUp, needsStepUp } from '$lib/state/step-up.svelte';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { localizedHref } from '$lib/utils/navigation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import type { MemoryCategory } from '#lib/modules/memory/types.ts';
+	import { readScopeFor, scopeGroups } from '#lib/modules/scopes.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { API_KEY_NAME_MAX_LENGTH } from '#lib/schemas/api-keys.ts';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { getStepUp, needsStepUp } from '#lib/state/step-up.svelte.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 
 	interface Props {
 		errors: FieldErrors;
@@ -38,6 +38,7 @@
 			return;
 		}
 		const read = readScopeFor(scopeId);
+
 		selected = [...new Set([...selected, scopeId, ...(read === null ? [] : [read])])];
 	}
 

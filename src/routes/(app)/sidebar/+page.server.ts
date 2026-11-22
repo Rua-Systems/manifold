@@ -1,7 +1,7 @@
-import { localizeHref } from '$lib/paraglide/runtime.js';
-import { requireUser } from '$lib/server/guard';
-import { saveSidebarWidth } from '$lib/server/user-settings';
-import { parseSidebarWidth } from '$lib/utils/sidebar-width';
+import { localizeHref } from '#lib/paraglide/runtime.js';
+import { requireUser } from '#lib/server/guard.ts';
+import { saveSidebarWidth } from '#lib/server/user-settings.ts';
+import { parseSidebarWidth } from '#lib/utils/sidebar-width.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

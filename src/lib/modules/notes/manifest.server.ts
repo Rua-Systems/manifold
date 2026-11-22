@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { getEnv } from '$lib/server/env';
+import { m } from '#lib/paraglide/messages.js';
+import { getEnv } from '#lib/server/env.ts';
 import type { ServerModuleManifest } from '../types.server';
 import { notesApiRoutes } from './api.server';
 import { mapApiRoutes } from './map/api.server';

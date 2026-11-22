@@ -1,15 +1,19 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import CodeBlock from '$lib/components/edra/headless/CodeBlock.svelte';
-	import { FileUpload } from '$lib/components/edra/headless/image-upload';
-	import LinkMenu from '$lib/components/edra/headless/LinkMenu.svelte';
-	import TableMenu from '$lib/components/edra/headless/TableMenu.svelte';
-	import Toolbar from '$lib/components/edra/headless/Toolbar.svelte';
-	import { SvelteNodeViewRenderer, Tiptap, useEditor } from '$lib/components/edra/tiptap';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { formatBytes } from '$lib/utils/format';
-	import { localizedHref } from '$lib/utils/navigation';
+	import CodeBlock from '#lib/components/edra/headless/CodeBlock.svelte';
+	import { FileUpload } from '#lib/components/edra/headless/image-upload.ts';
+	import LinkMenu from '#lib/components/edra/headless/LinkMenu.svelte';
+	import TableMenu from '#lib/components/edra/headless/TableMenu.svelte';
+	import Toolbar from '#lib/components/edra/headless/Toolbar.svelte';
+	import {
+		SvelteNodeViewRenderer,
+		Tiptap,
+		useEditor
+	} from '#lib/components/edra/tiptap/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { formatBytes } from '#lib/utils/format.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import { Node as TiptapNode, type AnyExtension, type JSONContent } from '@tiptap/core';
 	import { Placeholder } from '@tiptap/extensions';
 	import { untrack } from 'svelte';

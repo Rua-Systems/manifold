@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { formatMegabytes } from '$lib/utils/format';
+import { m } from '#lib/paraglide/messages.js';
+import { formatMegabytes } from '#lib/utils/format.ts';
 import type { FileRejection } from './files';
 
 export interface RejectionContext {

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import AuditLog from '$lib/components/Security/AuditLog.svelte';
-	import SessionList from '$lib/components/Security/SessionList.svelte';
-	import TwoFactorPanel from '$lib/components/Security/TwoFactorPanel.svelte';
-	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import AuditLog from '#lib/components/Security/AuditLog.svelte';
+	import SessionList from '#lib/components/Security/SessionList.svelte';
+	import TwoFactorPanel from '#lib/components/Security/TwoFactorPanel.svelte';
+	import SettingsNav from '#lib/components/SettingsNav/SettingsNav.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

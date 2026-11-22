@@ -1,4 +1,4 @@
-import type { FolderOption } from '$lib/types/folders';
+import type { FolderOption } from '#lib/types/folders.ts';
 import type { NoteContent } from './content';
 
 export interface NoteSummary {

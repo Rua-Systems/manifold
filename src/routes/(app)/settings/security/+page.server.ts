@@ -1,12 +1,12 @@
-import { m } from '$lib/paraglide/messages.js';
-import { codeSchema, passwordSchema } from '$lib/schemas/auth';
-import { auditFilterSchema, twoFactorCredentialsSchema } from '$lib/schemas/security';
-import { ownerActor } from '$lib/server/actor';
-import { AUDIT_PAGE_SIZE, listAuditEvents, originOf, recordAudit } from '$lib/server/audit';
-import { requireUser } from '$lib/server/guard';
-import { countFailedCredentialCheck, isCredentialCheckBlocked } from '$lib/server/rate-limit';
-import { listSessions, revokeOtherSessions, revokeSession } from '$lib/server/sessions';
-import { isSteppedUp } from '$lib/server/step-up';
+import { m } from '#lib/paraglide/messages.js';
+import { codeSchema, passwordSchema } from '#lib/schemas/auth.ts';
+import { auditFilterSchema, twoFactorCredentialsSchema } from '#lib/schemas/security.ts';
+import { ownerActor } from '#lib/server/actor.ts';
+import { AUDIT_PAGE_SIZE, listAuditEvents, originOf, recordAudit } from '#lib/server/audit.ts';
+import { requireUser } from '#lib/server/guard.ts';
+import { countFailedCredentialCheck, isCredentialCheckBlocked } from '#lib/server/rate-limit.ts';
+import { listSessions, revokeOtherSessions, revokeSession } from '#lib/server/sessions.ts';
+import { isSteppedUp } from '#lib/server/step-up.ts';
 import {
 	confirmSetup,
 	disable,
@@ -15,10 +15,10 @@ import {
 	startSetup,
 	totpSecret,
 	type TwoFactorProblem
-} from '$lib/server/two-factor';
-import type { SecurityFormState, TwoFactorSetup } from '$lib/types/security';
-import type { FieldErrors } from '$lib/types/validation';
-import { fieldErrors, textValue } from '$lib/utils/validation';
+} from '#lib/server/two-factor.ts';
+import type { SecurityFormState, TwoFactorSetup } from '#lib/types/security.ts';
+import type { FieldErrors } from '#lib/types/validation.ts';
+import { fieldErrors, textValue } from '#lib/utils/validation.ts';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

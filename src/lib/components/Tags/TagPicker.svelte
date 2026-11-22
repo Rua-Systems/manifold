@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import type { Tag } from '$lib/types/tags';
-	import { localizedHref } from '$lib/utils/navigation';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { Tag } from '#lib/types/tags.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 
 	interface Props {
 		/** Every tag to choose from. */

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
 
 	interface Props {
 		apiKey: string;

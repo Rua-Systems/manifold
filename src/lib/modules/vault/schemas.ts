@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { URL_MAX_LENGTH } from '$lib/schemas/rules';
+import { m } from '#lib/paraglide/messages.js';
+import { URL_MAX_LENGTH } from '#lib/schemas/rules.ts';
 import { z } from 'zod';
 
 export const SECRET_NAME_MAX_LENGTH = 100;

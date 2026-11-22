@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { pageTitle } from '$lib/utils/title';
+	import { pageTitle } from '#lib/utils/title.ts';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

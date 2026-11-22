@@ -1,6 +1,6 @@
 import longCommonPasswords from './common-passwords-long.txt?raw';
 import commonPasswords from './common-passwords.txt?raw';
-import { PASSWORD_MIN_LENGTH } from '$lib/schemas/rules';
+import { PASSWORD_MIN_LENGTH } from '#lib/schemas/rules.ts';
 
 // New passwords are checked on the server against common and breached passwords and against
 // words an attacker would try first. The lists come from SecLists (MIT, see

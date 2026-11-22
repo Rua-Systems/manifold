@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PromptPage from '$lib/modules/memory/prompts/components/PromptPage.svelte';
+	import PromptPage from '#lib/modules/memory/prompts/components/PromptPage.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();

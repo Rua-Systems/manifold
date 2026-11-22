@@ -1,11 +1,11 @@
-import { m } from '$lib/paraglide/messages.js';
-import type { Actor } from '$lib/server/actor';
-import { getDb, type Transaction } from '$lib/server/db';
-import { apiKey, tag } from '$lib/server/db/schema';
-import { ConflictError, NotFoundError, ValidationError } from '$lib/server/errors';
-import { containsPattern, prefixQuery } from '$lib/server/search-query';
-import type { Tag } from '$lib/types/tags';
-import { isUuid } from '$lib/utils/uuid';
+import { m } from '#lib/paraglide/messages.js';
+import type { Actor } from '#lib/server/actor.ts';
+import { getDb, type Transaction } from '#lib/server/db/index.ts';
+import { apiKey, tag } from '#lib/server/db/schema.ts';
+import { ConflictError, NotFoundError, ValidationError } from '#lib/server/errors.ts';
+import { containsPattern, prefixQuery } from '#lib/server/search-query.ts';
+import type { Tag } from '#lib/types/tags.ts';
+import { isUuid } from '#lib/utils/uuid.ts';
 import {
 	and,
 	asc,

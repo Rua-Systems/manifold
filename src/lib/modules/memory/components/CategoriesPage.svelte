@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import PencilIcon from '$lib/components/icons/PencilIcon.svelte';
-	import TrashIcon from '$lib/components/icons/TrashIcon.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import { localizedHref } from '$lib/utils/navigation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import PencilIcon from '#lib/components/icons/PencilIcon.svelte';
+	import TrashIcon from '#lib/components/icons/TrashIcon.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import { localizedHref } from '#lib/utils/navigation.ts';
 	import { MEMORY_CATEGORY_NAME_MAX_LENGTH } from '../schemas';
 	import type { MemoryCategoriesFormState, MemoryCategory, MemoryCategoryNode } from '../types';
 

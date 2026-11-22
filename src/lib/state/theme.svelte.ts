@@ -1,5 +1,5 @@
-import type { Theme } from '$lib/types/theme';
-import { parseTheme } from '$lib/utils/theme';
+import type { Theme } from '#lib/types/theme.ts';
+import { parseTheme } from '#lib/utils/theme.ts';
 import { getContext, setContext } from 'svelte';
 
 const THEME_KEY = Symbol('theme');

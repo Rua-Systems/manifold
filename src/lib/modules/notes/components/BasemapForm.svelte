@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { m } from '$lib/paraglide/messages.js';
-	import { Field, validateAll } from '$lib/state/field.svelte';
-	import type { FieldErrors } from '$lib/types/validation';
-	import { fromSchema } from '$lib/utils/validation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { Field, validateAll } from '#lib/state/field.svelte.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
+	import { fromSchema } from '#lib/utils/validation.ts';
 	import { untrack } from 'svelte';
 	import {
 		BASEMAP_DEFAULT_MAX_ZOOM,

@@ -1,5 +1,5 @@
-import { decodeCursor, pageOf, pageQuery } from '$lib/server/api/paging';
-import { defineRoute, type ApiRoute } from '$lib/server/api/types';
+import { decodeCursor, pageOf, pageQuery } from '#lib/server/api/paging.ts';
+import { defineRoute, type ApiRoute } from '#lib/server/api/types.ts';
 import { z } from 'zod';
 import { markdownToNote } from '../markdown.server';
 import { NOTE_TITLE_MAX_LENGTH } from '../schemas';

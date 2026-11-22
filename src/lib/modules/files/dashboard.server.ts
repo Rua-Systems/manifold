@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import type { DashboardCard } from '$lib/types/dashboard';
+import { m } from '#lib/paraglide/messages.js';
+import type { DashboardCard } from '#lib/types/dashboard.ts';
 import { fileTotals, recentFiles } from './library.server';
 
 const RECENT_FILES = 6;

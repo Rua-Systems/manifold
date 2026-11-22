@@ -54,6 +54,7 @@ npm run dev
 ```text
 src/
   hooks.server.ts          startup and the request pipeline: sessions, origin check, body limits, headers
+  params.ts                the route parameter matchers (note, memory and prompt ids)
   routes/
     (app)/                 signed-in pages: dashboard, services, notes, map, memory, files, data sources, vault, search, settings, sidebar, step-up
     login/                 sign-in
@@ -89,6 +90,8 @@ docs/                      this documentation
 
 The app's own pages talk to the server through `load` functions and form actions. `+server.ts` endpoints exist only for outside callers: `/api/v1`, `/mcp`, `/healthz`, `/files/<id>` and the export download, and, in development only, `/dev/mail/<template>`. Widgets that save or read on their own, such as the note editor, the map and the command palette, call form actions with `fetch` and `deserialize`.
 
+Code imports from `src/lib` through the `#lib` subpath import in `package.json`, with the file extension, such as `#lib/server/env.ts`. App paths keep their leading slash (`/notes`, the `AppPath` and `AppHref` types in `src/lib/types/navigation.ts`); `localizedHref` adds the locale and drops the slash only where it calls SvelteKit's `resolve()`. Forms use `enhance` from `src/lib/utils/enhance.ts` rather than from `$app/forms`: it applies an action's answer to the page that sent it, so a form on `/notes?folder=<id>` keeps the folder open, where SvelteKit 3 would move to `/notes`.
+
 Better Auth runs only on the server. Its HTTP handler is not mounted; pages call `auth.api.*` from form actions and hooks.
 
 ## Server entry and logging
@@ -99,7 +102,7 @@ Server code logs through `src/lib/server/log.ts`: `log(level, message, fields, e
 
 ## Startup
 
-On every start, `hooks.server.ts` validates the environment (`src/lib/server/env.ts`), applies pending migrations under an advisory lock, creates the owner when no user exists, and starts the daily housekeeping. A missing or malformed variable stops the start with a message that names it.
+On every start, `hooks.server.ts` validates the environment (`src/lib/server/env.ts`, which reads `process.env`; `vite dev` and `vite preview` add the `.env` file to it), applies pending migrations under an advisory lock, creates the owner when no user exists, and starts the daily housekeeping. A missing or malformed variable stops the start with a message that names it.
 
 ## Modules
 
@@ -142,7 +145,7 @@ The interface texts are in `messages/en.json` and `messages/tr.json`, with Engli
 
 ```svelte
 <script lang="ts">
-  import { m } from '$lib/paraglide/messages.js';
+  import { m } from '#lib/paraglide/messages.js';
 </script>
 
 <h1>{m.data_title()}</h1>

@@ -1,7 +1,7 @@
-import { moduleDashboardCards } from '$lib/modules/registry.server';
-import { m } from '$lib/paraglide/messages.js';
-import type { Dashboard, DashboardCard } from '$lib/types/dashboard';
-import { fillDays, startOfLastDays } from '$lib/utils/days';
+import { moduleDashboardCards } from '#lib/modules/registry.server.ts';
+import { m } from '#lib/paraglide/messages.js';
+import type { Dashboard, DashboardCard } from '#lib/types/dashboard.ts';
+import { fillDays, startOfLastDays } from '#lib/utils/days.ts';
 import { and, count, desc, eq, gt, gte, isNull, or, sql } from 'drizzle-orm';
 import type { ActorType } from './actor';
 import { credentialSummaries } from './api/credentials';

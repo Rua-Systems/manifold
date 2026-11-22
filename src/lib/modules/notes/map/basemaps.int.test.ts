@@ -1,6 +1,6 @@
-import { getDb } from '$lib/server/db';
-import { getEnv } from '$lib/server/env';
-import { NotFoundError, ValidationError } from '$lib/server/errors';
+import { getDb } from '#lib/server/db/index.ts';
+import { getEnv } from '#lib/server/env.ts';
+import { NotFoundError, ValidationError } from '#lib/server/errors.ts';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { mapBasemap } from '../schema.server';
 import {

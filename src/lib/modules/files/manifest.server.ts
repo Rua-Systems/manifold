@@ -1,7 +1,7 @@
-import { m } from '$lib/paraglide/messages.js';
-import { getLocale } from '$lib/paraglide/runtime.js';
-import { measureRows } from '$lib/server/usage/measure';
-import { formatBytes } from '$lib/utils/format';
+import { m } from '#lib/paraglide/messages.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
+import { measureRows } from '#lib/server/usage/measure.ts';
+import { formatBytes } from '#lib/utils/format.ts';
 import type { ServerModuleManifest } from '../types.server';
 import { filesApiRoutes } from './api.server';
 import { FILES_MODULE } from './constants';

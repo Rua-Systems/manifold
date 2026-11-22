@@ -1,6 +1,6 @@
-import { m } from '$lib/paraglide/messages.js';
-import type { TagsAction, TagsFormState } from '$lib/types/tags';
-import { textValue } from '$lib/utils/validation';
+import { m } from '#lib/paraglide/messages.js';
+import type { TagsAction, TagsFormState } from '#lib/types/tags.ts';
+import { textValue } from '#lib/utils/validation.ts';
 import { fail, type ActionFailure, type RequestEvent } from '@sveltejs/kit';
 import { NotFoundError, ValidationError } from '../errors';
 import { requireUser } from '../guard';

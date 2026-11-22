@@ -1,4 +1,4 @@
-import { loadEnv } from '$lib/server/env';
+import { loadEnv } from '#lib/server/env.ts';
 import { inject } from 'vitest';
 import { testEnvironment } from '../support/environment.ts';
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
-	import UsageReport from '$lib/components/Usage/UsageReport.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import SettingsNav from '#lib/components/SettingsNav/SettingsNav.svelte';
+	import UsageReport from '#lib/components/Usage/UsageReport.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

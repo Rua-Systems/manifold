@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import ConfirmDialog from '$lib/components/ConfirmDialog/ConfirmDialog.svelte';
-	import Dialog from '$lib/components/Dialog/Dialog.svelte';
-	import ArrowDownIcon from '$lib/components/icons/ArrowDownIcon.svelte';
-	import ArrowUpIcon from '$lib/components/icons/ArrowUpIcon.svelte';
-	import PencilIcon from '$lib/components/icons/PencilIcon.svelte';
-	import TrashIcon from '$lib/components/icons/TrashIcon.svelte';
-	import PageShell from '$lib/components/PageShell/PageShell.svelte';
-	import SettingsNav from '$lib/components/SettingsNav/SettingsNav.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getNotifications } from '$lib/state/notifications.svelte';
-	import type { FieldErrors } from '$lib/types/validation';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
+	import { enhance } from '#lib/utils/enhance.ts';
+	import ConfirmDialog from '#lib/components/ConfirmDialog/ConfirmDialog.svelte';
+	import Dialog from '#lib/components/Dialog/Dialog.svelte';
+	import ArrowDownIcon from '#lib/components/icons/ArrowDownIcon.svelte';
+	import ArrowUpIcon from '#lib/components/icons/ArrowUpIcon.svelte';
+	import PencilIcon from '#lib/components/icons/PencilIcon.svelte';
+	import TrashIcon from '#lib/components/icons/TrashIcon.svelte';
+	import PageShell from '#lib/components/PageShell/PageShell.svelte';
+	import SettingsNav from '#lib/components/SettingsNav/SettingsNav.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getNotifications } from '#lib/state/notifications.svelte.ts';
+	import type { FieldErrors } from '#lib/types/validation.ts';
 	import type { Basemap, BasemapsAction, BasemapsFormState } from '../map/basemaps';
 	import BasemapForm from './BasemapForm.svelte';
 
@@ -108,9 +108,10 @@
 	<section class="section" aria-labelledby="basemapsHeading">
 		<div class="heading">
 			<h2 id="basemapsHeading">{m.basemaps_heading()}</h2>
-			<button type="button" class="primary" onclick={() => (createOpen = true)}>
-				{m.basemaps_new()}
-			</button>
+
+			<button type="button" class="primary" onclick={() => (createOpen = true)}
+				>{m.basemaps_new()}</button
+			>
 		</div>
 		<p class="lead">{m.basemaps_lead()}</p>
 		<ol class="list" aria-label={m.basemaps_heading()}>
